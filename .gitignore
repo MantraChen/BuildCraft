@@ -42,3 +42,7 @@ logs
 
 claude.md
 claude/
+
+# Local development tools and verification logs
+.tools/
+verification/

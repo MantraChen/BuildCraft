@@ -24,7 +24,8 @@ public class BuildCraftFabric implements ModInitializer {
                 ========================================
                 BuildCraft  |  Fabric 1.20.1
                 Originally by SpaceToad & BuildCraft Team
-                Ported by R.Chen
+                Remake by FelixMantra
+                Fabric port by R.Chen (MantraChen)
                 https://github.com/MantraChen
                 ========================================
                 """);

@@ -3,16 +3,17 @@
   "id": "buildcraft",
   "version": "${version}",
 
-  "name": "BuildCraft",
-  "description": "BuildCraft for Minecraft 1.20.1 (Fabric port)",
+  "name": "BuildCraft Fabric",
+  "description": "BuildCraft for Minecraft 1.20.1. Remake by FelixMantra. Experimental port in development.",
   "authors": [
     "SpaceToad",
-    "BuildCraft Team"
+    "BuildCraft Team",
+    "FelixMantra (R.Chen / MantraChen)"
   ],
   "contact": {
     "homepage": "https://www.mod-buildcraft.com/",
-    "sources":  "https://github.com/MantraChen/BuildCraft",
-    "issues":   "https://github.com/MantraChen/BuildCraft/issues"
+    "sources":  "https://github.com/MantraChen/BuildCraft-Fabric",
+    "issues":   "https://github.com/MantraChen/BuildCraft-Fabric/issues"
   },
 
   "license": "MPL-2.0",
@@ -47,6 +48,7 @@
   },
 
   "custom": {
+    "remake-credit": "Remake by FelixMantra",
     "porter": "R.Chen",
     "porter-url": "https://github.com/MantraChen",
     "migration-notes": [

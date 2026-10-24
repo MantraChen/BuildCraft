@@ -1,3 +1,43 @@
+# BuildCraft Fabric — Minecraft 1.20.1
+
+**Remake by FelixMantra** (R.Chen / [MantraChen](https://github.com/MantraChen)).
+Originally created by SpaceToad and the BuildCraft team. Original authorship and licenses are preserved.
+
+This independent repository continues the work in
+[BuildCraft/BuildCraft PR #4754](https://github.com/BuildCraft/BuildCraft/pull/4754).
+The original 60 migration commits are ancestors of `main`, with their original hashes,
+authors and dates. `archive/pr-4754` preserves the exact imported revision
+`2051fb41455312a2e6c5ffeb972c6639e2a32bb9`.
+
+**Status: incomplete experimental port.** The imported source contains unfinished
+registration, rendering, networking and machine implementations. A successful partial
+compilation does not imply a working mod. See [the migration assessment](docs/MIGRATION_STATUS.md)
+and [the history/contributions record](docs/HISTORY.md).
+
+## Development
+
+Use JDK 17 and the checked-in Gradle wrapper. Initialize submodules before building:
+
+```sh
+git clone --recurse-submodules https://github.com/MantraChen/BuildCraft-Fabric.git
+cd BuildCraft-Fabric
+./gradlew build
+```
+
+On Windows, use `./gradlew.bat`. `./gradlew compileLibLeaf` checks only the selected
+migrated subset; `./gradlew :sub_projects:expression:test` checks the expression library.
+The target is Minecraft 1.20.1, Yarn mappings and Fabric Loader/API. Full build and
+gameplay validation are still being restored; these commands describe the development
+workflow, not a claim that the imported build passes.
+
+Report issues with this remake in
+[MantraChen/BuildCraft-Fabric](https://github.com/MantraChen/BuildCraft-Fabric/issues).
+
+## Original upstream documentation
+
+The following documentation describes upstream BuildCraft, including its historical
+Forge build. Use the Fabric development instructions above for this repository.
+
 ## Welcome to BuildCraft on GitHub
 
 ### Reporting an issue
