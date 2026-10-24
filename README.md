@@ -24,7 +24,10 @@ cd BuildCraft-Fabric
 ./gradlew build
 ```
 
-On Windows, use `./gradlew.bat`. `./gradlew compileLibLeaf` checks only the selected
+On Windows, use `./gradlew.bat`, or `./scripts/gradle.ps1 build` to discover a JDK 17
+extracted under `.tools/` and Git installed in its standard Windows location.
+The helper changes environment variables only for its own invocation.
+`./gradlew compileLibLeaf` checks only the selected
 migrated subset; `./gradlew :sub_projects:expression:test` checks the expression library.
 The target is Minecraft 1.20.1, Yarn mappings and Fabric Loader/API. Full build and
 gameplay validation are still being restored; these commands describe the development

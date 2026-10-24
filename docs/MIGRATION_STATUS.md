@@ -10,8 +10,9 @@ assets, algorithms and already migrated API definitions. Restore Fabric integrat
 by subsystem instead of throwing away all prior work or adding more no-op shims.
 
 The imported code is not yet a playable Fabric port. The latest original commit
-message reports 358 remaining full-compilation errors; that number is historical,
-pending reproduction on this machine. A source scan found 1,265 Java files under
+message reports 358 remaining full-compilation errors. The local full compilation
+on JDK 17.0.20.1 / Gradle 8.14.5 reported **357 errors** after dependency resolution.
+A source scan found 1,265 Java files under
 `common`, and 692 files across `common` and `BuildCraftAPI/api` matching `STUB` or
 `TODO(R.Chen)`. These are file counts, not a precise count of broken features.
 
@@ -25,8 +26,12 @@ pending reproduction on this machine. A source scan found 1,265 Java files under
   immediately tries to register its renderer. The referenced common-side
   `BCTransportInitializer` does not exist and is absent from mod entrypoints.
 - `BCNetworkManager` logs tile-update packets but does not apply them.
+- The source tree contains 65 classes under `net.minecraft` and 95 under
+  `net.minecraftforge`, including compatibility shims with unfinished behavior.
 - `TileQuarry` defers output storage, frame placement and several world integration
   paths. Merely making this class compile would not validate mining behavior.
+- `BlockUtil.breakBlockAndGetDrops` removes a block and returns no drops. This must
+  be repaired and tested before enabling a quarry in a real world.
 - Resources still include old `.lang` files and historical model/recipe formats.
 - Expression and energy dependencies need verification in the distributable jar,
   not just the development classpath.
@@ -43,5 +48,18 @@ pending reproduction on this machine. A source scan found 1,265 Java files under
 
 No “zero bugs” guarantee is made. Record observed test results and unsupported
 features explicitly as work proceeds.
+
+## Verified results
+
+- Original-history import: all 60 original migration commits now count as GitHub
+  contributions; see [HISTORY.md](HISTORY.md).
+- Gradle wrapper: regenerated with Gradle 8.14.5, pinned to the official distribution
+  SHA-256, and launched successfully on Windows with JDK 17.
+- Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
+  and 9 expression tests). The generator produced 100 Java source files.
+- Full `compileJava`: **fails with 357 errors** in the imported source. No client or
+  dedicated-server startup has been claimed.
+- Runtime packaging configuration now includes the expression library and Team Reborn
+  Energy; final packaged-jar validation remains blocked on full compilation.
 
 Remake by FelixMantra.

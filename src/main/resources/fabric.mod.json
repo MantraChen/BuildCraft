@@ -40,11 +40,9 @@
   "depends": {
     "fabricloader": ">=0.15.0",
     "fabric-api":   "*",
-    "minecraft":    "~1.20.1"
-  },
-
-  "suggests": {
-    "team_reborn_energy": "*"
+    "minecraft":    "1.20.1",
+    "java": ">=17",
+    "team_reborn_energy": ">=3.0.0 <4.0.0"
   },
 
   "custom": {
