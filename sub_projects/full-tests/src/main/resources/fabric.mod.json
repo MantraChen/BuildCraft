@@ -17,7 +17,8 @@
       "buildcraft.test.full.PipeGateActionGameTests",
       "buildcraft.test.full.GateStorageGameTests",
       "buildcraft.test.full.WireGameTests",
-      "buildcraft.test.full.FluidPipeGameTests"
+      "buildcraft.test.full.FluidPipeGameTests",
+      "buildcraft.test.full.FluidRecoveryGameTests"
     ],
     "client": [
       "buildcraft.test.full.FullClientSmoke",

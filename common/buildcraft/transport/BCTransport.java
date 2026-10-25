@@ -25,6 +25,7 @@ public class BCTransport {
 
     public static void init() {
         BCTransportRegistries.init();
+        BCTransportRecipes.init();
         BCTransportScreens.register();
     }
 

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **72 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **79 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -116,6 +116,11 @@ features explicitly as work proceeds.
   Forced extraction returns the actual amount; earlier Fabric mB saves convert once,
   while malformed sections and snapshots are bounded. Diamond and wooden-diamond
   fluid filters use non-consuming native item providers, and material rates are restored.
+  Seven recovery/crafting tests cover exact half-bucket shards, native item storage,
+  nested rollback and replacement failure, legacy NBT, actual survival breaking and
+  player pickup/tank use, creative loot suppression, exact-NBT sample filters,
+  all 374 upgrade/undo/dye combinations, sealant ingredient consumption and bucket
+  remainders, and native recipe packet round trips.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -159,7 +164,7 @@ features explicitly as work proceeds.
   client block entity through server replies; the centre still removes the entire pipe
   on both sides. The test passes and the integrated server saves/exits cleanly.
   Run it with `./scripts/full-smoke.ps1 -Client -Interactions`.
-- Packaged GPU client: **928 visible block states, 129 items and 199 item variants pass**
+- Packaged GPU client: **928 visible block states, 130 items and 232 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen with all **30 core and 105 transport statements** resolving their icons and
   localized descriptions. Direction, colour, wire and limit icons use the original assets.
@@ -243,7 +248,17 @@ features explicitly as work proceeds.
   sprites through the translucent vertex-consumer path, including lava luminosity.
   The real GPU fixture checks 640 connection/fill/fluid combinations; a connected client
   receives tagged fluid, observes its passage and clears it after exact 81,037-droplet
-  delivery. Fluid-pipe crafting and fluid recovery on breaking remain unfinished.
+  delivery. Sealant and all 11 dye-preserving fluid upgrade/undo pairs now craft through
+  native recipes; cold oil residue returns its bucket. Breaking a fluid pipe drops exact
+  half-bucket shards with native extraction-only item storage, preserving custom names
+  on partial use and destroying the item only when empty. Native tank interactions and
+  gate/pipe samples can use them. Their bounded, reload-local model cache clips actual
+  animated fluid sprites to the authored mask, so precoloured lava and oil remain correct;
+  all 32 fluid variants have GPU coverage. A connected client receives the upgrade
+  serializer/recipes and renders four distinct fluid shards in hand/hotbar; its saved
+  screenshot confirms lava, oil, gaseous fuel and water remain visually distinct.
+  Machine tank contents still need their own
+  native break/recovery integration.
   Full power/RF transport, obsidian/stripes behavior, gate/wire crafting
   and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only

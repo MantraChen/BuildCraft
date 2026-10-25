@@ -1,0 +1,12 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_wood_fluid"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_wood_item"
+  }
+}

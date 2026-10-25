@@ -54,5 +54,7 @@ public class BCCoreItems {
             goggles = HELPER.addItem("item.goggles", () -> new ItemGoggles("item.goggles"));
         }
         FluidItemDrops.item = fragileFluidShard;
+        if (fragileFluidShard != null) net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.ITEM.registerForItems(
+            (stack, context) -> fragileFluidShard.storage(context), fragileFluidShard);
     }
 }

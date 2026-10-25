@@ -29,8 +29,11 @@ predicted air for an attachment break, losing the pipe before its incremental up
 The same client then transfers 81,037 droplets of tagged water through wooden and stone
 pipes between native tanks. It requires a renderable client fluid with the original NBT,
 exact delivery on the integrated server and no remaining client fluid after emptying.
+It then renders lava, oil, gaseous fuel and water shards in the player's hand/hotbar,
+checks receipt of the custom upgrade recipe and captures `screenshots/fluid-shards-smoke.png`
+inside the isolated interaction run directory before saving and exiting.
 
-The 72 server tests currently verify:
+The 79 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -144,10 +147,20 @@ The 72 server tests currently verify:
   are bounded. Diamond bucket samples prioritize matching outputs and permit fallback
   around full tanks; wooden-diamond whitelist/blacklist queries leave samples intact.
   Material rates and the shorter gold-pipe delay retain their original differences.
+- Fluid shards split exact drops into half-bucket containers, preserve NBT, reject
+  refilling and consume the item only when empty. Partial extraction, nested rollback,
+  failed item replacement, stale views and malformed/legacy saved amounts are covered.
+  Actual survival breaking drops the pipe plus exactly three shards for 81,037 droplets;
+  native player pickup and tank use recover the entire amount, while creative breaking
+  creates no fluid loot. Recovered shards can filter exact-NBT fluids without consumption.
+- All 11 fluid-pipe upgrade/undo pairs preserve plain pipes and all 16 dyes through
+  actual crafting-result clicks (374 combinations), consuming the expected ingredients.
+  Sealant recipes accept green dye, slime or a cold residue bucket and retain the empty
+  bucket. Native recipe packet round trips preserve coloured crafting outputs.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
-129 default item models and 199 explicit item/pipe/gate/wire variants. It rejects missing models,
+130 default item models and 232 explicit item/pipe/gate/wire/shard variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map
 locations, decorated blocks, lists, snapshots and single-block schematics. It also
 checks that the chute, tank and gear/wrench crafting chain have translated names and
@@ -163,7 +176,9 @@ eight corners and 36 connection shapes, lit/unlit, for every colour (1,408 combi
 with bounded atlas UVs, correct light and transformed coordinates. The production fluid
 pipe renderer is checked for water/lava at five fill levels across all 64 connection
 masks (640 combinations), including translucent layers, atlas UVs, transformed bounds
-and lava light. It requires
+and lava light. All 32 water/lava/oil/fuel shard variants must use their actual fluid atlas sprite,
+preserve the original pixel mask without holes, keep UVs and vertices bounded, leave
+the glass untinted and show translated fluid names/amount tooltips. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

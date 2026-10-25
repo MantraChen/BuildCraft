@@ -1,4 +1,7 @@
 {
+  "item.fragile_fluid_shard.name": "脆弱的%s碎片",
+  "item.buildcraftcore.fragile_fluid_shard.empty": "空流体碎片",
+  "tooltip.buildcraftcore.fluid_shard.amount": "%s / 500 mB",
   "command.buildcraft.reload.success": "BuildCraft 数据注册表已重新加载。",
   "command.buildcraft.reload.failure": "BuildCraft 注册表重新加载失败。详情请查看服务器日志。",
   "item.buildcraftcore.gear_wood": "木齿轮",

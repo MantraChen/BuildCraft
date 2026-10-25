@@ -1,0 +1,43 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcrafttransport:waterproof"
+    },
+    "title": {
+      "translate": "advancements.buildcrafttransport.sealing_fluids.title"
+    },
+    "description": {
+      "translate": "advancements.buildcrafttransport.sealing_fluids.description"
+    }
+  },
+  "parent": "buildcrafttransport:pipe_dream",
+  "criteria": {
+    "has_sealant": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "buildcrafttransport:waterproof"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "buildcrafttransport:pipe_wood_fluid",
+      "buildcrafttransport:pipe_cobblestone_fluid",
+      "buildcrafttransport:pipe_stone_fluid",
+      "buildcrafttransport:pipe_quartz_fluid",
+      "buildcrafttransport:pipe_iron_fluid",
+      "buildcrafttransport:pipe_gold_fluid",
+      "buildcrafttransport:pipe_clay_fluid",
+      "buildcrafttransport:pipe_sandstone_fluid",
+      "buildcrafttransport:pipe_void_fluid",
+      "buildcrafttransport:pipe_diamond_fluid",
+      "buildcrafttransport:pipe_diamond_wood_fluid"
+    ]
+  }
+}

@@ -7,10 +7,14 @@
  */
 package buildcraft.transport;
 
-// STUB(R.Chen): Forge recipe registration (GameRegistry.addRecipe, net.minecraft.recipe.CraftingRecipe) → Fabric data-gen
-// or RecipeManager in Phase 4E. Pipe-colour recipes are the primary transport recipes.
+/** Data-driven upgrades retain the source pipe's colour. Remake by FelixMantra. */
 public class BCTransportRecipes {
+    public static final net.minecraft.recipe.RecipeSerializer<buildcraft.transport.recipe.PipeUpgradeRecipe> PIPE_UPGRADE =
+        new buildcraft.transport.recipe.PipeUpgradeRecipe.Serializer();
     public static void preInit() {}
-    public static void init() {}
+    public static void init() {
+        net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,
+            new net.minecraft.util.Identifier("buildcrafttransport", "pipe_upgrade"), PIPE_UPGRADE);
+    }
     public static void postInit() {}
 }

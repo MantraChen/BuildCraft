@@ -1,4 +1,6 @@
 {
+  "item.pipeWaterproof.name": "Pipe Sealant",
+  "advancements.buildcrafttransport.sealing_fluids.description": "Craft pipe sealant from green dye or a slimeball",
   "gui.buildcrafttransport.emzuli.title": "Extraction Presets",
   "gui.buildcrafttransport.emzuli.no_paint": "No paint",
   "gui.buildcrafttransport.emzuli.paint": "Paint: %s",

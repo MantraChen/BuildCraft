@@ -90,6 +90,12 @@ public class PipeFlowFluids extends PipeFlow implements IFlowFluid, IDebuggable 
     public long getAmount(@Nullable Direction side) { return sections.get(EnumPipePart.fromFacing(side)).amount; }
     public FluidVariant getFluid() { return currentFluid == null ? FluidVariant.blank() : currentFluid; }
     public boolean doesContainFluid() { return getAmount() > 0; }
+    @Override public void addDrops(List<net.minecraft.item.ItemStack> drops, int fortune) {
+        var shards = net.minecraft.util.collection.DefaultedList.<net.minecraft.item.ItemStack>of();
+        if (currentFluid != null) buildcraft.api.items.FluidItemDrops.addFluidDrops(shards,
+            buildcraft.lib.compat.FluidStackBC.of(currentFluid, getAmount()));
+        drops.addAll(shards);
+    }
     public Storage<FluidVariant> getStorage(Direction side) { return side == null ? null : sections.get(EnumPipePart.fromFacing(side)); }
 
     private boolean live() {

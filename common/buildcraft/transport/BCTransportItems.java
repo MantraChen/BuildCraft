@@ -39,6 +39,12 @@ public class BCTransportItems {
     public static ItemWire wire;
 
     public static void preInit() {
+        waterproof = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcrafttransport", "waterproof"), new Item(new Item.Settings()) {
+                @Override public String getTranslationKey() { return "item.pipeWaterproof.name"; }
+            });
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.INGREDIENTS)
+            .register(entries -> entries.add(waterproof));
         wire = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcrafttransport", "wire"), new ItemWire("wire"));
         net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE).register(entries -> {

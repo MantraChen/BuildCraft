@@ -31,11 +31,16 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
     private CompletableFuture<Void> serverWork;
     private TilePipeHolder clientTile;
     private boolean sawFluid;
+    private int shardFrames;
     private net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant testFluid;
 
     @Override public void onInitializeClient() {
         if (!Boolean.getBoolean("buildcraft.fullClientInteractionSmoke")) return;
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.END.register(context -> {
+            var client=MinecraftClient.getInstance();
+            if(stage==11 && client.player!=null && client.player.getMainHandStack().isOf(buildcraft.core.BCCoreItems.fragileFluidShard)) shardFrames++;
+        });
     }
 
     private void tick(MinecraftClient client) {
@@ -53,7 +58,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                 registries -> registries.get(RegistryKeys.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createDimensionsRegistryHolder());
             return;
         }
-        if (stage == 11) return;
+        if (stage == 12) return;
         if (System.nanoTime() > deadline) throw new IllegalStateException("Attachment client smoke timed out at stage " + stage);
         if (client.world == null || client.player == null || client.interactionManager == null || client.getServer() == null) return;
         ticks++;
@@ -167,7 +172,29 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                     "Client retained a ghost fluid after the server emptied the pipe");
             }
             System.out.println("BUILDCRAFT FULL CLIENT FLUIDS: native cache NBT, visible transport, exact 81037 droplets, empty sync; failures=0");
-            stage = 11;
+            var playerId=client.player.getUuid();
+            serverWork=client.getServer().submit(() -> {
+                var player=client.getServer().getPlayerManager().getPlayer(playerId);
+                var fluids=new net.minecraft.fluid.Fluid[]{net.minecraft.fluid.Fluids.LAVA,buildcraft.energy.BCEnergyFluids.crudeOil[0],
+                    buildcraft.energy.BCEnergyFluids.fuelGaseous[2],net.minecraft.fluid.Fluids.WATER};
+                for(int i=0;i<fluids.length;i++) player.getInventory().setStack(i,buildcraft.core.BCCoreItems.fragileFluidShard.stack(
+                    net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluids[i]),40500));
+                player.getInventory().markDirty(); player.currentScreenHandler.sendContentUpdates();
+            });
+            advance();
+        } else if(stage==11 && ready() && shardFrames>=10) {
+            for(int i=0;i<4;i++) {
+                var stack=client.player.getInventory().getStack(i);
+                require(stack.isOf(buildcraft.core.BCCoreItems.fragileFluidShard)
+                    && client.getItemRenderer().getModel(stack,client.world,client.player,0) instanceof buildcraft.core.client.ModelFluidShard,
+                    "Networked shard item did not use its native fluid model");
+            }
+            require(client.getNetworkHandler().getRecipeManager().get(new net.minecraft.util.Identifier("buildcrafttransport:pipe_gold_fluid"))
+                .orElse(null) instanceof buildcraft.transport.recipe.PipeUpgradeRecipe,"Client did not receive native dye-preserving upgrade recipe");
+            net.minecraft.client.util.ScreenshotRecorder.saveScreenshot(client.runDirectory,"fluid-shards-smoke.png",client.getFramebuffer(),
+                message -> System.out.println("BUILDCRAFT RECOVERY SCREENSHOT: "+message.getString()));
+            System.out.println("BUILDCRAFT FULL CLIENT RECOVERY: four fluid shards rendered in world/hotbar; native recipe sync; failures=0");
+            stage = 12;
             client.world.disconnect();
             client.disconnect();
             client.scheduleStop();

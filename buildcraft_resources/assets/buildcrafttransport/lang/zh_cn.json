@@ -1,4 +1,7 @@
 {
+  "item.pipeWaterproof.name": "管道密封剂",
+  "advancements.buildcrafttransport.sealing_fluids.title": "密封流体",
+  "advancements.buildcrafttransport.sealing_fluids.description": "用绿色染料或黏液球合成管道密封剂",
   "gui.buildcrafttransport.emzuli.title": "抽取预设",
   "gui.buildcrafttransport.emzuli.no_paint": "不染色",
   "gui.buildcrafttransport.emzuli.paint": "染色：%s",

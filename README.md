@@ -54,7 +54,10 @@ Fluid pipes now expose native transactional storage, retain exact droplets/NBT t
 save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
 clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.
 Their client renderer uses native animated fluid sprites and synchronized fill levels.
-Fluid-pipe crafting and recovery of fluid when breaking a pipe remain unfinished.
+Sealant crafts from green dye/slime or a residue bucket. All 11 fluid pipe upgrades
+and undo recipes preserve dye. Breaking a fluid pipe yields half-bucket shards that
+retain exact amounts/NBT and empty into native tanks; emptied shards disappear.
+Shard icons clip the actual animated fluid texture to their original shape.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

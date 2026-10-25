@@ -1,4 +1,6 @@
 {
+  "item.buildcraftcore.fragile_fluid_shard.empty": "Empty Fluid Shard",
+  "tooltip.buildcraftcore.fluid_shard.amount": "%s / 500 mB",
   "command.buildcraft.reload.success": "BuildCraft data registries reloaded.",
   "command.buildcraft.reload.failure": "BuildCraft registry reload failed. See the server log.",
   "item.buildcraftcore.gear_wood": "Wooden Gear",

@@ -50,6 +50,7 @@ public final class FullClientSmoke implements ClientModInitializer {
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
             int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures) + checkGateGeometry(client, failures);
+            variants += checkFluidShards(client, failures);
             checkWireGeometry(failures);
             checkFluidPipeGeometry(failures);
             var statements = new java.util.HashSet<>(buildcraft.api.statements.StatementManager.statements.values());
@@ -114,6 +115,55 @@ public final class FullClientSmoke implements ClientModInitializer {
             }
         }
         return count;
+    }
+
+    private static int checkFluidShards(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
+        var fluids=new java.util.ArrayList<net.minecraft.fluid.Fluid>(buildcraft.energy.BCEnergyFluids.allFluids);
+        fluids.add(net.minecraft.fluid.Fluids.WATER); fluids.add(net.minecraft.fluid.Fluids.LAVA);
+        for(var fluid:fluids) {
+            var variant=net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluid);
+            var stack=buildcraft.core.BCCoreItems.fragileFluidShard.stack(variant,40500);
+            var model=client.getItemRenderer().getModel(stack,null,null,0);
+            var colourProvider=net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.get(stack.getItem());
+            int tint=colourProvider.getColor(stack,1);
+            if(tint!=net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering.getColor(variant)) failures.add("Wrong shard fluid tint: "+fluid);
+            boolean base=false;
+            for(var quad:model.getQuads(null,null,Random.create(0))) {
+                String texture=quad.getSprite().getContents().getId().toString();
+                base |= texture.equals("buildcraftcore:items/fragile_fluid_shard_base") && quad.getColorIndex()==0;
+            }
+            if(!base || colourProvider.getColor(stack,0)!=-1) failures.add("Shard base missing or tinted: "+fluid);
+            if(model instanceof buildcraft.core.client.ModelFluidShard shard) {
+                var sprite=net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering.getSprites(variant)[0];
+                var mask=client.getSpriteAtlas(net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(new net.minecraft.util.Identifier("buildcraftcore:items/fragile_fluid_shard_fluid"));
+                int pixels=0,planes=0;
+                for(int y=0;y<mask.getContents().getHeight();y++) for(int x=0;x<mask.getContents().getWidth();x++) if(!mask.getContents().isPixelTransparent(0,x,y)) pixels++;
+                for(var quad:shard.getFluidQuads(variant)) {
+                    if(quad.getSprite()!=sprite || quad.getColorIndex()!=1) failures.add("Shard lost native fluid texture/tint: "+fluid);
+                    var data=quad.getVertexData(); float cx=0,cy=0;
+                    for(int v=0;v<4;v++) {
+                        for(int axis=0;axis<3;axis++) { float p=Float.intBitsToFloat(data[v*8+axis]); if(!Float.isFinite(p) || p<0 || p>1) failures.add("Shard outside item bounds: "+fluid); }
+                        float u=Float.intBitsToFloat(data[v*8+4]),w=Float.intBitsToFloat(data[v*8+5]);
+                        if(u<sprite.getMinU()-1e-6 || u>sprite.getMaxU()+1e-6 || w<sprite.getMinV()-1e-6 || w>sprite.getMaxV()+1e-6) failures.add("Shard UV outside fluid sprite: "+fluid);
+                        cx+=Float.intBitsToFloat(data[v*8]); cy+=Float.intBitsToFloat(data[v*8+1]);
+                    }
+                    if(quad.getFace().getAxis()==Direction.Axis.Z) {
+                        planes++; int x=(int)(cx/4*mask.getContents().getWidth()),y=(int)((1-cy/4)*mask.getContents().getHeight());
+                        if(mask.getContents().isPixelTransparent(0,x,y)) failures.add("Shard fluid leaked outside original mask: "+fluid);
+                    }
+                }
+                if(pixels==0 || planes!=pixels*2) failures.add("Shard fluid mask has holes: "+fluid);
+            } else failures.add("Native shard fluid model missing: "+fluid);
+            String name=stack.getName().getString();
+            if(name.contains("%s") || name.contains("item.") || name.contains("fluid.") || name.contains("Bad Format")) failures.add("Untranslated shard: "+name);
+            var tooltip=stack.getTooltip(null,net.minecraft.client.item.TooltipContext.Default.BASIC);
+            if(tooltip.stream().noneMatch(line->line.getString().equals("500 / 500 mB"))) failures.add("Shard amount tooltip missing: "+fluid);
+        }
+        var sealant=new ItemStack(buildcraft.transport.BCTransportItems.waterproof);
+        checkItemTexture(client,sealant,"buildcrafttransport:items/pipewaterproof",failures);
+        if(sealant.getName().getString().contains("item.")) failures.add("Sealant name missing");
+        System.out.println("BUILDCRAFT FLUID SHARDS: "+fluids.size()+" native masked fluid sprites, names and amount tooltips");
+        return fluids.size()+1;
     }
 
     private static int checkGateGeometry(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {

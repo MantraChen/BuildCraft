@@ -30,6 +30,21 @@ public final class BCCoreModels {
     public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 
     public static void fmlInit() {
+        net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(plugin -> plugin.modifyModelAfterBake().register((model, context) -> {
+            if (model != null && context.id() instanceof net.minecraft.client.util.ModelIdentifier id
+                    && id.getNamespace().equals("buildcraftcore") && id.getPath().equals("fragile_fluid_shard") && id.getVariant().equals("inventory")) {
+                var mask = context.textureGetter().apply(new net.minecraft.client.util.SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE,
+                    new net.minecraft.util.Identifier("buildcraftcore:items/fragile_fluid_shard_fluid")));
+                return new buildcraft.core.client.ModelFluidShard(model, mask);
+            }
+            return model;
+        }));
+        if (BCCoreItems.fragileFluidShard != null) net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
+            (stack, index) -> {
+                var fluid = buildcraft.core.item.ItemFragileFluidContainer.getFluid(stack);
+                return index == 1 && !fluid.isEmpty()
+                    ? net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering.getColor(fluid.getFluidVariant()) : -1;
+            }, BCCoreItems.fragileFluidShard);
         var variant = new net.minecraft.util.Identifier("buildcraftcore", "variant");
         if (BCCoreItems.mapLocation != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
             BCCoreItems.mapLocation, variant, (stack, world, entity, seed) -> buildcraft.api.items.IMapLocation.MapLocationType.getFromStack(stack).ordinal() / 10.0f);

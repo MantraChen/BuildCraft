@@ -1,0 +1,12 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_stone_fluid"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_stone_item"
+  }
+}
