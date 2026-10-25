@@ -1,0 +1,26 @@
+{
+  "textures": {
+    "particle": "buildcraftbuilders:blocks/quarry/normal/back",
+    "face": "buildcraftbuilders:blocks/quarry/normal/back"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "texture": "#face",
+          "cullface": "south"
+        }
+      }
+    }
+  ]
+}

@@ -14,6 +14,7 @@
         }
     ],
     "textures": {
-        "main": "minecraft:blocks/stone"
+        "particle": "#main",
+        "main": "minecraft:block/stone"
     }
 }

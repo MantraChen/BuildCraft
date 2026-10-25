@@ -1,32 +1,89 @@
 {
-    "forge_marker": 1,
-    "defaults": {
-        "model": "buildcraftcore:default_cube",
-        "textures": {
-            "particle": "buildcraftfactory:blocks/flood_gate/top",
-            "up": "buildcraftfactory:blocks/flood_gate/top"
-        }
+  "multipart": [
+    {
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/top"
+      }
     },
-    "variants": {
-        "connected_down": {
-            "false": {"textures": {"down": "buildcraftfactory:blocks/flood_gate/closed"}},
-            "true": {"textures": {"down": "buildcraftfactory:blocks/flood_gate/open"}}
-        },
-        "connected_north": {
-            "false": {"textures": {"north": "buildcraftfactory:blocks/flood_gate/closed"}},
-            "true": {"textures": {"north": "buildcraftfactory:blocks/flood_gate/open"}}
-        },
-        "connected_south": {
-            "false": {"textures": {"south": "buildcraftfactory:blocks/flood_gate/closed"}},
-            "true": {"textures": {"south": "buildcraftfactory:blocks/flood_gate/open"}}
-        },
-        "connected_east": {
-            "false": {"textures": {"east": "buildcraftfactory:blocks/flood_gate/closed"}},
-            "true": {"textures": {"east": "buildcraftfactory:blocks/flood_gate/open"}}
-        },
-        "connected_west": {
-            "false": {"textures": {"west": "buildcraftfactory:blocks/flood_gate/closed"}},
-            "true": {"textures": {"west": "buildcraftfactory:blocks/flood_gate/open"}}
-        }
+    {
+      "when": {
+        "connected_down": "false"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/down_closed"
+      }
+    },
+    {
+      "when": {
+        "connected_down": "true"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/down_open"
+      }
+    },
+    {
+      "when": {
+        "connected_north": "false"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/north_closed"
+      }
+    },
+    {
+      "when": {
+        "connected_north": "true"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/north_open"
+      }
+    },
+    {
+      "when": {
+        "connected_south": "false"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/south_closed"
+      }
+    },
+    {
+      "when": {
+        "connected_south": "true"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/south_open"
+      }
+    },
+    {
+      "when": {
+        "connected_east": "false"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/east_closed"
+      }
+    },
+    {
+      "when": {
+        "connected_east": "true"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/east_open"
+      }
+    },
+    {
+      "when": {
+        "connected_west": "false"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/west_closed"
+      }
+    },
+    {
+      "when": {
+        "connected_west": "true"
+      },
+      "apply": {
+        "model": "buildcraftfactory:block/flood_gate/west_open"
+      }
     }
+  ]
 }

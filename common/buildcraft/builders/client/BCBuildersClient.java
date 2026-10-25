@@ -25,6 +25,11 @@ public final class BCBuildersClient {
     private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        if (BCBuildersItems.schematicSingle != null) ModelPredicateProviderRegistry.register(
+            BCBuildersItems.schematicSingle, new Identifier("buildcraftbuilders", "schematic_used"),
+            (stack, world, entity, seed) -> stack.getDamage() == buildcraft.builders.item.ItemSchematicSingle.DAMAGE_USED
+                || stack.getNbt() != null && stack.getNbt().contains(buildcraft.builders.item.ItemSchematicSingle.NBT_KEY,
+                    net.minecraft.nbt.NbtElement.COMPOUND_TYPE) ? 1 : 0);
         if (buildcraft.builders.BCBuildersBlocks.quarry != null) BlockEntityRendererFactories.register(
             BlockEntityRegistry.type(buildcraft.builders.tile.TileQuarry.class), buildcraft.builders.client.render.RenderQuarry::new);
         if (buildcraft.builders.BCBuildersBlocks.architect != null) BlockEntityRendererFactories.register(
@@ -41,7 +46,7 @@ public final class BCBuildersClient {
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register(
             (handler, client) -> buildcraft.builders.snapshot.ClientSnapshots.INSTANCE.clear());
         if (BCBuildersItems.snapshot != null) ModelPredicateProviderRegistry.register(BCBuildersItems.snapshot, new Identifier("buildcraftbuilders", "snapshot_type"),
-            (stack, world, entity, seed) -> ItemSnapshot.EnumItemSnapshotType.getFromStack(stack).ordinal());
+            (stack, world, entity, seed) -> ItemSnapshot.EnumItemSnapshotType.getFromStack(stack).ordinal() / 10.0f);
         HandledScreens.<ContainerBC_Neptune, GuiFiller>register(BCBuildersScreens.FILLER,
             (handler, inventory, title) -> new GuiFiller((ContainerFiller) handler, inventory, title));
         if (buildcraft.builders.BCBuildersBlocks.filler != null)

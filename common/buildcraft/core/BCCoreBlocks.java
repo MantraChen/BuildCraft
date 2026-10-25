@@ -40,8 +40,8 @@ public class BCCoreBlocks {
     public static void preInit() {
         spring = HELPER.addBlockAndItem("block.spring", () -> new BlockSpring("block.spring"), ItemBlockSpring::new);
         decorated = HELPER.addBlockAndItem("block.decorated", () -> new BlockDecoration("block.decorated"), ItemBlockDecorated::new);
-        markerVolume = HELPER.addBlockAndItem("block.marker.volume", () -> new BlockMarkerVolume(MaterialBC.CIRCUITS, "block.marker.volume"));
-        markerPath = HELPER.addBlockAndItem("block.marker.path", () -> new BlockMarkerPath(MaterialBC.CIRCUITS, "block.marker.path"));
+        markerVolume = HELPER.addBlockAndItem("block.marker.volume", () -> new BlockMarkerVolume(markerSettings(), "block.marker.volume"));
+        markerPath = HELPER.addBlockAndItem("block.marker.path", () -> new BlockMarkerPath(markerSettings(), "block.marker.path"));
         if (BCLib.DEV) {
             powerTester = HELPER.addBlockAndItem("block.power_tester", () -> new BlockPowerConsumerTester(MaterialBC.IRON, "block.power_tester"));
         }
@@ -61,5 +61,10 @@ public class BCCoreBlocks {
         if (BCLib.DEV) {
             HELPER.registerTile(TilePowerConsumerTester.class, "tile.power_tester", TilePowerConsumerTester::new, powerTester);
         }
+    }
+
+    private static net.minecraft.block.AbstractBlock.Settings markerSettings() {
+        return net.minecraft.block.AbstractBlock.Settings.create().nonOpaque().noCollision()
+            .sounds(net.minecraft.sound.BlockSoundGroup.WOOD).luminance(state -> 7);
     }
 }

@@ -1,16 +1,19 @@
 {
-    "forge_marker": 1,
-    "defaults": {
-        "model": "buildcraftrobotics:zone_planner"
+  "variants": {
+    "facing=east": {
+      "model": "buildcraftrobotics:block/zone_planner",
+      "y": 90
     },
-    "variants": {
-        "facing": {
-            "east": {"y": 90},
-            "south": {"y": 180},
-            "west": {"y": 270},
-            "north": {"y": 0}
-        },
-        "inventory": [{}],
-        "normal": [{}]
+    "facing=south": {
+      "model": "buildcraftrobotics:block/zone_planner",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "buildcraftrobotics:block/zone_planner",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "buildcraftrobotics:block/zone_planner"
     }
+  }
 }

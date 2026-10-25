@@ -5,7 +5,6 @@
 package buildcraft.core.item;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import net.minecraft.client.util.ModelIdentifier;
 
@@ -20,15 +19,16 @@ import buildcraft.lib.item.ItemBlockBCMulti;
 public class ItemBlockDecorated extends ItemBlockBCMulti {
 
     public ItemBlockDecorated(BlockBCBase_Neptune block) {
-        super(block, createNameArray());
+        super(block, stack -> getVariant(stack).asString());
     }
 
-    private static String[] createNameArray() {
-        String[] names = new String[EnumDecoratedBlock.VALUES.length];
-        for (int i = 0; i < names.length; i++) {
-            names[i] = EnumDecoratedBlock.VALUES[i].asString();
+    public static EnumDecoratedBlock getVariant(net.minecraft.item.ItemStack stack) {
+        var tag = stack.getSubNbt("BlockStateTag");
+        if (tag != null) {
+            String variant = tag.getString(buildcraft.core.block.BlockDecoration.DECORATED_TYPE.getName());
+            for (var type : EnumDecoratedBlock.VALUES) if (type.asString().equals(variant)) return type;
         }
-        return names;
+        return EnumDecoratedBlock.fromMeta(stack.getDamage());
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1

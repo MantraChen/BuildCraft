@@ -23,10 +23,10 @@ import buildcraft.energy.tile.TileEngineRF;
 
 @Environment(EnvType.CLIENT)
 public final class BCEnergyModels {
-    private static final EngineModel STONE = new EngineModel("buildcraftenergy:models/block/engine_stone.json");
-    private static final EngineModel IRON = new EngineModel("buildcraftenergy:models/block/engine_iron.json");
-    private static final EngineModel RF = new EngineModel("buildcraftenergy:models/block/engine_rf.json");
-    private static final EngineModel DYNAMO = new EngineModel("buildcraftenergy:models/block/mj_dynamo.json");
+    private static final EngineModel STONE = new EngineModel("buildcraftenergy:bc_models/block/engine_stone.json");
+    private static final EngineModel IRON = new EngineModel("buildcraftenergy:bc_models/block/engine_iron.json");
+    private static final EngineModel RF = new EngineModel("buildcraftenergy:bc_models/block/engine_rf.json");
+    private static final EngineModel DYNAMO = new EngineModel("buildcraftenergy:bc_models/block/mj_dynamo.json");
 
     public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 

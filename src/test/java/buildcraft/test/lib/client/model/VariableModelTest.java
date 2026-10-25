@@ -76,7 +76,7 @@ public class VariableModelTest {
     }
 
     @Test public void realEngineAnimatesAndSelectsStageTextureAndLight() throws Exception {
-        JsonVariableModel model = load("buildcraftcore:models/block/engine_redstone.json");
+        JsonVariableModel model = load("buildcraftcore:bc_models/block/engine_redstone.json");
         stage.value = EnumPowerStage.RED;
         facing.value = Direction.UP;
         progress.value = 0;
@@ -96,7 +96,7 @@ public class VariableModelTest {
     }
 
     @Test public void realEngineRotatesAroundBlockCenterForEveryFacing() throws Exception {
-        JsonVariableModel model = load("buildcraftcore:models/block/engine_redstone.json");
+        JsonVariableModel model = load("buildcraftcore:bc_models/block/engine_redstone.json");
         stage.value = EnumPowerStage.BLUE;
         progress.value = 0.25;
         facing.value = Direction.UP;
@@ -116,10 +116,10 @@ public class VariableModelTest {
     }
 
     @Test public void everyEngineVariantAndStageBakesUsingExistingTextures() throws Exception {
-        for (String location : new String[] { "buildcraftcore:models/block/engine_redstone.json",
-                "buildcraftcore:models/block/engine_creative.json", "buildcraftenergy:models/block/engine_stone.json",
-                "buildcraftenergy:models/block/engine_iron.json", "buildcraftenergy:models/block/engine_rf.json",
-                "buildcraftenergy:models/block/mj_dynamo.json" }) {
+        for (String location : new String[] { "buildcraftcore:bc_models/block/engine_redstone.json",
+                "buildcraftcore:bc_models/block/engine_creative.json", "buildcraftenergy:bc_models/block/engine_stone.json",
+                "buildcraftenergy:bc_models/block/engine_iron.json", "buildcraftenergy:bc_models/block/engine_rf.json",
+                "buildcraftenergy:bc_models/block/mj_dynamo.json" }) {
             JsonVariableModel model = load(location);
             progress.value = 0.35;
             for (EnumPowerStage power : EnumPowerStage.values()) {

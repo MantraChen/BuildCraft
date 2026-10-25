@@ -1,21 +1,484 @@
 {
-    "forge_marker": 1,
-    "defaults": {
-        "model": "buildcraftbuilders:quarry"
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "connected_up": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_normal",
+        "y": 0
+      }
     },
-    "variants": {
-        "facing": {
-            "east": {"y": 90},
-            "south": {"y": 180},
-            "west": {"y": 270},
-            "north": {"y": 0}
-        },
-        "connected_up": {"false": {"textures": {"up": "buildcraftbuilders:blocks/quarry/normal/top"}}, "true": {"textures": {"up": "buildcraftbuilders:blocks/quarry/connected/top"}}},
-        "connected_down": {"false": {"textures": {"down": "buildcraftbuilders:blocks/quarry/normal/bottom"}}, "true": {"textures": {"down": "buildcraftbuilders:blocks/quarry/connected/bottom"}}},
-        "connected_east": {"false": {"textures": {"east": "buildcraftbuilders:blocks/quarry/normal/side"}}, "true": {"textures": {"east": "buildcraftbuilders:blocks/quarry/connected/side"}}},
-        "connected_west": {"false": {"textures": {"west": "buildcraftbuilders:blocks/quarry/normal/side"}}, "true": {"textures": {"west": "buildcraftbuilders:blocks/quarry/connected/side"}}},
-        "connected_north": {"false": {"textures": {"north": "buildcraftbuilders:blocks/quarry/normal/front"}}, "true": {"textures": {"north": "buildcraftbuilders:blocks/quarry/connected/front"}}},
-        "connected_south": {"false": {"textures": {"south": "buildcraftbuilders:blocks/quarry/normal/back"}}, "true": {"textures": {"south": "buildcraftbuilders:blocks/quarry/connected/back"}}},
-        "inventory": [{}]
+    {
+      "when": {
+        "facing": "east",
+        "connected_up": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_up": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_up": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_up": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_up": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_up": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_up": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/up_connected",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_down": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_normal",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_down": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_down": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_down": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_down": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_down": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_down": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_down": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/down_connected",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_north": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_normal",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_north": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_north": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_north": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_north": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_north": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_north": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_north": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/north_connected",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_south": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_normal",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_south": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_south": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_south": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_south": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_south": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_south": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_south": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/south_connected",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_east": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_normal",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_east": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_east": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_east": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_east": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_east": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_east": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_east": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/east_connected",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_west": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_normal",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_west": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_normal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_west": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_normal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_west": "false"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_normal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connected_west": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_connected",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connected_west": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_connected",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connected_west": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_connected",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connected_west": "true"
+      },
+      "apply": {
+        "model": "buildcraftbuilders:block/quarry/west_connected",
+        "y": 270
+      }
     }
+  ]
 }

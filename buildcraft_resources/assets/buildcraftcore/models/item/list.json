@@ -1,0 +1,11 @@
+{
+  "parent": "buildcraftcore:item/list_clean",
+  "overrides": [
+    {
+      "predicate": {
+        "buildcraftcore:variant": 1
+      },
+      "model": "buildcraftcore:item/list_used"
+    }
+  ]
+}

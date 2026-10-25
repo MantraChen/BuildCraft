@@ -1,18 +1,19 @@
 {
-    "forge_marker":1,
-    "defaults": {
-        "model": "buildcraftfactory:distiller",
-        "textures": {
-        	"sprite_a": "buildcraftfactory:blocks/distiller/tank_sprite_a",
-        	"sprite_b": "buildcraftfactory:blocks/distiller/tank_sprite_b"
-        }
+  "variants": {
+    "facing=south": {
+      "model": "buildcraftfactory:block/distiller/variant_0",
+      "y": 270
     },
-    "variants": {
-        "facing": {
-            "south": { "y": 270 },
-            "east":  { "y": 180 },
-            "north": { "y": 90  },
-            "west":  { "y": 0   }
-        }
+    "facing=east": {
+      "model": "buildcraftfactory:block/distiller/variant_0",
+      "y": 180
+    },
+    "facing=north": {
+      "model": "buildcraftfactory:block/distiller/variant_0",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "buildcraftfactory:block/distiller/variant_0"
     }
+  }
 }

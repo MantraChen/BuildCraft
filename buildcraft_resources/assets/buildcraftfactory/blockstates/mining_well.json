@@ -1,15 +1,19 @@
 {
-    "forge_marker": 1,
-    "defaults": {
-        "model": "buildcraftfactory:mining_well"
+  "variants": {
+    "facing=east": {
+      "model": "buildcraftfactory:block/mining_well",
+      "y": 90
     },
-    "variants": {
-        "facing": {
-            "east": {"y": 90},
-            "south": {"y": 180},
-            "west": {"y": 270},
-            "north": {"y": 0}
-        },
-        "inventory": [{}]
+    "facing=south": {
+      "model": "buildcraftfactory:block/mining_well",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "buildcraftfactory:block/mining_well",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "buildcraftfactory:block/mining_well"
     }
+  }
 }

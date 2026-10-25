@@ -1,5 +1,5 @@
 {
-    "parent":"buildcraftcore:block/centeredTorch",
+    "parent":"buildcraftcore:block/centeredtorch",
     "textures": {
         "torch":"buildcraftbuilders:blocks/marker/construction"
     }

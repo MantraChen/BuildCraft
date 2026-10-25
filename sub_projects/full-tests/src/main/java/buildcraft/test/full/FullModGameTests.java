@@ -13,6 +13,55 @@ import net.minecraft.util.math.BlockPos;
 /** Loads the complete packaged mod; no production classes or entrypoints are replaced. */
 public class FullModGameTests implements FabricGameTest {
     @GameTest(templateName = EMPTY_STRUCTURE)
+    public void decoratedBlocksKeepTheirVariantWhenPickedAndPlaced(TestContext context) {
+        var block = buildcraft.core.BCCoreBlocks.decorated;
+        var property = buildcraft.core.block.BlockDecoration.DECORATED_TYPE;
+        var player = context.createMockCreativeServerPlayerInWorld();
+        var local = new BlockPos(2, 2, 2);
+        var pos = context.getAbsolutePos(local);
+        for (var type : buildcraft.api.enums.EnumDecoratedBlock.VALUES) {
+            var state = block.getDefaultState().with(property, type);
+            context.setBlockState(local, state);
+            var picked = block.getPickStack(context.getWorld(), pos, state);
+            var restored = net.minecraft.item.ItemStack.fromNbt(picked.writeNbt(new net.minecraft.nbt.NbtCompound()));
+            var hit = new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(pos),
+                net.minecraft.util.math.Direction.UP, pos, false);
+            var placement = new net.minecraft.item.ItemPlacementContext(player, net.minecraft.util.Hand.MAIN_HAND, restored, hit);
+            var placed = block.getPlacementState(placement);
+            context.assertTrue(placed.get(property) == type, "Pick/save/place lost decoration " + type);
+            context.assertTrue(placed.getLuminance() == type.lightValue, "Decoration lost its light value");
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = EMPTY_STRUCTURE)
+    public void markersAttachToEachFaceAndDropWhenSupportDisappears(TestContext context) {
+        var player = context.createMockCreativeServerPlayerInWorld();
+        BlockPos local = new BlockPos(3, 3, 3);
+        BlockPos pos = context.getAbsolutePos(local);
+        for (String name : new String[] {"buildcraftcore:marker_volume", "buildcraftcore:marker_path"}) {
+            var block = (buildcraft.lib.block.BlockMarkerBase) Registries.BLOCK.get(new Identifier(name));
+            for (var face : net.minecraft.util.math.Direction.values()) {
+                BlockPos support = pos.offset(face.getOpposite());
+                context.getWorld().setBlockState(support, Blocks.STONE.getDefaultState());
+                var hit = new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(support), face, support, false);
+                var placement = new net.minecraft.item.ItemPlacementContext(player, net.minecraft.util.Hand.MAIN_HAND,
+                    new net.minecraft.item.ItemStack(block), hit);
+                var state = block.getPlacementState(placement);
+                context.assertTrue(state != null && state.get(buildcraft.lib.block.BlockBCBase_Neptune.BLOCK_FACING_6) == face,
+                    "Marker does not face away from its support: " + face);
+                context.getWorld().setBlockState(pos, state);
+                var box = state.getOutlineShape(context.getWorld(), pos).getBoundingBox();
+                context.assertTrue(box.maxX - box.minX < 1 && box.maxY - box.minY < 1 && box.maxZ - box.minZ < 1,
+                    "Marker still has a full-block selection box");
+                context.getWorld().setBlockState(support, Blocks.AIR.getDefaultState());
+                context.assertTrue(context.getWorld().getBlockState(pos).isAir(), "Unsupported marker remained in world");
+            }
+        }
+        context.complete();
+    }
+
+    @GameTest(templateName = EMPTY_STRUCTURE)
     public void animatedEnginesDoNotBlockTheirOwnLighting(TestContext context) {
         for (String name : new String[] {"buildcraftcore:engine", "buildcraftenergy:mj_dynamo"}) {
             var block = Registries.BLOCK.get(new Identifier(name));

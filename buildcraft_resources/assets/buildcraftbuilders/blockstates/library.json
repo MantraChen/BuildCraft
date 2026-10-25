@@ -1,15 +1,19 @@
 {
-    "forge_marker":1,
-    "defaults": {
-        "model":"buildcraftbuilders:library"
+  "variants": {
+    "facing=east": {
+      "model": "buildcraftbuilders:block/library",
+      "y": 90
     },
-    "variants": {
-        "facing": {
-            "east":  { "y":90 },
-            "south": { "y":180 },
-            "west":  { "y":270 },
-            "north": { "y":0 }
-        },
-        "inventory": [{ "model": "buildcraftbuilders:library" }]
+    "facing=south": {
+      "model": "buildcraftbuilders:block/library",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "buildcraftbuilders:block/library",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "buildcraftbuilders:block/library"
     }
+  }
 }

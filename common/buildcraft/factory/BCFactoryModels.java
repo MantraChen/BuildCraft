@@ -12,7 +12,7 @@ import buildcraft.factory.client.model.ModelHeatExchange;
 @Environment(EnvType.CLIENT)
 public final class BCFactoryModels {
     public static final ModelHolderVariable HEAT_EXCHANGE_STATIC = new ModelHolderVariable(
-        "buildcraftfactory:models/tiles/heat_exchange_static.json", ModelHeatExchange.FUNCTION_CONTEXT);
+        "buildcraftfactory:bc_models/tiles/heat_exchange_static.json", ModelHeatExchange.FUNCTION_CONTEXT);
     private static boolean registered;
     public static void fmlPreInit() { /* Construct the resource holder before resource reload. */ }
     public static void fmlInit() {

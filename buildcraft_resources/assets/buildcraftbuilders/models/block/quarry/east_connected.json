@@ -1,0 +1,26 @@
+{
+  "textures": {
+    "particle": "buildcraftbuilders:blocks/quarry/connected/side",
+    "face": "buildcraftbuilders:blocks/quarry/connected/side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "east": {
+          "texture": "#face",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

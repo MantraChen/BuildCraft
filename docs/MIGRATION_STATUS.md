@@ -69,11 +69,13 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **4 full-mod GameTests pass**. All **839 non-null registered block-entity states**
+  **6 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
-  native states so they do not block their own skylight. This does not establish complete machine
+  native states so they do not block their own skylight. Both marker kinds attach to all
+  six supporting faces, and decorative variants survive picking, saving and placing.
+  This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
 - Full development client: created and entered a local creative superflat world,
@@ -81,9 +83,15 @@ features explicitly as work proceeds.
   Stirling engine, opened its native screen, and saved/exited cleanly. A fresh client
   reloaded that world. Newly placed engines show their base/piston textures after the
   native opacity fix; a block saved with the previous opaque settings retained its old
-  light cache until removed. Startup still
-  reports legacy resource paths/formats, missing models and unavailable guide links;
-  this is not a clean-resource or complete-playability result.
+  light cache until removed. After the resource migration, that saved world loaded
+  again; a newly placed quarry displayed its authored textures, and a volume marker
+  rendered on its upper face. The world saved and the client exited cleanly.
+- Packaged GPU client: **928 visible block states, 81 items and 20 item variants pass**
+  missing-model, particle/quad-texture and expected-variant checks. It reaches the title
+  screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
+  parse errors or missing blockstate variants. Unavailable guide links, legacy fluid
+  animation frames and atlas mipmap warnings remain. This is not complete playability
+  or a check of every in-world renderer and UI.
 - Client model/GUI fixture: **32 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
   All six engine/dynamo variants bake across every power stage and facing; referenced textures
@@ -95,6 +103,15 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Converted registered legacy Forge blockstates into native variants/multipart models,
+  retained the authored textures and restored inventory aliases. Resource paths are
+  lowercase; 18 expression models now live under `bc_models/` so vanilla does not try
+  to parse their dynamic expressions. Native predicates select map/list/decorative/
+  schematic/snapshot item variants using values within the required 0–1 range.
+- Markers now have native facing, support checks, narrow selection shapes and cutout
+  rendering. Decorated blocks preserve their type in native `BlockStateTag` item data.
+  Multipart resource coverage does not yet restore frame/chute/quarry neighbor-state
+  updates; those still need native integration.
 - Restored the missing common transport entrypoint and native pipe-holder block/entity
   registration. Pipe pluggable render methods are client-only, including their API base
   declaration, so dedicated servers can load the common pipe definitions. Full pipe

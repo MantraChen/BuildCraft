@@ -24,12 +24,22 @@ import buildcraft.energy.BCEnergyModels;
 
 @Environment(EnvType.CLIENT)
 public final class BCCoreModels {
-    private static final EngineModel REDSTONE = new EngineModel("buildcraftcore:models/block/engine_redstone.json");
-    private static final EngineModel CREATIVE = new EngineModel("buildcraftcore:models/block/engine_creative.json");
+    private static final EngineModel REDSTONE = new EngineModel("buildcraftcore:bc_models/block/engine_redstone.json");
+    private static final EngineModel CREATIVE = new EngineModel("buildcraftcore:bc_models/block/engine_creative.json");
 
     public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 
     public static void fmlInit() {
+        var variant = new net.minecraft.util.Identifier("buildcraftcore", "variant");
+        if (BCCoreItems.mapLocation != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
+            BCCoreItems.mapLocation, variant, (stack, world, entity, seed) -> buildcraft.api.items.IMapLocation.MapLocationType.getFromStack(stack).ordinal() / 10.0f);
+        if (BCCoreItems.list != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
+            BCCoreItems.list, variant, (stack, world, entity, seed) -> buildcraft.lib.list.ListHandler.hasItems(stack) ? 1 : 0);
+        if (BCCoreBlocks.decorated != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
+            BCCoreBlocks.decorated.asItem(), variant, (stack, world, entity, seed) -> buildcraft.core.item.ItemBlockDecorated.getVariant(stack).ordinal() / 10.0f);
+        for (var marker : new net.minecraft.block.Block[] {BCCoreBlocks.markerVolume, BCCoreBlocks.markerPath})
+            if (marker != null) net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE
+                .putBlock(marker, RenderLayer.getCutout());
         buildcraft.lib.client.render.DetachedRenderer.register(buildcraft.lib.client.render.MarkerRenderer.INSTANCE);
         if (BCCoreBlocks.markerVolume != null) BlockEntityRendererFactories.register(
             BlockEntityRegistry.type(buildcraft.core.tile.TileMarkerVolume.class), buildcraft.core.client.render.RenderMarkerVolume::new);

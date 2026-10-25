@@ -1,5 +1,7 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
+param([switch]$Client)
+
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 & (Join-Path $PSScriptRoot 'gradle.ps1') remapJar --console=plain
@@ -38,4 +40,16 @@ general {
     Set-Content -LiteralPath $testConfigFile -Value $testConfig -Encoding utf8
 }
 & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runGameTest --console=plain
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Client) {
+    $clientRun = Join-Path $verification 'full-client-run'
+    $clientConfig = Join-Path $clientRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $clientConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $clientConfig 'main.cfg') -Force
+    $clientOptions = Join-Path $clientRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $clientOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $clientOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFullClientSmoke --console=plain
+}
 exit $LASTEXITCODE

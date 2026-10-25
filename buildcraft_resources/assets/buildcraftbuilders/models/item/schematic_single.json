@@ -1,0 +1,11 @@
+{
+  "parent": "buildcraftbuilders:item/schematic_single/clean",
+  "overrides": [
+    {
+      "predicate": {
+        "buildcraftbuilders:schematic_used": 1
+      },
+      "model": "buildcraftbuilders:item/schematic_single/used"
+    }
+  ]
+}

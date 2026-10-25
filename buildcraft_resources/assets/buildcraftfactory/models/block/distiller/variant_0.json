@@ -1,0 +1,7 @@
+{
+  "parent": "buildcraftfactory:block/distiller",
+  "textures": {
+    "sprite_a": "buildcraftfactory:blocks/distiller/tank_sprite_a",
+    "sprite_b": "buildcraftfactory:blocks/distiller/tank_sprite_b"
+  }
+}

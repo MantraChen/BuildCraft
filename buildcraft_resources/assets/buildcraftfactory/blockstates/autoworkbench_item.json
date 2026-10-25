@@ -1,5 +1,7 @@
 {
-    "variants": {
-        "normal": { "model": "buildcraftfactory:autoworkbench_item" }
+  "variants": {
+    "": {
+      "model": "buildcraftfactory:block/autoworkbench_item"
     }
+  }
 }
