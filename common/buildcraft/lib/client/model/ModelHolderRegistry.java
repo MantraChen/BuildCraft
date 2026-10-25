@@ -37,6 +37,7 @@ public final class ModelHolderRegistry {
                     return List.of(ResourceReloadListenerKeys.MODELS);
                 }
                 @Override public void reload(ResourceManager resources) {
+                    buildcraft.lib.client.render.laser.LaserRenderer_BC8.clearModels();
                     // Atlas source JSON includes the legacy texture directories before this phase.
                     onTextureStitchPre(new HashSet<>());
                     onModelBake();

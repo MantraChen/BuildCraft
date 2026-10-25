@@ -58,7 +58,7 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 38 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 22 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **140 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
-- Client model/GUI fixture: **27 tests passed**, plus the expression library's 13 tests.
+- Client model/GUI fixture: **32 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
   All five engine variants bake across every power stage and facing; referenced textures
   exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
@@ -80,6 +80,22 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- The laser path now emits native vertex consumers with real original texture rows,
+  atlas-backed marker/power/stripe types, sampled light and world-to-local coordinates.
+  Short beams and fractional final segments stop at their actual endpoint; long meshes
+  have a bounded segment count. Five geometry tests cover every axis, diagonals, normals,
+  winding, UVs, double-sided faces, invalid/zero-length inputs and far-world precision.
+  The block atlas now includes the original animated laser directory.
+- Quarry rails, vertical support, animated drill travel and powered clearing beam now
+  use a registered native block-entity renderer. Mining-well and pump renderers share
+  the native pipe mesh and charge/work LED geometry. Volume marker signals and cached
+  path/volume connections render through a scoped world-render callback. Architect scan
+  surfaces use translucent native buffers, clipped bounds and fading ticks; scan caches
+  clear on world changes/disconnect. These registrations and geometry have not yet been
+  observed in a running full client; GPU appearance and machine integration remain open.
+- Mining tubes now use native shape/hardness settings, bounded vertical owner lookup and
+  Fabric's cancellable block-break event to protect a connected miner's tube in creative
+  mode. Actual miner placement/retraction and this callback await full-world validation.
 - Restored bundled schematic compatibility rules and native server-data additions at
   `data/<namespace>/buildcraft/builders/rules/*.json`. Rules publish only after a complete
   successful load, support block-state/tag selectors and retain declared rule order.

@@ -1,57 +1,26 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.factory.block;
 
-import buildcraft.lib.compat.MaterialBC;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Box;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-
+import buildcraft.factory.tile.TileMiner;
 import buildcraft.lib.block.BlockBCBase_Neptune;
 
-import buildcraft.factory.tile.TileMiner;
-
 public class BlockTube extends BlockBCBase_Neptune {
-    private static final Box BOUNDING_BOX = new Box(4 / 16D, 0 / 16D, 4 / 16D, 12 / 16D, 16 / 16D, 12 / 16D);
-
-    public BlockTube(AbstractBlock.Settings material, String id) {
-        super(material, id);
-        setBlockUnbreakable();
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean isOpaqueCube(BlockState state) {
-        return false;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean isFullCube(BlockState state) {
-        return false;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest) {
-        BlockPos currentPos = pos;
-        // noinspection StatementWithEmptyBody
-        while (world.getBlockState(currentPos = currentPos.up()).getBlock() == this) {
-        }
-        if (!(world.getBlockEntity(currentPos) instanceof TileMiner)) {
-            return super.removedByPlayer(state, world, pos, player, willHarvest);
-        } else {
-            return false;
-        }
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public Box getBoundingBox(BlockState state, BlockView source, BlockPos pos) {
-        return BOUNDING_BOX;
+    private static final VoxelShape SHAPE = VoxelShapes.cuboid(.25, 0, .25, .75, 1, .75);
+    public BlockTube(AbstractBlock.Settings settings, String id) { super(settings.strength(-1, 3_600_000).nonOpaque(), id); }
+    @Override public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) { return SHAPE; }
+    @Override public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) { return SHAPE; }
+    /** A connected tube belongs to its miner, including during creative-mode breaking. */
+    public boolean isConnectedToMiner(World world, BlockPos pos) {
+        BlockPos current = pos.up();
+        while (world.isInBuildLimit(current) && world.getBlockState(current).isOf(this)) current = current.up();
+        return world.isInBuildLimit(current) && world.getBlockEntity(current) instanceof TileMiner;
     }
 }

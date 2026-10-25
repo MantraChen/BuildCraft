@@ -4,8 +4,7 @@
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
  *
  * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- * Pure data class — no Forge/GL dependencies; SpriteHolder is supplied by the (stubbed)
- * SpriteHolderRegistry until the Phase 5 client-render pass.
+ * Pure data class — SpriteHolder resolves the current native block atlas after resource reloads.
  */
 
 package buildcraft.lib.client.render.laser;
@@ -80,10 +79,10 @@ public class LaserData_BC8 {
         }
 
         public LaserType(LaserType from, SpriteHolder replacementSprite) {
-            this.capStart = new LaserRow(from.capStart, replacementSprite);
-            this.capEnd = new LaserRow(from.capEnd, replacementSprite);
-            this.start = new LaserRow(from.start, replacementSprite);
-            this.end = new LaserRow(from.end, replacementSprite);
+            this.capStart = from.capStart == null ? null : new LaserRow(from.capStart, replacementSprite);
+            this.capEnd = from.capEnd == null ? null : new LaserRow(from.capEnd, replacementSprite);
+            this.start = from.start == null ? null : new LaserRow(from.start, replacementSprite);
+            this.end = from.end == null ? null : new LaserRow(from.end, replacementSprite);
             this.variations = new LaserRow[from.variations.length];
             for (int i = 0; i < variations.length; i++) {
                 this.variations[i] = new LaserRow(from.variations[i], replacementSprite);

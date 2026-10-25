@@ -24,4 +24,5 @@ public class ClientArchitectTables {
         SCANNED_BLOCKS.entrySet().forEach(entry -> entry.setValue(entry.getValue() - 1));
         SCANNED_BLOCKS.values().removeIf(i -> i <= 0);
     }
+    public static void clear() { BOXES.clear(); SCANNED_BLOCKS.clear(); }
 }

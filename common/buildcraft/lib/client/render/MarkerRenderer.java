@@ -26,5 +26,8 @@ public enum MarkerRenderer implements IDetachedRenderer {
     }
 
     @Override
-    public void render(float partialTicks) { /* STUB */ }
+    public void render(float partialTicks) {
+        var player = net.minecraft.client.MinecraftClient.getInstance().player;
+        if (player != null) render(player, partialTicks);
+    }
 }

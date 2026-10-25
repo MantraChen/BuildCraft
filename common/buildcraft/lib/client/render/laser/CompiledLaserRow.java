@@ -4,7 +4,7 @@
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
  *
  * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- * Pure geometry/data — bakes against LaserContext (stubbed until the Phase 5 client-render pass).
+ * Texture rows bake through the native, double-precision LaserContext.
  */
 
 package buildcraft.lib.client.render.laser;
@@ -137,41 +137,41 @@ public class CompiledLaserRow {
         context.addPoint(ls, -h, h, texU(0), texV(0));// 1
     }
 
-    public void bakeFor(LaserContext context, LaserSide side, double startX, int count) {
+    public void bakeFor(LaserContext context, LaserSide side, double startX, double endX) {
         double xMin = startX;
-        double xMax = startX + width;
+        double segment = Math.max(width, (endX - startX) / 4096);
         double h = height / 2;
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < 4096 && xMin < endX; i++) {
             this.currentRowIndex = i % rows.length;
             double ls = xMin;
-            double lb = xMax;
+            double lb = Math.min(endX, xMin + segment);
+            double uEnd = Math.min(1, (lb - ls) / segment);
             if (side == LaserSide.TOP) {
                 context.setFaceNormal(0, 1, 0);
                 context.addPoint(ls, h, -h, texU(0), texV(0));// 1
                 context.addPoint(ls, h, h, texU(0), texV(1));// 2
-                context.addPoint(lb, h, h, texU(1), texV(1));// 3
-                context.addPoint(lb, h, -h, texU(1), texV(0));// 4
+                context.addPoint(lb, h, h, texU(uEnd), texV(1));// 3
+                context.addPoint(lb, h, -h, texU(uEnd), texV(0));// 4
             } else if (side == LaserSide.BOTTOM) {
                 context.setFaceNormal(0, -1, 0);
-                context.addPoint(lb, -h, -h, texU(1), texV(0));// 4
-                context.addPoint(lb, -h, h, texU(1), texV(1));// 3
+                context.addPoint(lb, -h, -h, texU(uEnd), texV(0));// 4
+                context.addPoint(lb, -h, h, texU(uEnd), texV(1));// 3
                 context.addPoint(ls, -h, h, texU(0), texV(1));// 2
                 context.addPoint(ls, -h, -h, texU(0), texV(0));// 1
             } else if (side == LaserSide.LEFT) {
                 context.setFaceNormal(0, 0, -1);
                 context.addPoint(ls, -h, -h, texU(0), texV(0));// 1
                 context.addPoint(ls, h, -h, texU(0), texV(1));// 2
-                context.addPoint(lb, h, -h, texU(1), texV(1));// 3
-                context.addPoint(lb, -h, -h, texU(1), texV(0));// 4
+                context.addPoint(lb, h, -h, texU(uEnd), texV(1));// 3
+                context.addPoint(lb, -h, -h, texU(uEnd), texV(0));// 4
             } else if (side == LaserSide.RIGHT) {
                 context.setFaceNormal(0, 0, 1);
-                context.addPoint(lb, -h, h, texU(1), texV(0));// 4
-                context.addPoint(lb, h, h, texU(1), texV(1));// 3
+                context.addPoint(lb, -h, h, texU(uEnd), texV(0));// 4
+                context.addPoint(lb, h, h, texU(uEnd), texV(1));// 3
                 context.addPoint(ls, h, h, texU(0), texV(1));// 2
                 context.addPoint(ls, -h, h, texU(0), texV(0));// 1
             }
-            xMin += width;
-            xMax += width;
+            xMin = lb;
         }
     }
 }

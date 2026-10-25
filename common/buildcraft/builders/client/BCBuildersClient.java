@@ -22,15 +22,28 @@ import buildcraft.builders.item.ItemSnapshot;
 
 @Environment(EnvType.CLIENT)
 public final class BCBuildersClient {
+    private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        if (buildcraft.builders.BCBuildersBlocks.quarry != null) BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.builders.tile.TileQuarry.class), buildcraft.builders.client.render.RenderQuarry::new);
+        if (buildcraft.builders.BCBuildersBlocks.architect != null) BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.builders.tile.TileArchitectTable.class), buildcraft.builders.client.render.RenderArchitectTable::new);
+        buildcraft.lib.client.render.DetachedRenderer.register(buildcraft.builders.client.render.RenderArchitectTables.INSTANCE);
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (previousWorld != client.world) { ClientArchitectTables.clear(); previousWorld = client.world; }
+            ClientArchitectTables.tick();
+        });
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientArchitectTables.clear());
         if (BCBuildersItems.snapshot != null) ModelPredicateProviderRegistry.register(BCBuildersItems.snapshot, new Identifier("buildcraftbuilders", "snapshot_type"),
             (stack, world, entity, seed) -> ItemSnapshot.EnumItemSnapshotType.getFromStack(stack).ordinal());
         HandledScreens.<ContainerBC_Neptune, GuiFiller>register(BCBuildersScreens.FILLER,
             (handler, inventory, title) -> new GuiFiller((ContainerFiller) handler, inventory, title));
-        BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileFiller.class), RenderFiller::new);
+        if (buildcraft.builders.BCBuildersBlocks.filler != null)
+            BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileFiller.class), RenderFiller::new);
         HandledScreens.<ContainerBC_Neptune, GuiBuilder>register(BCBuildersScreens.BUILDER,
             (handler, inventory, title) -> new GuiBuilder((ContainerBuilder) handler, inventory, title));
-        BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileBuilder.class), RenderBuilder::new);
+        if (buildcraft.builders.BCBuildersBlocks.builder != null)
+            BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileBuilder.class), RenderBuilder::new);
     }
 }

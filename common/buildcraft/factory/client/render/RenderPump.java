@@ -1,31 +1,14 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-// STUB(R.Chen): TileEntitySpecialRenderer → BlockEntityRenderer migration
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.factory.client.render;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-
 import buildcraft.factory.tile.TilePump;
+import buildcraft.lib.client.render.laser.LaserRenderer_BC8;
+import buildcraft.lib.client.sprite.SpriteHolderRegistry;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 
-@Environment(EnvType.CLIENT)
-public class RenderPump implements BlockEntityRenderer<TilePump> {
-
-    public RenderPump(BlockEntityRendererFactory.Context ctx) {
-        // STUB
-    }
-
-    @Override
-    public void render(TilePump be, float tickDelta, MatrixStack matrices,
-            VertexConsumerProvider vcp, int light, int overlay) {
-        // STUB
-    }
+public final class RenderPump extends RenderMiner<TilePump> {
+    private static final String TEXTURE = "buildcraftfactory:blocks/pump/tube";
+    public RenderPump(BlockEntityRendererFactory.Context context) { super(TEXTURE, true); }
+    public static void init() { SpriteHolderRegistry.getHolder(TEXTURE); }
+    public static void textureStitchPost() { LaserRenderer_BC8.clearModels(); }
 }

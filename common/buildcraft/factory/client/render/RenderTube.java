@@ -1,50 +1,23 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.factory.client.render;
 
-import javax.annotation.Nonnull;
-
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
-
-import net.minecraftforge.client.model.animation.FastTESR;
-
-import buildcraft.lib.client.render.laser.LaserData_BC8;
-import buildcraft.lib.client.render.laser.LaserData_BC8.LaserType;
-import buildcraft.lib.client.render.laser.LaserRenderer_BC8;
-
+import buildcraft.lib.client.render.laser.*;
 import buildcraft.factory.tile.TileMiner;
 
-public class RenderTube extends FastTESR<TileMiner> {
-    private final LaserType laserType;
-
-    public RenderTube(LaserType laserType) {
-        this.laserType = laserType;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void renderTileEntityFast(@Nonnull TileMiner tile, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
-        if (tile.isComplete()) {
-            return;
-        }
-
-        double tubeY = tile.getPos().getY() - tile.getLength(partialTicks);
-
-        BlockPos from = tile.getPos();
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: buffer.setTranslation(x - from.getX(), y - from.getY(), z - from.getZ());
-
-        Vec3d start = new Vec3d(from.getX() + 0.5, from.getY(), from.getZ() + 0.5);
-
-        Vec3d end = new Vec3d(from.getX() + 0.5, tubeY, from.getZ() + 0.5);
-
-        LaserData_BC8 data = new LaserData_BC8(laserType, start, end, 1 / 16.0);
-        LaserRenderer_BC8.renderLaserDynamic(data, buffer);
-
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: buffer.setTranslation(0, 0, 0);
+/** Shared native pipe mesh for a pump or mining well; the machine owns the block-entity renderer. */
+public final class RenderTube {
+    private final LaserData_BC8.LaserType type;
+    public RenderTube(LaserData_BC8.LaserType type) { this.type = type; }
+    public void render(TileMiner tile, float delta, MatrixStack matrices, VertexConsumerProvider consumers, int overlay) {
+        if (tile.isComplete()) return;
+        double length = tile.getLength(delta);
+        if (!Double.isFinite(length) || length <= 0) return;
+        Vec3d origin = Vec3d.of(tile.getPos());
+        Vec3d start = origin.add(.5, 0, .5);
+        var beam = new LaserData_BC8(type, start, start.add(0, -length, 0), 1/16.0);
+        LaserRenderer_BC8.render(beam, matrices, consumers, origin, overlay);
     }
 }

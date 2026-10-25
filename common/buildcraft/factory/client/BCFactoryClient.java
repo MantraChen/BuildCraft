@@ -17,6 +17,10 @@ import buildcraft.lib.registry.BlockEntityRegistry;
 public final class BCFactoryClient {
     private BCFactoryClient() {}
     public static void register() {
+        if (BCFactoryBlocks.miningWell != null) BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.factory.tile.TileMiningWell.class), buildcraft.factory.client.render.RenderMiningWell::new);
+        if (BCFactoryBlocks.pump != null) BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.factory.tile.TilePump.class), buildcraft.factory.client.render.RenderPump::new);
         HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, GuiTank>register(BCFactoryScreens.TANK,
             (handler, inventory, title) -> new GuiTank((ContainerTank) handler, inventory, title));
         if (BCFactoryBlocks.tank != null) {

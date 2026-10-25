@@ -1,106 +1,32 @@
-/* Copyright (c) 2016 SpaceToad and the BuildCraft team
- * 
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+/* Copyright (c) 2016 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.core.client.render;
 
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderHelper;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.Axis;
-import net.minecraft.util.math.Vec3d;
-
-import buildcraft.lib.client.render.DetachedRenderer;
-import buildcraft.lib.client.render.laser.LaserData_BC8;
-import buildcraft.lib.client.render.laser.LaserData_BC8.LaserType;
-import buildcraft.lib.client.render.laser.LaserRenderer_BC8;
-import buildcraft.lib.misc.VecUtil;
-
+import net.minecraft.client.render.*;
+import net.minecraft.client.render.block.entity.*;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.*;
 import buildcraft.core.BCCoreConfig;
 import buildcraft.core.client.BuildCraftLaserManager;
-import buildcraft.core.marker.VolumeConnection;
 import buildcraft.core.tile.TileMarkerVolume;
+import buildcraft.lib.client.render.laser.*;
 
-public class RenderMarkerVolume extends TileEntitySpecialRenderer<TileMarkerVolume> {
-    private static final double SCALE = 1 / 16.2; // smaller than normal lasers
-
-    public static final RenderMarkerVolume INSTANCE = new RenderMarkerVolume();
-
-    private static final LaserType LASER_TYPE = BuildCraftLaserManager.MARKER_VOLUME_SIGNAL;
-    private static final Vec3d VEC_HALF = new Vec3d(0.5, 0.5, 0.5);
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean isGlobalRenderer(TileMarkerVolume te) {
-        return true;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void render(TileMarkerVolume marker, double tileX, double tileY, double tileZ, float partialTicks, int destroyStage, float alpha) {
-        if (marker == null || !marker.isShowingSignals()) return;
-
-        MinecraftClient.getInstance().getProfiler().push("bc");
-        MinecraftClient.getInstance().getProfiler().push("marker");
-        MinecraftClient.getInstance().getProfiler().push("volume");
-
-        DetachedRenderer.fromWorldOriginPre(MinecraftClient.getInstance().player, partialTicks);
-        RenderHelper.disableStandardItemLighting();
-        com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
-
-        VolumeConnection volume = marker.getCurrentConnection();
-        Set<Axis> taken = volume == null ? ImmutableSet.of() : volume.getConnectedAxis();
-
-        Vec3d start = VecUtil.add(VEC_HALF, marker.getPos());
-        for (Direction face : Direction.values()) {
-            if (taken.contains(face.getAxis())) {
-                continue;
-            }
-            Vec3d end = VecUtil.offset(start, face, BCCoreConfig.markerMaxDistance);
-            renderLaser(start, end, face.getAxis());
-        }
-
-        RenderHelper.enableStandardItemLighting();
-        DetachedRenderer.fromWorldOriginPost();
-
-        MinecraftClient.getInstance().getProfiler().pop();
-        MinecraftClient.getInstance().getProfiler().pop();
-        MinecraftClient.getInstance().getProfiler().pop();
-    }
-
-    private static void renderLaser(Vec3d min, Vec3d max, Axis axis) {
-        Direction faceForMin = VecUtil.getFacing(axis, true);
-        Direction faceForMax = VecUtil.getFacing(axis, false);
-        Vec3d one = offset(min, faceForMin);
-        Vec3d two = offset(max, faceForMax);
-        LaserData_BC8 data = new LaserData_BC8(LASER_TYPE, one, two, SCALE);
-        LaserRenderer_BC8.renderLaserStatic(data);
-    }
-
-    private static Vec3d offset(Vec3d vec, Direction face) {
-        double by = 1 / 16.0;
-        if (face == Direction.DOWN) {
-            return vec.add(0, -by, 0);
-        } else if (face == Direction.UP) {
-            return vec.add(0, by, 0);
-        } else if (face == Direction.EAST) {
-            return vec.add(by, 0, 0);
-        } else if (face == Direction.WEST) {
-            return vec.add(-by, 0, 0);
-        } else if (face == Direction.SOUTH) {
-            return vec.add(0, 0, by);
-        } else {// North
-            return vec.add(0, 0, -by);
+public final class RenderMarkerVolume implements BlockEntityRenderer<TileMarkerVolume> {
+    public RenderMarkerVolume(BlockEntityRendererFactory.Context context) {}
+    @Override public void render(TileMarkerVolume marker, float delta, MatrixStack matrices, VertexConsumerProvider consumers, int light, int overlay) {
+        if (!marker.isShowingSignals()) return;
+        var connection = marker.getCurrentConnection();
+        Set<Direction.Axis> occupied = connection == null ? Set.of() : connection.getConnectedAxis();
+        Vec3d origin = Vec3d.of(marker.getPos());
+        for (Direction direction : Direction.values()) {
+            if (occupied.contains(direction.getAxis())) continue;
+            Vec3d axis = Vec3d.of(direction.getVector());
+            Vec3d start = origin.add(.5, .5, .5).add(axis.multiply(1/16.0));
+            Vec3d end = origin.add(.5, .5, .5).add(axis.multiply(BCCoreConfig.markerMaxDistance-1/16.0));
+            LaserRenderer_BC8.render(new LaserData_BC8(BuildCraftLaserManager.MARKER_VOLUME_SIGNAL, start, end, 1/16.2),
+                matrices, consumers, origin, overlay);
         }
     }
-
-// @Override removed (R.Chen): no longer overrides — Phase 10 
-    public void render(TileMarkerVolume entity, float tickDelta, net.minecraft.client.util.math.MatrixStack matrices, net.minecraft.client.render.VertexConsumerProvider vertexConsumers, int light, int overlay) { /* STUB */ }
-
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public boolean canUse(net.minecraft.entity.player.PlayerEntity player) { return true; }
+    @Override public boolean rendersOutsideBoundingBox(TileMarkerVolume tile) { return true; }
+    @Override public int getRenderDistance() { return 256; }
 }

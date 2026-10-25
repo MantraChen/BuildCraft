@@ -27,6 +27,10 @@ in `port-tests` under Fabric's transformed class loader instead of plain JUnit.
 
 Three tank-render geometry tests bring the client total to 27: liquid and gas fill
 bounds, outward face winding, UV bounds, empty geometry and face-mask selection.
+Five laser geometry tests bring the total to 32: all axes/diagonals, endpoint clipping,
+short start/end segments, winding/normals, fractional UVs, double-sided faces, invalid
+inputs, far-coordinate precision and bounded long-beam tessellation. These execute the
+production row compiler and coordinate transform, with an injected light sampler.
 Run this fixture and the root Gradle build sequentially: both use the expression
 project's generated source directory.
 

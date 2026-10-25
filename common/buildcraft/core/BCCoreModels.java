@@ -30,6 +30,9 @@ public final class BCCoreModels {
     public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 
     public static void fmlInit() {
+        buildcraft.lib.client.render.DetachedRenderer.register(buildcraft.lib.client.render.MarkerRenderer.INSTANCE);
+        if (BCCoreBlocks.markerVolume != null) BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.core.tile.TileMarkerVolume.class), buildcraft.core.client.render.RenderMarkerVolume::new);
         if (BCCoreBlocks.engine == null) return;
         BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileEngineRedstone_BC8.class),
             context -> RenderEngineWood.INSTANCE);

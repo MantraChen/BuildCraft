@@ -36,9 +36,25 @@ public class RenderPartCube {
     }
 
     public void setWhiteTex() {
-        Sprite sprite = buildcraft.lib.compat.McTextureCompat.getMissingSprite();
+        Sprite sprite = buildcraft.lib.client.sprite.SpriteHolderRegistry.getHolder("buildcraftlib:blocks/white").getSprite();
+        if (sprite == null) return;
         // Reset the vertex so that edits don't spill out to other tiles.
         center.texf(sprite.getFrameU(8), sprite.getFrameV(8));
+    }
+
+    public void render(net.minecraft.client.util.math.MatrixStack matrices,
+            net.minecraft.client.render.VertexConsumerProvider consumers, int light, int overlay) {
+        var vertices = consumers.getBuffer(net.minecraft.client.render.RenderLayer.getEntityCutout(
+            new net.minecraft.util.Identifier("buildcraftlib", "textures/blocks/white.png")));
+        for (var face : net.minecraft.util.math.Direction.values()) {
+            var quad = buildcraft.lib.client.model.ModelUtil.createFace(face,
+                new javax.vecmath.Point3f(center.position_x, center.position_y, center.position_z),
+                new javax.vecmath.Point3f((float)sizeX/2, (float)sizeY/2, (float)sizeZ/2),
+                new buildcraft.lib.client.model.ModelUtil.UvFaceData(0, 0, 1, 1));
+            quad.colouri(center.colour_r, center.colour_g, center.colour_b, center.colour_a);
+            quad.lighti(center.light_block, center.light_sky);
+            quad.render(vertices, matrices.peek(), light, overlay);
+        }
     }
 
     /** Renders an element, without changing the vertex. However this does ignore the "normal" and "texture" components

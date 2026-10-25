@@ -1,52 +1,20 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.builders.client.render;
 
-import org.lwjgl.opengl.GL11;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderHelper;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-
-import buildcraft.lib.client.render.laser.LaserBoxRenderer;
-
+import net.minecraft.client.render.*;
+import net.minecraft.client.render.block.entity.*;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.Vec3d;
 import buildcraft.builders.tile.TileArchitectTable;
 import buildcraft.core.client.BuildCraftLaserManager;
+import buildcraft.lib.client.render.laser.LaserBoxRenderer;
 
-public class RenderArchitectTable extends TileEntitySpecialRenderer<TileArchitectTable> {
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void render(TileArchitectTable tile, double x, double y, double z, float partialTicks, int destroyStage,
-        float partial) {
-        if (!tile.markerBox) {
-            return;
-        }
-        MinecraftClient.getInstance().getProfiler().push("bc");
-        MinecraftClient.getInstance().getProfiler().push("architect_table");
-
-        GL11.glPushMatrix();
-        GL11.glTranslated(x - tile.getPos().getX(), y - tile.getPos().getY(), z - tile.getPos().getZ());
-        RenderHelper.disableStandardItemLighting();
-
-        MinecraftClient.getInstance().getProfiler().push("box");
-        LaserBoxRenderer.renderLaserBoxStatic(tile.box, BuildCraftLaserManager.STRIPES_READ, true);
-        MinecraftClient.getInstance().getProfiler().pop();
-
-        RenderHelper.enableStandardItemLighting();
-        GL11.glPopMatrix();
-
-        MinecraftClient.getInstance().getProfiler().pop();
-        MinecraftClient.getInstance().getProfiler().pop();
+public final class RenderArchitectTable implements BlockEntityRenderer<TileArchitectTable> {
+    public RenderArchitectTable(BlockEntityRendererFactory.Context context) {}
+    @Override public void render(TileArchitectTable tile, float delta, MatrixStack matrices, VertexConsumerProvider consumers, int light, int overlay) {
+        if (tile.markerBox) LaserBoxRenderer.render(tile.box, BuildCraftLaserManager.STRIPES_READ, true,
+            matrices, consumers, Vec3d.of(tile.getPos()), overlay);
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean isGlobalRenderer(TileArchitectTable te) {
-        return true;
-    }
-
-    @Override
-    public void render(TileArchitectTable entity, float tickDelta, net.minecraft.client.util.math.MatrixStack matrices, net.minecraft.client.render.VertexConsumerProvider vertexConsumers, int light, int overlay) { /* STUB */ }
+    @Override public boolean rendersOutsideBoundingBox(TileArchitectTable tile) { return true; }
+    @Override public int getRenderDistance() { return 256; }
 }

@@ -19,13 +19,18 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 public class DetachedRenderer {
 
     private static final List<IDetachedRenderer> renderers = new ArrayList<>();
+    private static boolean registered;
+    private static WorldRenderContext currentContext;
+    public static WorldRenderContext context() {
+        return java.util.Objects.requireNonNull(currentContext, "No active detached render frame");
+    }
 
     /**
      * Register a renderer to be called each frame at the end of world rendering
      * (equivalent to Forge's {@code RenderWorldLastEvent}).
      */
     public static void register(IDetachedRenderer renderer) {
-        renderers.add(renderer);
+        if (!renderers.contains(renderer)) renderers.add(renderer);
     }
 
     /**
@@ -33,13 +38,25 @@ public class DetachedRenderer {
      * {@code BCLibClientInitializer.onInitializeClient()}.
      */
     public static void registerEvents() {
+        if (registered) return;
+        registered = true;
         WorldRenderEvents.LAST.register(DetachedRenderer::onWorldRenderLast);
     }
 
     private static void onWorldRenderLast(WorldRenderContext context) {
-        float partialTicks = context.tickDelta();
-        for (IDetachedRenderer r : renderers) {
-            r.render(partialTicks);
+        WorldRenderContext previous = currentContext;
+        currentContext = context;
+        var consumers = net.minecraft.client.MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        try (var frame = buildcraft.lib.client.render.laser.LaserRenderer_BC8.beginFrame(
+                context.matrixStack(), consumers, context.camera().getPos())) {
+            for (IDetachedRenderer r : renderers) r.render(context.tickDelta());
+        } catch (RuntimeException failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new IllegalStateException("Could not close world render frame", failure);
+        } finally {
+            currentContext = previous;
+            consumers.draw();
         }
     }
 
