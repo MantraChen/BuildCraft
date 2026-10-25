@@ -43,6 +43,11 @@ public class PipeBehaviourWoodDiamond extends PipeBehaviourWood {
     public FilterMode filterMode = FilterMode.WHITE_LIST;
     public int currentFilter;
     public boolean filterValid;
+    private final net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<Integer> cursorSnapshots=new net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<>() {
+        @Override protected Integer createSnapshot(){return currentFilter;}
+        @Override protected void readSnapshot(Integer cursor){currentFilter=cursor;}
+        @Override protected void onFinalCommit(){changed();}
+    };
 
     public PipeBehaviourWoodDiamond(IPipe pipe) {
         super(pipe);
@@ -130,8 +135,10 @@ public class PipeBehaviourWoodDiamond extends PipeBehaviourWood {
         // A power query must never change the round-robin cursor, inventory, or travelling items.
         int extracted = flow.tryExtractItems(1, dir, null, this::matches, simulate);
         if (extracted > 0 && !simulate && filterMode == FilterMode.ROUND_ROBIN) {
+            var transaction=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe();
+            if(transaction!=null)cursorSnapshots.updateSnapshots(transaction);
             currentFilter = nextFilter(currentFilter);
-            changed();
+            if(transaction==null)changed();
         }
         return extracted;
     }

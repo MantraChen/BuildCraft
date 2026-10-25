@@ -137,7 +137,7 @@ public class PipeFlowFluids extends PipeFlow implements IFlowFluid, IDebuggable 
             var resource = view.getResource();
             if (resource.isBlank() || !tried.add(resource) || !filter.test(resource)
                     || currentFluid != null && !currentFluid.equals(resource)) continue;
-            try (var tx = Transaction.openOuter()) {
+            try (var tx = Transaction.openNested(Transaction.getCurrentUnsafe())) {
                 long extracted = source.extract(resource, available, tx);
                 if (extracted <= 0) continue;
                 snapshots.updateSnapshots(tx);

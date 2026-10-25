@@ -36,6 +36,7 @@ public class BCTransportBlocks {
         }, pipeHolderTile);
         team.reborn.energy.api.EnergyStorage.SIDED.registerForBlockEntity((tile, face) -> {
             var pipe = tile.getPipe(); var plug = tile.getPluggable(face);
+            if(plug instanceof buildcraft.transport.plug.PluggablePowerAdaptor adaptor)return adaptor.getEnergyStorage();
             if (tile.isRemoved() || plug != null && plug.isBlocking()) return null;
             return pipe != null && pipe.flow instanceof buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux flow ? flow.getStorage(face) : null;
         }, pipeHolderTile);

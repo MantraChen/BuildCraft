@@ -77,6 +77,13 @@ use the sensor's face. Single-action latches persist across world reloads, and
 removing an attachment disables its conditions. Use
 `./scripts/full-smoke.ps1 -ControlPlugs` for the connected-client fixture.
 Facades, lenses and other remaining pluggables still need restoration.
+Pipe plugs and power adaptors also have native crafting, six-face placement,
+models, picking and drops. A plug blocks the face; an adaptor keeps material flow
+blocked while accepting MJ for the extraction behavior. With automatic RF conversion
+enabled, native RF input uses the configured conversion rate and preserves sub-RF
+credit across saves. Energy, inventory/fluid changes and filter cursors roll back
+together when a transaction is cancelled. Run
+`./scripts/full-smoke.ps1 -TransportPlugs` for the RF pipeline and restart fixture.
 The charging table was already an empty, development-only placeholder in the
 original baseline; it is not exposed as a supported production feature.
 Fluid pipes now expose native transactional storage, retain exact droplets/NBT through

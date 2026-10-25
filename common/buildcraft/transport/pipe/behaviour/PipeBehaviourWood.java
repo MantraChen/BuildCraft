@@ -29,9 +29,7 @@ import buildcraft.api.transport.pipe.PipeEventFluid;
 import buildcraft.api.transport.pipe.PipeEventHandler;
 import buildcraft.api.transport.pipe.PipeFaceTex;
 
-// BCTransportConfig inlined below — BCTransportConfig has Forge deps and is not yet in libLeaf.
-
-public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRedstoneReceiver, IDebuggable {
+public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRedstoneReceiver, IDebuggable, buildcraft.lib.mj.TransactionalMjReceiver {
 
     private static final PipeFaceTex TEX_CLEAR = PipeFaceTex.get(0);
     private static final PipeFaceTex TEX_FILLED = PipeFaceTex.get(1);
@@ -120,6 +118,14 @@ public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRe
     @Override
     public long receivePower(long microJoules, boolean simulate) {
         return extract(microJoules, simulate);
+    }
+
+    @Override public long receivePower(long microJoules, net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) {
+        try(var nested=transaction.openNested()) {
+            long excess=extract(microJoules,false);
+            nested.commit();
+            return excess;
+        }
     }
 
     @Override

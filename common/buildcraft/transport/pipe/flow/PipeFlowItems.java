@@ -69,6 +69,18 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
     private boolean needsTimeBase;
     private PipeItemStorage nativeStorage;
 
+    private record PendingExtraction(ItemStack stack,DyeColor colour,Direction from) {}
+    private final List<PendingExtraction> pendingExtractions=new ArrayList<>();
+    private final net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<List<PendingExtraction>> extractionSnapshots=new net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<>() {
+        @Override protected List<PendingExtraction> createSnapshot(){return List.copyOf(pendingExtractions);}
+        @Override protected void readSnapshot(List<PendingExtraction> state){pendingExtractions.clear();pendingExtractions.addAll(state);}
+        @Override protected void onFinalCommit(){
+            var committed=List.copyOf(pendingExtractions);pendingExtractions.clear();
+            for(var entry:committed)insertItemEvents(entry.stack(),entry.colour(),EXTRACT_SPEED,entry.from());
+            pipe.getHolder().getPipeTile().markDirty();
+        }
+    };
+
     public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant> getStorage(Direction face) {
         if (!(pipe.getHolder() instanceof buildcraft.transport.tile.TilePipeHolder holder)) return null;
         if (nativeStorage == null) nativeStorage = new PipeItemStorage(holder, this);
@@ -260,7 +272,12 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         }
 
         if (!simulate) {
-            insertItemEvents(stack, colour, EXTRACT_SPEED, from);
+            var transaction=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe();
+            if(transaction==null)insertItemEvents(stack, colour, EXTRACT_SPEED, from);
+            else {
+                extractionSnapshots.updateSnapshots(transaction);
+                pendingExtractions.add(new PendingExtraction(stack.copy(),colour,from));
+            }
         }
 
         return count;

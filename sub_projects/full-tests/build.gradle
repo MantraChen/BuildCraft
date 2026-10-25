@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        transportPlugClientSmoke {
+            client()
+            runDir '../../verification/transport-plugs-client-run'
+            vmArg '-Dbuildcraft.transportPlugClientSmoke=true'
+        }
         controlPlugClientSmoke {
             client()
             runDir '../../verification/control-plugs-client-run'

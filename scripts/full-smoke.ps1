@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -196,5 +196,22 @@ if ($ControlPlugs) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $controlOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runControlPlugClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($TransportPlugs) {
+    $transportPlugRun = Join-Path $verification 'transport-plugs-client-run'
+    $transportPlugConfig = Join-Path $transportPlugRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $transportPlugConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $transportPlugConfig 'main.cfg') -Force
+    $transportSettingsPath = Join-Path $transportPlugConfig 'main.cfg'
+    $transportSettings = Get-Content -LiteralPath $transportSettingsPath -Raw
+    $transportSettings = $transportSettings -replace 'S:"powerMode"="[A-Z_]+"', 'S:"powerMode"="MJ_AUTOCONVERT_RF"'
+    $transportSettings = $transportSettings -replace 'I:"pipes.mjPerItem"=\d+', 'I:"pipes.mjPerItem"=150000'
+    Set-Content -LiteralPath $transportSettingsPath -Value $transportSettings -Encoding utf8
+    $transportPlugOptions = Join-Path $transportPlugRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $transportPlugOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $transportPlugOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runTransportPlugClientSmoke --console=plain
 }
 exit $LASTEXITCODE

@@ -64,8 +64,7 @@ public class PluggableBlocker extends PipePluggable {
 
     @Override
     public ItemStack getPickStack() {
-        // STUB(R.Chen): BCTransportItems not in libLeaf (Forge RegistrationHelper dep). Phase 4F.
-        return ItemStack.EMPTY;
+        return new ItemStack(buildcraft.transport.BCTransportItems.plugBlocker);
     }
 
     @Override

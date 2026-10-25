@@ -57,6 +57,12 @@ public class PipeBehaviourEmzuli extends PipeBehaviourWood {
     private final EnumSet<SlotIndex> activeSlots = EnumSet.noneOf(SlotIndex.class);
     private final byte[] activatedTtl = new byte[SlotIndex.VALUES.length];
     private SlotIndex currentSlot;
+    private record Cursor(SlotIndex slot) {}
+    private final net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<Cursor> cursorSnapshots=new net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<>() {
+        @Override protected Cursor createSnapshot(){return new Cursor(currentSlot);}
+        @Override protected void readSnapshot(Cursor state){currentSlot=state.slot();}
+        @Override protected void onFinalCommit(){changed();}
+    };
 
     public PipeBehaviourEmzuli(IPipe pipe) {
         super(pipe);
@@ -142,8 +148,10 @@ public class PipeBehaviourEmzuli extends PipeBehaviourWood {
         var filter = invFilters.getStackInSlot(selected.ordinal());
         int extracted = flow.tryExtractItems(count, dir, slotColours.get(selected), stack -> StackUtil.matchesStackOrList(filter, stack), simulate);
         if (extracted > 0 && !simulate) {
+            var transaction=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe();
+            if(transaction!=null)cursorSnapshots.updateSnapshots(transaction);
             currentSlot = nextSlot(selected);
-            changed();
+            if(transaction==null)changed();
         }
         return extracted;
     }

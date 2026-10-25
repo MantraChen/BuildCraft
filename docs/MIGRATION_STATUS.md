@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **286 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **300 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1016,6 +1016,42 @@ to true. Packet synchronization retains these counts, flags and NBT.
   Reproduce with `./scripts/full-smoke.ps1 -ControlPlugs`; local evidence is in
   `verification/control-plugs-tests-01.log`, `verification/control-plugs-client-05.log`
   and `verification/control-plugs-client-run/screenshots/`.
+
+### Native transport blockers and power adaptors
+
+- Restored both transport attachment items, original six-facing shapes/textures,
+  picking, placement/counts, NBT loading, native recipes and drops. Their tooltips
+  include `Remake by FelixMantra`. One structure pipe makes four blockers; six
+  structure pipes, a gold ingot, a stone gear and redstone make four adaptors.
+  Stone gears use the additive `c:stone_gears` tag. The original blocker advancement
+  is available again, and the guide now resolves both registered item pages.
+- Blockers close item, fluid, MJ and RF connections. Adaptors keep material passage
+  blocked and expose only the extraction behavior's native MJ input. Adjacent MJ/RF
+  pipes treat the adaptor as a machine endpoint; unrelated pipe families never join.
+  Removing/replacing the attachment or its block invalidates cached input handles.
+- RF input is enabled by `MJ_AUTOCONVERT_RF` or `DISPLAY_RF`, uses the configured
+  `mjPerRf` and extraction costs, and retains exact micro-MJ rounding credit in NBT.
+  It never stores a bulk RF battery or consumes RF for an unavailable extraction.
+  Oversized offers are bounded before multiplication; loaded credit is clamped.
+- Fabric transactions cover the source inventory, deferred travelling items,
+  fluid pipe sections/tanks, conversion credit and diamond-wood/Emzuli cursors.
+  Nested commits followed by outer abort restore all of them. Native wooden-family
+  receivers implement `TransactionalMjReceiver`; add-ons can implement that contract
+  to expose RF safely through an adaptor. MJ forwarding retains its native interface.
+- Fourteen packaged tests bring the suite to **300 passing tests**, covering native
+  placement/eligibility, blocked lookups, MJ simulation and stale handles, nested RF
+  aborts, saved rounding credit, mode changes, extreme offers, fluid droplets,
+  ordered filters/paint, connection types, real MJ-powered item delivery, recipes,
+  bounded legacy NBT and exact attachment drops.
+- The real client fixture passes with `failures=0`, including model/resource reload,
+  native placement and breaking, fractional-credit recovery after closing/reopening
+  the world, and a Dynamo feeding RF pipes, an adaptor and an item pipeline. Exactly
+  four diamonds arrive; removing the adaptor stops extraction and removing the
+  blocker reconnects the item pipe. Four screenshots were inspected. Reproduce with
+  `./scripts/full-smoke.ps1 -TransportPlugs`; local evidence is in
+  `verification/transport-plugs-tests-01.log`, `verification/transport-plugs-client-03.log`
+  and `verification/transport-plugs-client-run/screenshots/`. The isolated client
+  config enables automatic RF conversion and a 0.15 MJ/item cost to exercise rounding.
 
 ### Development-only placeholders in the original baseline
 

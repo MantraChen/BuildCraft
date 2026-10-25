@@ -34,11 +34,16 @@ public class BCTransportItems {
     public static ItemPipeHolder pipeItemStripes;
 
     public static Item waterproof;
-    public static Item plugBlocker;
-    public static Item plugPowerAdaptor;
+    public static buildcraft.transport.item.ItemTransportPlug plugBlocker,plugPowerAdaptor;
     public static ItemWire wire;
 
     public static void preInit() {
+        plugBlocker=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcrafttransport:plug_blocker"),new buildcraft.transport.item.ItemTransportPlug(new Item.Settings(),false));
+        plugPowerAdaptor=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcrafttransport:plug_power_adaptor"),new buildcraft.transport.item.ItemTransportPlug(new Item.Settings(),true));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)
+            .register(entries->{entries.add(plugBlocker);entries.add(plugPowerAdaptor);});
         waterproof = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcrafttransport", "waterproof"), new Item(new Item.Settings()) {
                 @Override public String getTranslationKey() { return "item.pipeWaterproof.name"; }

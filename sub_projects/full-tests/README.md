@@ -37,6 +37,8 @@ From the repository root on Windows:
 
 # Also verify native pulsars, timers, light sensors and their gate controls:
 ./scripts/full-smoke.ps1 -ControlPlugs
+# Also verify blockers, native MJ/RF power adaptors and the RF pipe chain:
+./scripts/full-smoke.ps1 -TransportPlugs
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -154,7 +156,19 @@ pending request without retriggering its still-high gate. Actual wooden/stone pi
 deliver the resulting items, and native attachment breaking must preserve the pipe
 while stopping the removed control's behavior.
 
-The 286 server tests currently verify:
+The transport-attachment client uses `verification/transport-plugs-client-run/`.
+It checks all model facings before/after resource reload, uses native placement and
+breaking, preserves fractional RF credit across a complete world restart, and drives
+an item pipeline through a real Dynamo/RF-pipe/adaptor chain. Removing the adaptor
+must stop extraction; removing a blocker must reconnect the remaining item pipe.
+
+The 300 server tests currently verify:
+
+- Fourteen transport-attachment tests cover six-face placement and eligibility,
+  blocked native lookups, MJ simulation, stale handles, nested RF rollback of source
+  inventory/travelling items/fluids/credit/filter cursors, saved credit, mode changes,
+  extreme inputs, exact droplets, paint, power-only machine endpoints, real MJ-pipe
+  delivery, original crafting recipes, bounded NBT and exact removal drops.
 
 - Fifteen control-attachment tests cover all six placement faces, pipe eligibility,
   manual cadence, retrying single requests, exact bucket extraction, configured MJ

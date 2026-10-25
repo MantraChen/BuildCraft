@@ -23,7 +23,8 @@ public class BCTransportPlugs {
 
     public static void preInit() {
         blocker = register("blocker", PluggableBlocker::new);
-        powerAdaptor = register("power_adaptor", PluggablePowerAdaptor::new);
+        powerAdaptor = register(new PluggableDefinition(new Identifier("buildcrafttransport:power_adaptor"),PluggablePowerAdaptor::new,
+            (definition,holder,side,buffer)->new PluggablePowerAdaptor(definition,holder,side)));
     }
 
     private static PluggableDefinition register(String name, IPluggableCreator creator) {

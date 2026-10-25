@@ -1,4 +1,8 @@
 {
+  "item.buildcrafttransport.plug_blocker": "Pipe Plug",
+  "item.buildcrafttransport.plug_blocker.tip": "Blocks connections on one pipe face.",
+  "item.buildcrafttransport.plug_power_adaptor": "Power Adaptor",
+  "item.buildcrafttransport.plug_power_adaptor.tip": "Powers an extraction pipe while blocking material flow. RF input requires automatic conversion.",
   "advancements.buildcrafttransport.conducting_rf.title": "Conducting RF",
   "advancements.buildcrafttransport.conducting_rf.description": "Use redstone to convert kinesis pipes to RF pipes",
   "advancements.buildcrafttransport.conducting_mj.title": "Conducting MJ",

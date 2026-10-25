@@ -1,4 +1,8 @@
 {
+  "item.buildcrafttransport.plug_blocker": "管道封堵塞",
+  "item.buildcrafttransport.plug_blocker.tip": "阻止管道在安装面连接。",
+  "item.buildcrafttransport.plug_power_adaptor": "动力适配器",
+  "item.buildcrafttransport.plug_power_adaptor.tip": "为抽取管道供能并阻挡物品、流体通行。RF 输入需启用自动转换。",
   "advancements.buildcrafttransport.conducting_rf.title": "传导 RF",
   "advancements.buildcrafttransport.conducting_rf.description": "用红石将 MJ 管道转换为 RF 管道",
   "advancements.buildcrafttransport.conducting_mj.title": "传导能量",

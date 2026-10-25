@@ -292,7 +292,11 @@ public final class Pipe implements IPipe, IDebuggable {
                     }
                     continue;
                 }
-                continue; // A blocked pipe must not fall back to an inventory connection.
+                // Only a power adaptor exposes a machine endpoint through its blocked face.
+                // Material pipes and ordinary blockers must never fall back to tile storage.
+                if(!(oPlug instanceof buildcraft.transport.plug.PluggablePowerAdaptor)
+                    || !(flow instanceof buildcraft.transport.pipe.flow.PipeFlowPower
+                        || flow instanceof buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux))continue;
             }
 
             BlockPos nPos = holder.getPipePos().offset(facing);
