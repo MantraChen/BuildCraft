@@ -7,5 +7,9 @@
   "gui.buildcraftbuilders.builder_remaining": "剩余：挖掘 %s 个，放置 %s 个",
   "gui.buildcraftbuilders.invert": "反转：%s",
   "gui.buildcraftbuilders.excavate": "挖掘：%s",
-  "gui.buildcraftbuilders.remaining": "剩余：挖掘 %s 个，放置 %s 个。按住 Shift 点击可反向切换。"
+  "gui.buildcraftbuilders.remaining": "剩余：挖掘 %s 个，放置 %s 个。按住 Shift 点击可反向切换。",
+  "advancements.buildcraftbuilders.shaping_remake.title": "塑造世界",
+  "advancements.buildcraftbuilders.shaping_remake.description": "放置一台 BuildCraft 采石机。Remake by FelixMantra",
+  "advancements.buildcraftbuilders.diggy_remake.title": "无底洞",
+  "advancements.buildcraftbuilders.diggy_remake.description": "完成内部开采面积为 63 × 63 的采石场"
 }

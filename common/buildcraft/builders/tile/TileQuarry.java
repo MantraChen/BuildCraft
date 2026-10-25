@@ -73,47 +73,12 @@ import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-// Forge→Fabric migration notes (R.Chen):
-//   ITickable.update()              → tick() driven by {@link #ticker()} (BlockEntityTicker)
-//   BlockState                     → BlockState
-//   LivingEntity                → LivingEntity
-//   Direction / Direction.Axis    → Direction / Direction.Axis
-//   Identifier                → Identifier
-//   NbtCompound                  → NbtCompound; readFromNBT/writeToNBT → readNbt/writeNbt (void)
-//   ServerWorld                     → ServerWorld
-//   world.isClient                  → world.isClient
-//   world.isAirBlock                → world.isAir
-//   world.isOutsideBuildHeight      → world.isOutOfHeightLimit
-//   world.sendBlockBreakProgress    → world.setBlockBreakingInfo
-//   validate()/invalidate()         → cancelRemoval()/markRemoved()
-//   ChunkLoaderManager              → migrated to ServerWorld.setChunkForced (see lib.chunkload)
-//   MessageUtil.read/writeVec3d     → local read/writeVec3d helpers (PacketBufferBC doubles)
-//
-//   STUBS (deferred — not in libLeaf yet):
-//   - IWorldEventListener / WorldEventListenerAdapter: dropped; the reactive frame/mining re-check is
-//     replaced by the existing polling loop over `toCheck`/`boxIterator` in tick().
-//   - core.marker.VolumeCache / TileMarkerVolume: the marker-volume frame selection is stubbed; the quarry
-//     falls back to its default frame box. Restored when core.marker.volume + core.tile land.
-//   - CapUtil.CAP_ITEM_TRANSACTOR + AutomaticProvidingTransactor: item-output capability deferred to the
-//     Transfer-API item pass; only the MJ receiver capability is exposed.
-//   - BCBuildersBlocks.frame / .quarry: block identity checks + frame placement stubbed (lib.block deferred).
-//   - BCBuildersConfig.* / BCCoreConfig.miningMaxDepth: inlined as constants (config layer deferred).
-//   - BCBuildersEventDist: quarry validate/invalidate bookkeeping dropped.
-//   - AdvDebuggerQuarry / render bounding box: client debug render stubbed.
-//   - BlockUtil fluid viscosity / break-power / drops: BlockUtil stubs (see lib.misc.BlockUtil).
+/** Native powered excavation, frame repair and persistence. Remake by FelixMantra. */
 public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, IChunkLoadingTile {
     public static final boolean DEBUG_QUARRY = BCDebugging.shouldDebugLog("builders.quarry");
     private static final long MAX_POWER_PER_TICK = 512 * MjAPI.MJ;
     private static final Identifier ADVANCEMENT_COMPLETE
         = new Identifier("buildcraftbuilders:diggy_diggy_hole");
-
-    // STUB(R.Chen): inlined BCBuildersConfig / BCCoreConfig values (config layer not yet in libLeaf).
-    private static final int QUARRY_FRAME_MIN_HEIGHT = 4;
-    private static final int QUARRY_MAX_TASKS_PER_TICK = 4;
-    private static final int QUARRY_TASK_POWER_DIVISOR = 2;
-    private static final double QUARRY_MAX_FRAME_MOVE_SPEED = 0;
-    private static final double QUARRY_MAX_BLOCK_MINE_RATE = 0;
-    private static final int MINING_MAX_DEPTH = 512;
 
     private final MjBattery battery = new MjBattery(24000 * MjAPI.MJ);
     public final Box frameBox = new Box();
@@ -121,8 +86,10 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     private BoxIterator boxIterator;
     public final List<BlockPos> framePoses = new ArrayList<>();
     private int frameBoxPosesCount = 0;
-    private final LinkedList<BlockPos> toCheck = new LinkedList<>();
-    private final Set<BlockPos> firstCheckedPoses = new HashSet<>();
+    private BoxIterator frameIterator;
+    private boolean miningFinished, performingWork;
+    private int scanBudget;
+    private static final int MAX_PENDING_FRAME_WORK = 1024;
     private boolean firstChecked = false;
     private final Set<BlockPos> frameBreakBlockPoses = new TreeSet<>(
         BlockUtil.uniqueBlockPosComparator(Comparator.comparingDouble(p -> getPos().getSquaredDistance(p)))
@@ -136,13 +103,20 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     private double blockPercentSoFar;
     private double moveDistanceSoFar;
     private boolean firstServerTick = true;
+    private boolean legacyMiningBounds;
 
     public TileQuarry(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery)));
-        // STUB(R.Chen): caps.addCapabilityInstance(CAP_ITEM_TRANSACTOR, AutomaticProvidingTransactor.INSTANCE,
-        //               EnumPipePart.VALUES) — Forge item-output capability; deferred to the Transfer-API
-        //               item pass (replace with ItemStorage.SIDED registration in BCBuildersInitializer).
+        caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery) {
+            @Override public boolean canReceive() { return isStorageAvailable(); }
+            @Override public long getPowerRequested() { return canReceive()?super.getPowerRequested():0; }
+            @Override public long receivePower(long amount,boolean simulate) {
+                if(amount<0 || !canReceive() || world.isClient)return amount;
+                long remainder=super.receivePower(amount,simulate);
+                if(!simulate && remainder!=amount)markDirty();
+                return remainder;
+            }
+        }));
     }
 
     @Nonnull
@@ -150,7 +124,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         long x = getPos().getX();
         long y = getPos().getY();
         long z = getPos().getZ();
-        long seed = ((x & 0xFFFF) << 0) | ((y & 0xFFFF) << 16) | ((z & 0xFFFF << 32));
+        long seed = ((x & 0xFFFF) << 0) | ((y & 0xFFFF) << 16) | ((z & 0xFFFF) << 32);
 
         Random rand = new Random(seed);
         EnumAxisOrder axisOrder = rand.nextBoolean() ? EnumAxisOrder.XZY : EnumAxisOrder.ZXY;
@@ -239,132 +213,134 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     @Override
     public void onPlacedBy(LivingEntity placer, ItemStack stack) {
         super.onPlacedBy(placer, stack);
-        if (placer.getWorld().isClient) {
-            return;
-        }
-        Direction facing = world.getBlockState(pos).get(BlockBCBase_Neptune.PROP_FACING);
-        BlockPos areaPos = pos.offset(facing.getOpposite());
-        BlockEntity tile = world.getBlockEntity(areaPos);
-        BlockPos min = null, max = null;
-        if (tile instanceof IAreaProvider) {
-            IAreaProvider provider = (IAreaProvider) tile;
-            min = provider.min();
-            max = provider.max();
-            int dx = max.getX() - min.getX();
-            int dz = max.getZ() - min.getZ();
-            if (dx < 3 || dz < 3) {
-                min = null;
-                max = null;
-            } else {
-                provider.removeFromWorld();
+        if (world == null || world.isClient) return;
+        Direction back = getCachedState().get(BlockBCBase_Neptune.PROP_FACING).getOpposite();
+        BlockPos areaPos = pos.offset(back);
+        IAreaProvider chosen = null;
+        if (world.isChunkLoaded(areaPos) && world.getBlockEntity(areaPos) instanceof IAreaProvider provider
+                && usableArea(provider.min(), provider.max(), areaPos)) chosen = provider;
+        if (chosen == null) {
+            var cache = buildcraft.core.marker.VolumeCache.INSTANCE.getSubCache(world);
+            for (BlockPos markerPos : List.copyOf(cache.getAllMarkers())) {
+                var marker = cache.getMarker(markerPos);
+                if (marker instanceof buildcraft.core.tile.TileMarkerVolume volume
+                        && volume.getCurrentConnection() != null && usableArea(volume.min(), volume.max(), areaPos)) {
+                    chosen = volume; break;
+                }
             }
         }
-        // STUB(R.Chen): core.marker.VolumeCache / TileMarkerVolume frame-volume selection deferred until
-        // core.marker.volume + core.tile.TileMarkerVolume are migrated. The quarry falls through to its
-        // default frame box below when no IAreaProvider (land-mark) volume is present.
-        if (min == null || max == null) {
-            miningBox.reset();
-            frameBox.reset();
-            switch (facing.getOpposite()) {
-                case DOWN:
-                case UP:
-                default:
-                case EAST: // +X
-                    min = pos.add(1, 0, -5);
-                    max = pos.add(11, 4, 5);
-                    break;
-                case WEST: // -X
-                    min = pos.add(-11, 0, -5);
-                    max = pos.add(-1, 4, 5);
-                    break;
-                case SOUTH: // +Z
-                    min = pos.add(-5, 0, 1);
-                    max = pos.add(5, 4, 11);
-                    break;
-                case NORTH: // -Z
-                    min = pos.add(-5, 0, -11);
-                    max = pos.add(5, 4, -1);
-                    break;
-            }
+        BlockPos min, max;
+        if (chosen != null) {
+            min = chosen.min(); max = chosen.max();
+        } else if (back == Direction.EAST || back == Direction.WEST) {
+            min = pos.add(back == Direction.EAST ? 1 : -11, 0, -5);
+            max = pos.add(back == Direction.EAST ? 11 : -1, 4, 5);
+        } else {
+            min = pos.add(-5, 0, back == Direction.SOUTH ? 1 : -11);
+            max = pos.add(5, 4, back == Direction.SOUTH ? 11 : -1);
         }
-        if (max.getY() - min.getY() < QUARRY_FRAME_MIN_HEIGHT) {
-            max = new BlockPos(max.getX(), min.getY() + QUARRY_FRAME_MIN_HEIGHT, max.getZ());
-        }
-        if (world.isOutOfHeightLimit(max)) {
-            int dist = max.getY() - min.getY();
-            min = min.down(dist);
-            max = max.down(dist);
-        }
-        frameBox.reset();
-        frameBox.setMin(min);
-        frameBox.setMax(max);
+        int height = Math.min(world.getHeight()-1, Math.max(max.getY()-min.getY(),
+            buildcraft.builders.BCBuildersConfig.quarryFrameMinHeight));
+        int y = Math.max(world.getBottomY(), Math.min(min.getY(), world.getTopY()-1-height));
+        frameBox.reset(); frameBox.setMin(new BlockPos(min.getX(),y,min.getZ()));
+        frameBox.setMax(new BlockPos(max.getX(),y+height,max.getZ()));
         miningBox.reset();
-        int minY = max.getY() - 1 - MINING_MAX_DEPTH;
-        if (world.isOutOfHeightLimit(new BlockPos(min.getX(), minY, min.getZ()))) {
-            // TODO: Ask the world for the actual minimum height, rather than just assume 0!
-            minY = 0;
-        }
-        miningBox.setMin(new BlockPos(min.getX() + 1, minY, min.getZ() + 1));
-        miningBox.setMax(new BlockPos(max.getX() - 1, max.getY() - 1, max.getZ() - 1));
-        updatePoses();
+        int bottom = Math.max(world.getBottomY(), frameBox.max().getY()-1-
+            Math.max(1,buildcraft.core.BCCoreConfig.miningMaxDepth));
+        miningBox.setMin(new BlockPos(min.getX()+1,bottom,min.getZ()+1));
+        miningBox.setMax(new BlockPos(max.getX()-1,frameBox.max().getY()-1,max.getZ()-1));
+        if (!validBounds()) { frameBox.reset(); miningBox.reset(); return; }
+        if (chosen != null) chosen.removeFromWorld();
+        boxIterator=null; currentTask=null; drillPos=null; miningFinished=false;
+        updatePoses(); markDirty(); sendNetworkUpdate(NET_RENDER_DATA);
     }
 
-    private boolean canMine(BlockPos blockPos) {
-        if (world.getBlockState(blockPos).getHardness(world, blockPos) < 0) {
-            return false;
-        }
-        // STUB(R.Chen): Forge fluid viscosity probing deferred; getFluidWithFlowing returns null for now.
-        return BlockUtil.getFluidWithFlowing(world, blockPos) == null;
+    private boolean usableArea(BlockPos min, BlockPos max, BlockPos adjacent) {
+        if (min==null || max==null || max.getX()-min.getX()<3 || max.getZ()-min.getZ()<3
+                || max.getX()-min.getX()>256 || max.getZ()-min.getZ()>256 || min.getY()!=pos.getY()) return false;
+        Box box = new Box(min,max);
+        return !box.contains(pos) && box.contains(adjacent)
+            && (adjacent.getX()==min.getX() || adjacent.getX()==max.getX()
+                || adjacent.getZ()==min.getZ() || adjacent.getZ()==max.getZ());
     }
 
-    private boolean canMoveThrough(BlockPos blockPos) {
-        if (world.isAir(blockPos)) {
-            return true;
-        }
-        // STUB(R.Chen): fluid passability (viscosity <= 1000) deferred; non-air treated as solid.
-        return false;
+    private boolean loaded(BlockPos target) {
+        return target!=null && world!=null && world.isInBuildLimit(target)
+            && world.getWorldBorder().contains(target) && world.isChunkLoaded(target);
     }
 
-    private boolean canMoveDownTo(BlockPos blockPos) {
-        for (int y = miningBox.max().getY(); y > blockPos.getY(); y--) {
-            if (!canMoveThrough(VecUtil.replaceValue(blockPos, Axis.Y, y))) {
-                return false;
-            }
-        }
+    private boolean canMine(BlockPos target) {
+        if (!loaded(target)) return false;
+        var state=world.getBlockState(target);
+        return !state.isAir() && !(state.getBlock() instanceof net.minecraft.block.FluidBlock)
+            && state.getHardness(world,target)>=0;
+    }
+
+    private boolean canMoveThrough(BlockPos target) {
+        if (!loaded(target)) return false;
+        var state=world.getBlockState(target);
+        if (state.isAir()) return true;
+        if (!(state.getBlock() instanceof net.minecraft.block.FluidBlock)) return false;
+        return net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes.getViscosity(
+            net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(state.getFluidState().getFluid()),world)<=1000;
+    }
+
+    private boolean canMoveDownTo(BlockPos target) {
+        for (int y=miningBox.max().getY();y>target.getY();y--)
+            if (!canMoveThrough(new BlockPos(target.getX(),y,target.getZ()))) return false;
         return true;
     }
 
-    private boolean canIgnoreInFrameBox(BlockPos blockPos) {
-        return !world.isAir(blockPos) && BlockUtil.getFluidWithFlowing(world, blockPos) == null;
+    private boolean canIgnoreInFrameBox(BlockPos target) {
+        var state=world.getBlockState(target);
+        return !state.isAir() && !(state.getBlock() instanceof net.minecraft.block.FluidBlock);
     }
 
-    private void check(BlockPos blockPos) {
-        frameBreakBlockPoses.remove(blockPos);
-        framePlaceFramePoses.remove(blockPos);
-        if (shouldBeFrame(blockPos)) {
-            // STUB(R.Chen): BCBuildersBlocks.frame identity check deferred (lib.block not in libLeaf).
-            // Treated as "not yet a frame block", so the position is queued for the frame-building logic.
-            if (canIgnoreInFrameBox(blockPos)) {
-                frameBreakBlockPoses.add(blockPos);
-            } else {
-                framePlaceFramePoses.add(blockPos);
+    private void check(BlockPos target) {
+        if (target==null || !frameBox.contains(target) || !loaded(target)) return;
+        frameBreakBlockPoses.remove(target); framePlaceFramePoses.remove(target);
+        if (frameBreakBlockPoses.size()+framePlaceFramePoses.size()>=MAX_PENDING_FRAME_WORK) return;
+        if (shouldBeFrame(target)) {
+            if (!world.getBlockState(target).isOf(buildcraft.builders.BCBuildersBlocks.frame)) {
+                if (canIgnoreInFrameBox(target)) frameBreakBlockPoses.add(target.toImmutable());
+                else framePlaceFramePoses.add(target.toImmutable());
             }
-        } else {
-            if (canIgnoreInFrameBox(blockPos)) {
-                frameBreakBlockPoses.add(blockPos);
-            }
-        }
-        if (!firstChecked) {
-            firstCheckedPoses.add(blockPos);
-            if (firstCheckedPoses.size() >= frameBoxPosesCount) {
-                firstChecked = true;
+        } else if (canIgnoreInFrameBox(target)) frameBreakBlockPoses.add(target.toImmutable());
+    }
+
+    private void scanFrame() {
+        if (frameIterator==null) return;
+        for (int i=0;i<(firstChecked?10:500);i++) {
+            if (frameBreakBlockPoses.size()+framePlaceFramePoses.size()>=MAX_PENDING_FRAME_WORK) return;
+            BlockPos target=frameIterator.getCurrent();
+            if (!loaded(target)) return;
+            check(target);
+            if (frameIterator.advance()==null) {
+                firstChecked=true;
+                frameIterator=new BoxIterator(frameBox,AxisOrder.getFor(EnumAxisOrder.XZY,AxisOrder.Inversion.NNN),false);
+                break;
             }
         }
     }
+
+    /** Native block changes revisit already-scanned mining positions and repair missing frames. */
+    public void onWorldBlockChanged(BlockPos changed) {
+        if (world==null || world.isClient || isRemoved() || performingWork) return;
+        if (frameBox.isInitialized() && frameBox.contains(changed)) check(changed);
+        if (miningBox.isInitialized() && miningBox.contains(changed) && boxIterator!=null
+                && (miningFinished || boxIterator.hasVisited(changed))) {
+            boxIterator.moveTo(changed); boxIterator.advance(); miningFinished=false;
+        }
+    }
+
+    public boolean isMiningFinished() { return miningFinished; }
+    public Box getMiningBox() { return miningBox; }
+    public long getStoredPower() { return battery.getStored(); }
 
     @Override
     public void onLoad() {
         super.onLoad();
+        buildcraft.builders.BCBuildersEventDist.INSTANCE.validateQuarry(this);
         if (!world.isClient) {
             updatePoses();
         }
@@ -373,23 +349,32 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     @Override
     public void cancelRemoval() {
         super.cancelRemoval();
-        // STUB(R.Chen): BCBuildersEventDist.INSTANCE.validateQuarry(this) + world.addEventListener
-        // (IWorldEventListener) dropped; reactive re-checks are handled by the polling loop in tick().
+        buildcraft.builders.BCBuildersEventDist.INSTANCE.validateQuarry(this);
     }
 
     @Override
     public void markRemoved() {
         super.markRemoved();
-        // STUB(R.Chen): BCBuildersEventDist.INSTANCE.invalidateQuarry(this) + world.removeEventListener dropped.
+        buildcraft.builders.BCBuildersEventDist.INSTANCE.invalidateQuarry(this);
         if (world != null && !world.isClient) {
             ChunkLoaderManager.releaseChunksFor(this);
         }
     }
 
+    @Override public void onRemove() {
+        if(world==null || world.isClient || !isStorageAvailable())return;
+        ChunkLoaderManager.forget(this);
+        buildcraft.builders.BCBuildersEventDist.INSTANCE.invalidateQuarry(this);
+        super.onRemove();
+        if(currentTask instanceof TaskBreakBlock task)world.setBlockBreakingInfo(task.breakPos.hashCode(),task.breakPos,-1);
+        for(var frame:List.copyOf(framePoses))if(world.isChunkLoaded(frame)
+            && world.getBlockState(frame).isOf(buildcraft.builders.BCBuildersBlocks.frame))world.removeBlock(frame,false);
+    }
+
     @Nullable
     @Override
     public LoadType getLoadType() {
-        return LoadType.HARD;
+        return validBounds() ? LoadType.HARD : null;
     }
 
     @Nullable
@@ -412,18 +397,14 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     private void updatePoses() {
         framePoses.clear();
         frameBoxPosesCount = 0;
-        toCheck.clear();
-        firstCheckedPoses.clear();
+        frameIterator = null;
         firstChecked = false;
         frameBreakBlockPoses.clear();
         framePlaceFramePoses.clear();
-        // STUB(R.Chen): state.getBlock() == BCBuildersBlocks.quarry identity check deferred (lib.block not in
-        // libLeaf). Since this BE only exists where the quarry block is placed, the block check is assumed true.
-        if (frameBox.isInitialized()) {
-            List<BlockPos> blocksInArea = frameBox.getBlocksInArea();
-            blocksInArea.sort(BlockUtil.uniqueBlockPosComparator(Comparator.comparingDouble(pos::getSquaredDistance)));
-            frameBoxPosesCount = blocksInArea.size();
-            toCheck.addAll(blocksInArea);
+        if (world!=null && frameBox.isInitialized() && miningBox.isInitialized() && validBounds()
+                && getCachedState().isOf(buildcraft.builders.BCBuildersBlocks.quarry)) {
+            var size=frameBox.size(); frameBoxPosesCount=size.getX()*size.getY()*size.getZ();
+            frameIterator=new BoxIterator(frameBox,AxisOrder.getFor(EnumAxisOrder.XZY,AxisOrder.Inversion.NNN),false);
             framePoses.addAll(getFramePositions());
             ChunkLoaderManager.loadChunksForTile(this);
         }
@@ -435,9 +416,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
     }
 
     public void tick() {
-        if (drillPos == null) {
-            // STUB(R.Chen): collision boxes (Box) deferred; entity-collision rendering not migrated.
-        }
+        if (world==null || isRemoved()) return;
 
         if (world.isClient) {
             prevClientDrillPos = clientDrillPos;
@@ -450,6 +429,18 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
 
         if (firstServerTick) {
             firstServerTick = false;
+            if (legacyMiningBounds && miningBox.isInitialized() && miningBox.min().getY()==0) {
+                int bottom=Math.max(world.getBottomY(),miningBox.max().getY()-Math.max(1,buildcraft.core.BCCoreConfig.miningMaxDepth));
+                if (bottom<0) {
+                    miningBox.setMin(miningBox.min().withY(bottom));
+                    boxIterator=null; miningFinished=false;
+                }
+            }
+            legacyMiningBounds=false;
+            if (!validBounds()) {
+                frameBox.reset(); miningBox.reset(); currentTask=null; drillPos=null;
+                ChunkLoaderManager.forget(this);
+            }
             updatePoses();
         }
 
@@ -457,17 +448,8 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
             return;
         }
 
-        if (!toCheck.isEmpty()) {
-            for (int i = 0; i < (firstChecked ? 10 : 500); i++) {
-                BlockPos blockPos = toCheck.pollFirst();
-                check(blockPos);
-                toCheck.addLast(blockPos);
-            }
-        }
-
-        if (!firstChecked) {
-            return;
-        }
+        scanFrame();
+        scanBudget=256;
 
         long max;
         if (battery.getStored() > battery.getCapacity() / 2) {
@@ -487,24 +469,26 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         blockPercentSoFar = 0;
         moveDistanceSoFar = 0;
 
-        int maxTasks = Math.max(1, (int) (max * QUARRY_MAX_TASKS_PER_TICK / MAX_POWER_PER_TICK));
+        int maxTasks = Math.max(1, (int) (max * buildcraft.builders.BCBuildersConfig.quarryMaxTasksPerTick / MAX_POWER_PER_TICK));
         boolean sendUpdate = false;
         power_loop: for (int i = 0; i < maxTasks; i++) {
 
             if (currentTask != null) {
-
+                if(currentTask instanceof TaskBreakBlock task && !canMine(task.breakPos)) {
+                    if(!loaded(task.breakPos))break;
+                    battery.addPower(currentTask.power,false);
+                    world.setBlockBreakingInfo(task.breakPos.hashCode(),task.breakPos,-1);
+                    currentTask=null;check(task.breakPos);sendUpdate=true;continue;
+                }
                 long needed = currentTask.getRequiredPowerThisTick();
                 long added;
-                final int mult = QUARRY_TASK_POWER_DIVISOR;
+                final int mult = buildcraft.builders.BCBuildersConfig.quarryTaskPowerDivisor;
                 if (mult > 0) {
-                    long nNeeded = needed * (mult + i) / mult;
-                    long leftover = (needed * (mult + i)) % mult;
+                    long nNeeded = (needed * (mult + i) + mult - 1) / mult;
                     long power = battery.extractPower(0, Math.min(max, nNeeded));
                     max -= power;
                     added = power * mult / (mult + i);
-                    if (leftover > 0) {
-                        added++;
-                    }
+
                 } else {
                     added = battery.extractPower(0, Math.min(max, needed));
                     max -= added;
@@ -544,52 +528,29 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
                 }
             }
 
-            if (boxIterator == null || drillPos == null) {
-                boxIterator = createBoxIterator();
-                while (
-                    canMoveThrough(boxIterator.getCurrent()) || !canMine(boxIterator.getCurrent())
-                    || !canMoveDownTo(boxIterator.getCurrent())
-                ) {
-                    if (boxIterator.advance() == null) {
-                        break;
-                    }
-                }
-                drillPos = Vec3d.of(miningBox.closestInsideTo(pos));
+            if (!firstChecked || miningFinished) break;
+            if (boxIterator==null || drillPos==null) {
+                boxIterator=createBoxIterator();
+                drillPos=Vec3d.of(miningBox.closestInsideTo(pos));
             }
-
-            if (boxIterator != null && boxIterator.hasNext()) {
-                while (
-                    canMoveThrough(boxIterator.getCurrent()) || !canMine(boxIterator.getCurrent())
-                    || !canMoveDownTo(boxIterator.getCurrent())
-                ) {
-                    if (boxIterator.advance() == null) {
-                        break;
-                    }
-                }
-
-                if (boxIterator.hasNext()) {
-                    boolean found = false;
-
-                    if (drillPos.squaredDistanceTo(Vec3d.of(boxIterator.getCurrent())) >= 1) {
-                        currentTask = new TaskMoveDrill(drillPos, Vec3d.of(boxIterator.getCurrent()));
-                        found = true;
-                    } else if (canMine(boxIterator.getCurrent())) {
-                        currentTask = new TaskBreakBlock(boxIterator.getCurrent());
-                        found = true;
-                    }
-
-                    if (found) {
-                        sendUpdate = true;
-                    } else {
-                        net.minecraft.util.math.Box box = miningBox.getBoundingBox();
-                        if (box.maxX - box.minX == 63 && box.maxZ - box.minZ == 63) {
-                            if (getOwner() != null) {
-                                AdvancementUtil.unlockAdvancement(getOwner().getId(), ADVANCEMENT_COMPLETE);
-                            }
-                        }
-                    }
-                }
+            while (boxIterator.hasNext() && scanBudget>0) {
+                BlockPos target=boxIterator.getCurrent();
+                if (!loaded(target)) break power_loop;
+                scanBudget--;
+                if (canMine(target) && canMoveDownTo(target)) break;
+                boxIterator.advance();
             }
+            if (!boxIterator.hasNext()) {
+                miningFinished=true; sendUpdate=true;
+                if (miningBox.size().getX()==63 && miningBox.size().getZ()==63 && getOwner()!=null)
+                    AdvancementUtil.unlockAdvancement(((ServerWorld)world).getServer().getPlayerManager().getPlayer(getOwner().getId()),ADVANCEMENT_COMPLETE);
+                break;
+            }
+            if (scanBudget<=0) break;
+            BlockPos target=boxIterator.getCurrent();
+            currentTask=drillPos.squaredDistanceTo(Vec3d.of(target))>=1
+                ?new TaskMoveDrill(drillPos,Vec3d.of(target)):new TaskBreakBlock(target);
+            sendUpdate=true;
         }
         debugPowerRate -= max;
         if (sendUpdate) {
@@ -598,16 +559,20 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         markChunkDirty();
     }
 
-    /** @return The (currently empty) entity-collision boxes for the drill arm.
-     *  STUB(R.Chen): collision boxes (Forge Box / BoundingBoxUtil) deferred to the client/physics
-     *  render pass; returns an empty list so entities pass through the drill until then. */
+    /** Physical rails and drill support use the same world coordinates as the renderer. */
     public List<net.minecraft.util.math.Box> getCollisionBoxes() {
-        return Collections.emptyList();
+        if(drillPos==null || !validDrill(drillPos) || !frameBox.isInitialized())return List.of();
+        double x=drillPos.x+.5,z=drillPos.z+.5,y=frameBox.max().getY()+.5,r=.125;
+        return List.of(
+            new net.minecraft.util.math.Box(x-r,y-r,frameBox.min().getZ()+.5-r,x+r,y+r,frameBox.max().getZ()+.5+r),
+            new net.minecraft.util.math.Box(frameBox.min().getX()+.5-r,y-r,z-r,frameBox.max().getX()+.5+r,y+r,z+r),
+            new net.minecraft.util.math.Box(x-r,drillPos.y,z-r,x+r,y+r,z+r));
     }
 
     @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
+        nbt.putInt("quarry_format",2);
         nbt.put("box", miningBox.writeToNBT());
         nbt.put("frame", frameBox.writeToNBT());
         if (boxIterator != null) {
@@ -626,24 +591,28 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
             nbt.put("drillPos", NBTUtilBC.writeVec3d(drillPos));
         }
         nbt.putBoolean("firstChecked", firstChecked);
+        nbt.putBoolean("miningFinished", miningFinished);
     }
 
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
+        legacyMiningBounds=nbt.getInt("quarry_format")<2;
         miningBox.initialize(nbt.getCompound("box"));
         frameBox.initialize(nbt.getCompound("frame"));
         boxIterator = BoxIterator.readFromNbt(nbt.getCompound("boxIterator"));
         battery.readFromNbt(nbt.getCompound("battery"));
-        if (nbt.contains("currentTask")) {
-            currentTask = EnumTaskType.values()[(int) nbt.getByte("currentTaskId")].supplier.apply(this);
+        int taskId=nbt.getByte("currentTaskId");
+        if (nbt.contains("currentTaskId") && taskId>=0 && taskId<EnumTaskType.values().length) {
+            currentTask = EnumTaskType.values()[taskId].supplier.apply(this);
             currentTask.readFromNBT(nbt.getCompound("currentTaskData"));
         } else {
             currentTask = null;
         }
         drillPos = NBTUtilBC.readVec3d(nbt.get("drillPos"));
-        firstChecked = nbt.getBoolean("firstChecked");
-        if (drillPos != null && drillPos.squaredDistanceTo(Vec3d.of(getPos())) > 1024 * 1024) {
+        firstChecked = false;
+        miningFinished=nbt.getBoolean("miningFinished");
+        if (drillPos != null && !validDrill(drillPos)) {
             drillPos = null;
         }
 
@@ -690,11 +659,62 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
                 ;
             }
         }
+        isValid &= validBounds();
+        if (boxIterator!=null && (!boxIterator.getMin().equals(miningBox.min()) || !boxIterator.getMax().equals(miningBox.max()))) boxIterator=null;
+        if (!validTask(currentTask)) currentTask=null;
         if (!isValid) {
             frameBox.reset();
             miningBox.reset();
             drillPos = null;
+            currentTask=null; boxIterator=null; miningFinished=false;
+            if(world instanceof ServerWorld)ChunkLoaderManager.forget(this);
         }
+    }
+
+    private boolean validBounds() {
+        return validBounds(frameBox,miningBox);
+    }
+
+    private boolean validBounds(Box frameBox,Box miningBox) {
+        if (!frameBox.isInitialized() || !miningBox.isInitialized()) return false;
+        if (world!=null && (frameBox.min().getY()<world.getBottomY() || frameBox.max().getY()>=world.getTopY()
+                || miningBox.min().getY()<world.getBottomY() || !world.getWorldBorder().contains(frameBox.min())
+                || !world.getWorldBorder().contains(frameBox.max()))) return false;
+        var size=frameBox.size();
+        if (size.getX()<4 || size.getZ()<4 || size.getY()<2 || size.getX()>257 || size.getZ()>257 || size.getY()>4096
+                || frameBox.contains(pos) || Math.abs((long)frameBox.min().getX())>30_000_000L
+                || Math.abs((long)frameBox.max().getX())>30_000_000L || Math.abs((long)frameBox.min().getZ())>30_000_000L
+                || Math.abs((long)frameBox.max().getZ())>30_000_000L || Math.abs((long)miningBox.min().getY())>4096
+                || Math.abs((long)miningBox.max().getY())>4096) return false;
+        return frameBox.min().getX()+1==miningBox.min().getX() && frameBox.max().getX()-1==miningBox.max().getX()
+            && frameBox.min().getZ()+1==miningBox.min().getZ() && frameBox.max().getZ()-1==miningBox.max().getZ()
+            && frameBox.min().getY()>=miningBox.min().getY() && frameBox.max().getY()-1==miningBox.max().getY()
+            && Direction.Type.HORIZONTAL.stream().anyMatch(side->frameBox.isOnEdge(pos.offset(side)));
+    }
+
+    private boolean validDrill(Vec3d value) {
+        return validDrill(value,miningBox);
+    }
+
+    private boolean validDrill(Vec3d value,Box miningBox) {
+        return value!=null && Double.isFinite(value.x+value.y+value.z) && miningBox.isInitialized()
+            && value.x>=miningBox.min().getX() && value.x<=miningBox.max().getX()
+            && value.y>=miningBox.min().getY() && value.y<=miningBox.max().getY()
+            && value.z>=miningBox.min().getZ() && value.z<=miningBox.max().getZ();
+    }
+
+    private boolean validTask(Task task) {
+        return validTask(task,frameBox,miningBox,drillPos);
+    }
+
+    private boolean validTask(Task task,Box frameBox,Box miningBox,Vec3d drillPos) {
+        if (task==null) return true;
+        if (task.power<0 || task.power>1_000_000L*MjAPI.MJ) return false;
+        if (task instanceof TaskAddFrame add) return add.framePos!=null && frameBox.isInitialized() && frameBox.isOnEdge(add.framePos);
+        if (task instanceof TaskBreakBlock mine) return mine.breakPos!=null && (drillPos==null
+            ?frameBox.isInitialized() && frameBox.contains(mine.breakPos):miningBox.isInitialized() && miningBox.contains(mine.breakPos));
+        if (task instanceof TaskMoveDrill move) return validDrill(move.from,miningBox) && validDrill(move.to,miningBox);
+        return false;
     }
 
     @Override
@@ -727,32 +747,33 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         super.readPayload(id, buffer, side, ctx);
         if (side == NetSide.CLIENT) {
             if (id == NET_RENDER_DATA) {
-                frameBox.readData(buffer);
-                miningBox.readData(buffer);
+                Box nextFrame=new Box(),nextMining=new Box();
+                nextFrame.readData(buffer);
+                nextMining.readData(buffer);
+                Vec3d nextDrill=buffer.readBoolean()?readVec3d(buffer):null;
+                Task task=null,update=null;
                 if (buffer.readBoolean()) {
-                    drillPos = readVec3d(buffer);
-                } else {
-                    drillPos = null;
-                }
-                if (buffer.readBoolean()) {
-                    int taskId = buffer.readByte();
-                    Task task = EnumTaskType.values()[taskId].supplier.apply(this);
+                    int taskId = buffer.readUnsignedByte();
+                    if (taskId>=EnumTaskType.values().length) throw new IOException("Invalid quarry task");
+                    task = EnumTaskType.values()[taskId].supplier.apply(this);
                     task.fromBytes(buffer);
-                    if (currentTask == null || !currentTask.equals(task)) {
-                        currentTask = task;
-                        Task tempTask = EnumTaskType.values()[taskId].supplier.apply(this);
-                        tempTask.fromBytes(buffer);
-                    } else {
-                        currentTask.fromBytes(buffer);
-                    }
-                } else {
-                    currentTask = null;
+                    update=EnumTaskType.values()[taskId].supplier.apply(this);
+                    update.fromBytes(buffer);
+                    if (!task.equals(update)) throw new IOException("Inconsistent quarry task");
                 }
+                boolean empty=!nextFrame.isInitialized() && !nextMining.isInitialized() && nextDrill==null && task==null;
+                if (!empty && (!validBounds(nextFrame,nextMining) || nextDrill!=null && !validDrill(nextDrill,nextMining)
+                        || !validTask(task,nextFrame,nextMining,nextDrill) || !validTask(update,nextFrame,nextMining,nextDrill)))
+                    throw new IOException("Invalid quarry render state");
+                if(empty) {frameBox.reset();miningBox.reset();}
+                else {frameBox.initialize(nextFrame);miningBox.initialize(nextMining);}
+                drillPos=nextDrill;
+                if (task!=null && currentTask!=null && currentTask.equals(task)) currentTask.power=update.power;
+                else currentTask=task;
             }
         }
     }
 
-    // STUB(R.Chen): MessageUtil.read/writeVec3d not yet migrated; inline double-triple (de)serialization.
     private static void writeVec3d(PacketBufferBC buffer, Vec3d vec) {
         buffer.writeDouble(vec.x);
         buffer.writeDouble(vec.y);
@@ -774,7 +795,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         left.add(" - min = " + miningBox.min());
         left.add(" - max = " + miningBox.max());
 
-        left.add("firstCheckedPoses = " + firstCheckedPoses.size());
+        left.add("frameScan = " + (frameIterator==null?null:frameIterator.getCurrent()));
         left.add("frameBoxPosesCount = " + frameBoxPosesCount);
         left.add("firstChecked = " + firstChecked);
 
@@ -837,8 +858,9 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
             buffer.writeLong(power);
         }
 
-        void fromBytes(PacketBufferBC buffer) {
+        void fromBytes(PacketBufferBC buffer) throws IOException {
             power = buffer.readLong();
+            if (power<0 || power>1_000_000L*MjAPI.MJ) throw new IOException("Invalid quarry task power");
         }
 
         void clientTick() {
@@ -860,7 +882,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
 
         /** @return {@code true} if this task has been completed, or cancelled. */
         final boolean addPower(long microJoules) {
-            power += microJoules;
+            power += Math.max(0,microJoules);
             long target = getTarget();
             if (power >= target) {
                 if (!finish(microJoules, target)) {
@@ -884,7 +906,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
 
         @Override
         NbtCompound serializeNBT() {
-            NbtCompound nbt = super.createNbt();
+            NbtCompound nbt = super.serializeNBT();
             nbt.put("breakPos", NBTUtilBC.writeBlockPos(breakPos));
             return nbt;
         }
@@ -906,21 +928,21 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         }
 
         @Override
-        void fromBytes(PacketBufferBC buffer) {
+        void fromBytes(PacketBufferBC buffer) throws IOException {
             super.fromBytes(buffer);
             breakPos = buffer.readBlockPos();
         }
 
         @Override
         public long getTarget() {
-            return BlockUtil.computeBlockBreakPower(world, breakPos);
+            return BlockUtil.computeBlockBreakPower(world, breakPos,buildcraft.core.BCCoreConfig.miningMultiplier);
         }
 
         @Override
         public long getRequiredPowerThisTick() {
             long target = getTarget();
             long req = Math.max(0, target - power);
-            double rate = QUARRY_MAX_BLOCK_MINE_RATE;
+            double rate = buildcraft.builders.BCBuildersConfig.quarryMaxBlockMineRate;
             if (rate < 0.1) {
                 return req;
             }
@@ -950,16 +972,14 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
                 return true;
             }
             world.setBlockBreakingInfo(breakPos.hashCode(), breakPos, -1);
-            Optional<List<ItemStack>> stacks = BlockUtil.breakBlockAndGetDrops(
-                (ServerWorld) world, breakPos, new ItemStack(Items.DIAMOND_PICKAXE), getOwner(), true
-            );
+            Optional<List<ItemStack>> stacks;
+            performingWork=true;
+            try { stacks=BlockUtil.breakBlockAndGetDrops((ServerWorld)world,breakPos,new ItemStack(Items.DIAMOND_PICKAXE),getOwner(),true); }
+            finally { performingWork=false; }
             if (stacks.isPresent()) {
-                // The drill pos will be null if we are making the frame: this is when we want to destroy the block, not
-                // drop its contents
+                // Frame clearing intentionally destroys its debris, as in upstream.
                 if (drillPos != null) {
-                    // STUB(R.Chen): InventoryUtil.addToBestAcceptor (pipe/inventory output) not yet migrated;
-                    // drops fall to the world instead of being pushed into adjacent acceptors.
-                    stacks.get().forEach(stack -> InventoryUtil.drop(world, pos, stack));
+                    stacks.get().forEach(stack -> InventoryUtil.addToBestAcceptor(world,pos,null,stack));
                 }
             }
             check(breakPos);
@@ -988,7 +1008,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
 
         @Override
         NbtCompound serializeNBT() {
-            NbtCompound nbt = super.createNbt();
+            NbtCompound nbt = super.serializeNBT();
             nbt.put("framePos", NBTUtilBC.writeBlockPos(framePos));
             return nbt;
         }
@@ -1010,7 +1030,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         }
 
         @Override
-        void fromBytes(PacketBufferBC buffer) {
+        void fromBytes(PacketBufferBC buffer) throws IOException {
             super.fromBytes(buffer);
             framePos = buffer.readBlockPos();
         }
@@ -1030,9 +1050,19 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
             if (canIgnoreInFrameBox(framePos)) {
                 return false;
             }
-            // STUB(R.Chen): world.setBlockState(framePos, BCBuildersBlocks.frame.getDefaultState()) deferred —
-            // BCBuildersBlocks.frame not in libLeaf (lib.block). Frame placement restored once the block lands.
-            return true;
+            if (!loaded(framePos) || !frameBox.isOnEdge(framePos)) return false;
+            var player=buildcraft.lib.misc.FakePlayerProvider.INSTANCE.getFakePlayer((ServerWorld)world,getOwner(),framePos);
+            if (!world.canPlayerModifyAt(player,framePos)) return false;
+            var previous=player.getMainHandStack();
+            var frameStack=new ItemStack(buildcraft.builders.BCBuildersBlocks.frame);
+            player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,frameStack);
+            performingWork=true;
+            try {
+                player.interactionManager.interactBlock(player,world,frameStack,net.minecraft.util.Hand.MAIN_HAND,
+                    new net.minecraft.util.hit.BlockHitResult(Vec3d.ofCenter(framePos),Direction.UP,framePos,false));
+            } finally { player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,previous); performingWork=false; }
+            check(framePos);
+            return world.getBlockState(framePos).isOf(buildcraft.builders.BCBuildersBlocks.frame);
         }
 
         @Override
@@ -1059,7 +1089,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
 
         @Override
         NbtCompound serializeNBT() {
-            NbtCompound nbt = super.createNbt();
+            NbtCompound nbt = super.serializeNBT();
             nbt.put("from", NBTUtilBC.writeVec3d(from));
             nbt.put("to", NBTUtilBC.writeVec3d(to));
             return nbt;
@@ -1084,7 +1114,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         }
 
         @Override
-        void fromBytes(PacketBufferBC buffer) {
+        void fromBytes(PacketBufferBC buffer) throws IOException {
             super.fromBytes(buffer);
             from = readVec3d(buffer);
             to = readVec3d(buffer);
@@ -1099,7 +1129,7 @@ public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.Ti
         public long getRequiredPowerThisTick() {
             long req = Math.max(0, getTarget() - power);
 
-            double max = QUARRY_MAX_FRAME_MOVE_SPEED;
+            double max = buildcraft.builders.BCBuildersConfig.quarryMaxFrameMoveSpeed;
             if (max < 0.1) {
                 return req;
             }

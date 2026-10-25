@@ -31,7 +31,7 @@ A source scan found 1,265 Java files under
 - `TileQuarry` defers output storage, frame placement and several world integration
   paths. Merely making this class compile would not validate mining behavior.
 - The imported `BlockUtil.breakBlockAndGetDrops` removed blocks and returned no drops.
-  The helper is now repaired and tested below; full quarry operation remains unverified.
+  The helper and the quarry excavation loop are now repaired and tested below.
 - Resources still include old `.lang` files and historical model/recipe formats.
 - Expression and energy dependencies need verification in the distributable jar,
   not just the development classpath.
@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **111 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **126 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -226,7 +226,7 @@ features explicitly as work proceeds.
   Quarries/chutes query sided Fabric item storage, including providers without block
   entities. Frame collision follows its connected arms; frame/chute rotation and
   mirroring preserve those arms. Chute rotation refreshes connections without replacing
-  its inventory. Complete quarry mining remains open.
+  its inventory. Quarry excavation is now covered by the additional tests below.
 - Chutes now collect at most three items per work cycle from the quarter-block mouth
   region, using gravity when facing up or MJ on any face. Transactional output moves
   one item per destination per tick, excludes the mouth and visits overlapping inventory
@@ -335,8 +335,8 @@ features explicitly as work proceeds.
   the native pipe mesh and charge/work LED geometry. Volume marker signals and cached
   path/volume connections render through a scoped world-render callback. Architect scan
   surfaces use translucent native buffers, clipped bounds and fading ticks; scan caches
-  clear on world changes/disconnect. These registrations and geometry have not yet been
-  observed in a running full client; GPU appearance and machine integration remain open.
+  clear on world changes/disconnect. Quarry appearance and drill movement have now
+  been observed in the real client; the other machine integrations still need validation.
 - Mining tubes now use native shape/hardness settings, bounded vertical owner lookup and
   Fabric's cancellable block-break event to protect a connected miner's tube in creative
   mode. Actual miner placement/retraction and this callback await full-world validation.
@@ -606,9 +606,39 @@ features explicitly as work proceeds.
   reload, GPU rendering and live guide input remain unverified. The Stirling engine
   screen has now been opened in the full client; other screens still need validation.
 
+### Native quarry excavation
+
+- Restored marker-selected and default quarry bounds, actual frame placement through
+  native player interaction, clearing, paid drill movement, hardness-based mining and
+  pipe-first output through Fabric item storage. Overflow drops exactly once. Water
+  columns remain passable; bedrock and native mining protection remain respected.
+- Mining reaches the world's actual bottom instead of stopping at Y=0. Legacy saved
+  quarries extend their old zero-depth bounds when loaded. Frame scanning and empty
+  mining searches have per-tick limits and a bounded pending queue.
+- Partial tasks serialize without recursion and restore their type, paid work and
+  battery. Invalid saved bounds/tasks and malformed render packets are rejected.
+  Native world updates repair missing frames and revisit newly placed mining blocks.
+  Moving rails/supports participate in native collision queries on both sides.
+- Quarry-owned chunk tickets are scoped by world and owner, persist across world
+  restarts, respect NONE/STRICT_TILES settings, and do not alter vanilla forced chunks.
+  Removing a quarry releases only its own tickets and frames; stale machine handles
+  cannot detach a replacement or accept energy after removal.
+- Restored the original survival recipe and localized placement/completion
+  advancements, with **Remake by FelixMantra** attribution. Fifteen additional
+  packaged-mod world tests cover these paths; the full suite now passes 126 tests,
+  including actual engine → wooden/stone MJ pipes → quarry excavation.
+  The focused fixture still passes 148 regression tests and 69 world tests.
+- The real client places the quarry using a block item, obtains its placement
+  advancement, saves partial work and reopens the same world with the player far away.
+  Saved tickets load the quarry without a nearby player; paid work plus remaining
+  energy is conserved as the machine continues. The GPU displays moving rails/drill,
+  and native excavation delivers exactly four diamond blocks and four gold blocks.
+  This run passes and saves/exits cleanly; its screenshot is
+  `verification/quarry-client-run/screenshots/quarry-smoke.png`.
+
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
-integration, full quarry operation, and broader connected-client/save-reload gameplay
+integration, larger quarry/third-party compatibility scenarios, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is
 ready for a survival world.
 

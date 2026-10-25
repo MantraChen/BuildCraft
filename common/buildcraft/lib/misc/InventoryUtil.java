@@ -20,6 +20,31 @@ import net.minecraft.world.World;
 // item layer is migrated. Only the BlockPos + DefaultedList drop path used by TileBC_Neptune is kept.
 public class InventoryUtil {
 
+    /** Auto-producing machines prefer item pipes, then sided inventories, and spill only the remainder. */
+    public static void addToBestAcceptor(World world, BlockPos pos, net.minecraft.util.math.Direction ignore, ItemStack stack) {
+        if (world.isClient || stack.isEmpty()) return;
+        ItemStack remaining=stack.copy();
+        var directions=net.minecraft.util.math.Direction.values();
+        for (int i=directions.length-1;i>0;i--) {
+            int j=world.random.nextInt(i+1);var side=directions[i];directions[i]=directions[j];directions[j]=side;
+        }
+        for (int pass=0;pass<2 && !remaining.isEmpty();pass++) for (var side:directions) {
+            BlockPos target=pos.offset(side);
+            if (side==ignore || !world.isChunkLoaded(target)) continue;
+            boolean pipe=world.getBlockEntity(target) instanceof buildcraft.api.transport.pipe.IPipeHolder;
+            if (pipe!=(pass==0)) continue;
+            var storage=net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.find(world,target,side.getOpposite());
+            if (storage==null || !storage.supportsInsertion()) continue;
+            try (var tx=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.openOuter()) {
+                long used=storage.insert(net.fabricmc.fabric.api.transfer.v1.item.ItemVariant.of(remaining),remaining.getCount(),tx);
+                if (used<0 || used>remaining.getCount()) throw new IllegalStateException("Invalid quarry item acceptance");
+                tx.commit();remaining.decrement((int)used);
+            }
+            if (remaining.isEmpty()) return;
+        }
+        drop(world,pos,remaining);
+    }
+
     public static void dropAll(World world, BlockPos pos, DefaultedList<ItemStack> toDrop) {
         for (ItemStack stack : toDrop) {
             if (stack == null) {

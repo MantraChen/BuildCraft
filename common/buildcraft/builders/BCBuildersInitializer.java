@@ -47,13 +47,15 @@ public class BCBuildersInitializer implements ModInitializer {
         BCBuildersItems.fmlPreInit();
         BCBuildersBlocks.fmlPreInit();
         BCBuildersBlocks.fmlInit();
+        buildcraft.lib.chunkload.ChunkLoaderManager.register();
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntity(
+            (tile,face)->net.fabricmc.fabric.api.transfer.v1.storage.Storage.empty(),
+            buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.builders.tile.TileQuarry.class));
         BCBuildersScreens.register();
         buildcraft.builders.snapshot.RulesLoader.loadAll();
         buildcraft.builders.snapshot.RulesLoader.registerReloadListener();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ARCHITECT_TABLE, LIBRARY, REPLACER, QUARRY.
-        // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCBuildersEventDist.INSTANCE) — port the quarry
-        //               validate/invalidate world-event-listener bookkeeping to Fabric callbacks.
 
         // --- Forge init (BCBuilders.init) ----------------------------------------
         // STUB(R.Chen): BCBuildersRecipes.init() — architect/library/snapshot recipes deferred.

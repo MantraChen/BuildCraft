@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -64,5 +64,17 @@ if ($Interactions) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $interactionOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFullClientInteractionSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Quarry) {
+    $quarryRun = Join-Path $verification 'quarry-client-run'
+    $quarryConfig = Join-Path $quarryRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $quarryConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $quarryConfig 'main.cfg') -Force
+    $quarryOptions = Join-Path $quarryRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $quarryOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $quarryOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runQuarryClientSmoke --console=plain
 }
 exit $LASTEXITCODE

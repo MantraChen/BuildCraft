@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        quarryClientSmoke {
+            client()
+            runDir '../../verification/quarry-client-run'
+            vmArg '-Dbuildcraft.quarryClientSmoke=true'
+        }
         fullClientSmoke {
             client()
             runDir '../../verification/full-client-run'

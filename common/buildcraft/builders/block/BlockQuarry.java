@@ -96,14 +96,6 @@ public class BlockQuarry extends BlockBCTile_Neptune implements IBlockWithFacing
 
     @Override
     public void breakBlock(World world, BlockPos pos, BlockState state) {
-        BlockEntity tile = world.getBlockEntity(pos);
-        if (!world.isClient && tile instanceof TileQuarry) {
-            for (BlockPos blockPos : ((TileQuarry) tile).framePoses) {
-                if (world.getBlockState(blockPos).getBlock() == BCBuildersBlocks.frame) {
-                    world.removeBlock(blockPos, false);
-                }
-            }
-        }
         super.breakBlock(world, pos, state);
     }
 

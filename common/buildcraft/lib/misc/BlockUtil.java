@@ -69,10 +69,17 @@ public class BlockUtil {
         return fluid instanceof net.minecraft.fluid.FlowableFluid flowing ? flowing.getStill() : fluid;
     }
 
-    // STUB(R.Chen): Forge block-hardness → MJ break-power curve deferred. Returns a flat placeholder cost so
-    // the quarry's task scheduler still advances; real per-block hardness scaling restored with the mining pass.
     public static long computeBlockBreakPower(World world, BlockPos pos) {
-        return 16 * buildcraft.api.mj.MjAPI.MJ;
+        return computeBlockBreakPower(world, pos, 1);
+    }
+
+    public static long computeBlockBreakPower(World world, BlockPos pos, double multiplier) {
+        var state=world.getBlockState(pos);
+        if (state.isAir()) return 0;
+        float hardness=state.getHardness(world,pos);
+        if (hardness<0) return Long.MAX_VALUE;
+        return (long)Math.max(1,Math.min(Long.MAX_VALUE,Math.floor(32.0*buildcraft.api.mj.MjAPI.MJ
+            *(hardness+1)*Math.max(1,multiplier))));
     }
 
     /** Harvests with native player break callbacks, loot tables and block-entity drops.

@@ -1,0 +1,20 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcraftbuilders:quarry"
+    },
+    "title": {
+      "translate": "advancements.buildcraftbuilders.diggy_remake.title"
+    },
+    "description": {
+      "translate": "advancements.buildcraftbuilders.diggy_remake.description"
+    },
+    "frame": "goal"
+  },
+  "parent": "buildcraftbuilders:shaping_the_world",
+  "criteria": {
+    "code_trigger": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

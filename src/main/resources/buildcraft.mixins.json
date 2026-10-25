@@ -3,6 +3,6 @@
   "package": "buildcraft.lib.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "buildcraft-refmap.json",
-  "mixins": ["ServerPlayerInteractionManagerMixin"],
+  "mixins": ["ServerPlayerInteractionManagerMixin", "WorldQuarryUpdateMixin", "QuarryCollisionMixin"],
   "injectors": { "defaultRequire": 1 }
 }

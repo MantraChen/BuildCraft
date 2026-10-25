@@ -1,0 +1,19 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcraftbuilders:quarry"
+    },
+    "title": {
+      "translate": "advancements.buildcraftbuilders.shaping_remake.title"
+    },
+    "description": {
+      "translate": "advancements.buildcraftbuilders.shaping_remake.description"
+    }
+  },
+  "parent": "buildcraftcore:root",
+  "criteria": {
+    "code_trigger": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

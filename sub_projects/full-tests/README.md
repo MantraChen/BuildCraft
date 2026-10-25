@@ -13,6 +13,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Client
 # Also verify real client/server breaking and prediction in a fresh flat world:
 ./scripts/full-smoke.ps1 -Client -Interactions
+# Also verify quarry placement, excavation and a complete world restart:
+./scripts/full-smoke.ps1 -Quarry
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -41,7 +43,14 @@ RF engine through a real client interaction, checks synchronized RF balance and
 shift-click gear limits, and captures `rf-pipes-smoke.png` and
 `rf-engine-screen-smoke.png` before saving and exiting.
 
-The 111 server tests currently verify:
+The quarry client uses `verification/quarry-client-run/`. It places a quarry through
+native item interaction beside connected volume markers, verifies its advancement,
+saves a partially paid frame task, moves the player away and reopens the same world.
+It requires the distant quarry to load from its saved tickets, preserve paid work,
+animate its drill and deliver exactly four diamond blocks and four gold blocks.
+It captures `screenshots/quarry-smoke.png` before saving and exiting.
+
+The 126 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -198,6 +207,15 @@ The 111 server tests currently verify:
   an RF engine with a chute ignores mismatched data without applying it or producing
   a reply. The connected client replaces the chute with an RF engine in the same tick,
   covering the block-update/custom-packet ordering that previously caused a disconnect.
+
+- Fifteen quarry tests cover four placement directions, native marker adoption,
+  frame building/repair, modern mining depth and old Y=0 saves, partial/completed task
+  reload, protected blocks, water/bedrock columns, pipe-first output and full-inventory
+  overflow. They also check native arm collision/removal, shared/stale chunk ownership,
+  chunk-loading configuration, preservation of vanilla forced chunks, hardness costs,
+  malformed saved tasks/render packets and actual survival crafting/advancements.
+  A creative engine drives excavation through wooden/stone MJ pipes without directly
+  injecting energy into the quarry battery.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 MJ and RF rendering each check 768 load, connection and scrolling-texture combinations, including

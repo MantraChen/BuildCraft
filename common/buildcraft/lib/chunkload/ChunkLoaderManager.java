@@ -1,96 +1,133 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native persistent quarry tickets. Remake by FelixMantra. */
 package buildcraft.lib.chunkload;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import java.lang.ref.WeakReference;
+import java.util.*;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.nbt.*;
+import net.minecraft.server.world.*;
+import net.minecraft.util.math.*;
+import net.minecraft.world.PersistentState;
+import buildcraft.lib.BCLibConfig;
+import buildcraft.lib.chunkload.IChunkLoadingTile.LoadType;
 
-/**
- * Forge→Fabric chunk-loading migration (R.Chen):
- *   ForgeChunkManager.Ticket / requestTicket / forceChunk / unforceChunk
- *     → {@link ServerWorld#setChunkForced(int, int, boolean)} (vanilla force-loaded chunks, persisted by the
- *       server in the world's forced-chunk set — no manual ticket rebinding needed on world load).
- *
- * The Forge implementation tracked one ticket per tile and diffed its chunk list each update; this keeps the
- * same diff behaviour but drives it through {@code setChunkForced}. The Forge {@code rebindTickets} hook is
- * dropped because Fabric/vanilla persists forced chunks itself.
- */
-public class ChunkLoaderManager {
-
-    // Tracks the chunks currently force-loaded per tile position, so they can be diffed and released.
-    // STUB(R.Chen): keyed on BlockPos only (no dimension/WorldPos) — the Forge WorldPos key and the
-    // BCLibConfig.chunkLoadingLevel gating are deferred until BCLibConfig lands in libLeaf. A single quarry
-    // per position makes multi-world key collisions harmless in practice.
-    private static final Map<BlockPos, Set<ChunkPos>> FORCED = new HashMap<>();
-
-    /** Should be called when a tile that wants to chunkload loads/validates. A check is performed to see if loading
-     * is permitted (currently always, pending the config gating). */
+/** Independent native tickets never add/remove the administrator's vanilla forced chunks. */
+public final class ChunkLoaderManager {
+    private static final String SAVE_ID="buildcraft_chunk_loaders";
+    private static final ChunkTicketType<BlockPos> TICKET=ChunkTicketType.create("buildcraft_machine",Comparator.comparingLong(BlockPos::asLong));
+    private static final Map<ServerWorld,State> WORLDS=new WeakHashMap<>();
+    private static boolean registered;
+    private record Lease(WeakReference<BlockEntity> tile,Set<ChunkPos> chunks) {}
+    public static final class State extends PersistentState {
+        private final Map<BlockPos,LoadType> saved=new HashMap<>();
+        private final Map<BlockPos,Lease> active=new HashMap<>();
+        private final Set<BlockPos> pending=new HashSet<>();
+        private BCLibConfig.ChunkLoaderLevel level;
+        private int startupTicks;
+        private static State read(NbtCompound nbt) {
+            var state=new State();
+            for(var element:nbt.getList("loaders",NbtElement.COMPOUND_TYPE)) {
+                var entry=(NbtCompound)element;int type=entry.getByte("type");
+                if(type>=0 && type<LoadType.values().length)state.saved.put(BlockPos.fromLong(entry.getLong("pos")),LoadType.values()[type]);
+            }
+            return state;
+        }
+        @Override public NbtCompound writeNbt(NbtCompound nbt) {
+            var list=new NbtList();
+            for(var entry:saved.entrySet()) {var tag=new NbtCompound();tag.putLong("pos",entry.getKey().asLong());tag.putByte("type",(byte)entry.getValue().ordinal());list.add(tag);}
+            nbt.put("loaders",list);return nbt;
+        }
+    }
+    public static void register() {
+        if(registered)return;registered=true;
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents.LOAD.register((server,world)->restoreWorld(world));
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents.UNLOAD.register((server,world)->unloadWorld(world));
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_WORLD_TICK.register(ChunkLoaderManager::tick);
+    }
+    private static State state(ServerWorld world) {
+        return WORLDS.computeIfAbsent(world,w->w.getPersistentStateManager().getOrCreate(State::read,State::new,SAVE_ID));
+    }
+    public static void restoreWorld(ServerWorld world) {
+        State state=state(world);state.level=BCLibConfig.chunkLoadingLevel;state.startupTicks=0;
+        for(var entry:List.copyOf(state.saved.entrySet())) {
+            BlockPos pos=entry.getKey();
+            if(!world.isInBuildLimit(pos) || !world.getWorldBorder().contains(pos)) {
+                state.saved.remove(pos);state.markDirty();continue;
+            }
+            if(!state.level.canLoad(entry.getValue()) || state.active.containsKey(pos))continue;
+            var chunk=new ChunkPos(pos);world.getChunkManager().addTicket(TICKET,chunk,2,pos);
+            state.active.put(pos,new Lease(new WeakReference<>(null),Set.of(chunk)));state.pending.add(pos);
+        }
+    }
+    public static void unloadWorld(ServerWorld world) {
+        State state=WORLDS.remove(world);if(state==null)return;
+        for(var entry:state.active.entrySet())remove(world,entry.getKey(),entry.getValue());
+        state.active.clear();state.pending.clear();
+    }
+    private static void tick(ServerWorld world) {
+        State state=state(world);
+        if(state.level!=BCLibConfig.chunkLoadingLevel) {
+            var tiles=new ArrayList<BlockEntity>();
+            for(var lease:state.active.values())if(lease.tile.get()!=null)tiles.add(lease.tile.get());
+            for(var entry:state.active.entrySet())remove(world,entry.getKey(),entry.getValue());
+            state.active.clear();state.pending.clear();restoreWorld(world);
+            for(var tile:tiles)if(tile instanceof IChunkLoadingTile loading && !tile.isRemoved())update(tile,loading,world);
+        }
+        if(++state.startupTicks<10)return;
+        for(var pos:List.copyOf(state.pending)) {
+            if(!world.isChunkLoaded(pos))continue;
+            var tile=world.getBlockEntity(pos);
+            if(tile instanceof IChunkLoadingTile loading && !tile.isRemoved())update(tile,loading,world);
+            else {
+                var lease=state.active.remove(pos);if(lease!=null)remove(world,pos,lease);
+                state.saved.remove(pos);state.pending.remove(pos);state.markDirty();
+            }
+        }
+    }
     public static <T extends BlockEntity & IChunkLoadingTile> void loadChunksForTile(T tile) {
-        World world = tile.getWorld();
-        if (!canLoadFor(tile) || !(world instanceof ServerWorld)) {
-            releaseChunksFor(tile);
-            return;
-        }
-        updateChunksFor(tile, (ServerWorld) world);
+        if(tile.getWorld() instanceof ServerWorld world && !tile.isRemoved())update(tile,tile,world);
     }
-
+    private static void update(BlockEntity tile,IChunkLoadingTile loading,ServerWorld world) {
+        State state=state(world);BlockPos pos=tile.getPos().toImmutable();LoadType type=loading.getLoadType();
+        if(type==null) {forget(tile,world);return;}
+        if(state.saved.put(pos,type)!=type)state.markDirty();
+        state.pending.remove(pos);
+        if(!BCLibConfig.chunkLoadingLevel.canLoad(type)) {release(tile,world);return;}
+        var wanted=new HashSet<ChunkPos>();
+        var additional=loading.getChunksToLoad();if(additional!=null)wanted.addAll(additional);
+        wanted.add(new ChunkPos(pos));
+        var previous=state.active.get(pos);var before=previous==null?Set.<ChunkPos>of():previous.chunks;
+        for(var chunk:before)if(!wanted.contains(chunk))world.getChunkManager().removeTicket(TICKET,chunk,2,pos);
+        for(var chunk:wanted)if(!before.contains(chunk))world.getChunkManager().addTicket(TICKET,chunk,2,pos);
+        state.active.put(pos,new Lease(new WeakReference<>(tile),Set.copyOf(wanted)));
+    }
+    private static void remove(ServerWorld world,BlockPos owner,Lease lease) {
+        for(var chunk:lease.chunks)world.getChunkManager().removeTicket(TICKET,chunk,2,owner);
+    }
+    private static void release(BlockEntity tile,ServerWorld world) {
+        State state=state(world);var lease=state.active.get(tile.getPos());
+        if(lease==null || lease.tile.get()!=null && lease.tile.get()!=tile)return;
+        state.active.remove(tile.getPos());state.pending.remove(tile.getPos());remove(world,tile.getPos(),lease);
+    }
+    /** Detachment removes runtime tickets but preserves the loader for the next world start. */
     public static <T extends BlockEntity & IChunkLoadingTile> void releaseChunksFor(T tile) {
-        Set<ChunkPos> previous = FORCED.remove(tile.getPos());
-        if (previous == null) {
-            return;
-        }
-        World world = tile.getWorld();
-        if (world instanceof ServerWorld) {
-            ServerWorld serverWorld = (ServerWorld) world;
-            for (ChunkPos pos : previous) {
-                serverWorld.setChunkForced(pos.x, pos.z, false);
-            }
-        }
+        if(tile.getWorld() instanceof ServerWorld world)release(tile,world);
     }
-
-    private static <T extends BlockEntity & IChunkLoadingTile> void updateChunksFor(T tile, ServerWorld world) {
-        Set<ChunkPos> wanted = getChunksToLoad(tile);
-        Set<ChunkPos> previous = FORCED.getOrDefault(tile.getPos(), Collections.emptySet());
-        // Unforce chunks we no longer need.
-        for (ChunkPos pos : previous) {
-            if (!wanted.contains(pos)) {
-                world.setChunkForced(pos.x, pos.z, false);
-            }
-        }
-        // Force newly-wanted chunks.
-        for (ChunkPos pos : wanted) {
-            if (!previous.contains(pos)) {
-                world.setChunkForced(pos.x, pos.z, true);
-            }
-        }
-        FORCED.put(tile.getPos(), new HashSet<>(wanted));
+    /** Actual block removal also removes its saved registration. */
+    public static <T extends BlockEntity & IChunkLoadingTile> void forget(T tile) {
+        if(tile.getWorld() instanceof ServerWorld world)forget(tile,world);
     }
-
+    private static void forget(BlockEntity tile,ServerWorld world) {
+        State state=state(world);var lease=state.active.get(tile.getPos());
+        if(lease!=null && lease.tile.get()!=null && lease.tile.get()!=tile)return;
+        release(tile,world);if(state.saved.remove(tile.getPos())!=null)state.markDirty();
+    }
     public static <T extends BlockEntity & IChunkLoadingTile> Set<ChunkPos> getChunksToLoad(T tile) {
-        Set<ChunkPos> chunksToLoad = tile.getChunksToLoad();
-        Set<ChunkPos> chunkPoses = new HashSet<>(chunksToLoad != null ? chunksToLoad : Collections.emptySet());
-        chunkPoses.add(new ChunkPos(tile.getPos()));
-        return chunkPoses;
+        var chunks=new HashSet<ChunkPos>();if(tile.getChunksToLoad()!=null)chunks.addAll(tile.getChunksToLoad());
+        chunks.add(new ChunkPos(tile.getPos()));return chunks;
     }
-
-    // STUB(R.Chen): Forge BCLibConfig.chunkLoadingLevel.canLoad(loadType) gating deferred (BCLibConfig not yet
-    // in libLeaf). Permits any tile that declares a non-null LoadType; the NONE/STRICT config levels return.
-    private static boolean canLoadFor(IChunkLoadingTile tile) {
-        return tile.getLoadType() != null;
+    public static Set<ChunkPos> getActiveChunks(ServerWorld world,BlockPos owner) {
+        var lease=state(world).active.get(owner);return lease==null?Set.of():lease.chunks;
     }
 }

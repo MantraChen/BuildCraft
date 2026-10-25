@@ -18,11 +18,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 
-// Forge→Fabric migration notes (R.Chen):
-//   BlockEntity                → BlockEntity
-//   Direction.HORIZONTALS    → Direction.Type.HORIZONTAL
-//   The BCLibConfig.ChunkLoaderLevel gating referenced in the old javadoc is deferred until BCLibConfig
-//   lands; see ChunkLoaderManager.canLoadFor for the temporary always-permit behaviour.
 /** This should be implemented by {@link BlockEntity}s that wish to be chunk-loaded by buildcraft lib. Note that tiles
  * should add themselves to the chunk-loading list via {@link ChunkLoaderManager#loadChunksForTile}. */
 public interface IChunkLoadingTile {
@@ -50,7 +45,7 @@ public interface IChunkLoadingTile {
     }
 
     public enum LoadType {
-        /** Softly attempt to chunkload this. Under the (deferred) config gating, STRICT/NONE levels would skip it. */
+        /** Softly attempt to chunkload this. STRICT_TILES and NONE skip this type. */
         SOFT,
         /** Aggressively chunkload this. Generally only enabled for machines designed to operate far from a player's
          * territory, like a quarry or a pump. Skipped only when chunk loading is globally disabled. */

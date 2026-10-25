@@ -76,12 +76,19 @@ upgrades, and has a native screen marked **Remake by FelixMantra**. Enable
 `enableMjDynamo` and `enableRfEngine` in the generated BuildCraft config to use both
 converters; they remain disabled by default. The fixture enables them and verifies
 exact MJ/RF conservation, real chute work and removal of stale energy interfaces.
+Quarries now build and repair frames, excavate to the world's bottom, respect native
+break protection and send mined loot to pipes or nearby inventories. Partially paid
+tasks and energy survive saving. Each quarry owns persistent native chunk tickets,
+independent of other quarries and vanilla forced chunks. The original gear/pickaxe
+recipe and localized placement/completion advancements are restored.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
 Add `-Interactions` to create an isolated flat world and exercise real client/server
 wire, gate and whole-pipe breaking, including vanilla prediction acknowledgements,
 then tank-to-pipe fluid transport, native fluid-cache replies and empty-state synchronization.
+Add `-Quarry` to verify native quarry placement, client animation, saving/reopening a
+world and automatic loading of a distant quarry, then inspect its exact mined output.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 
