@@ -83,6 +83,17 @@ block work with a full 16,000 MJ battery; this original entity stage does not sp
 additional MJ. Existing matching entities are retained across saves. Riding groups
 are excluded. Use `./scripts/full-smoke.ps1 -Entities` for native capture, rotated
 reconstruction, missing-material recovery and three complete world restarts.
+Single-block schematics now capture a block before its normal interaction opens a
+screen. Two paper and one lapis craft four blanks. Use a recorded sample to place
+the saved block using exact inventory materials, including chest contents; sneak-use
+clears it. Fluid requirements use the builder. Blank samples stack to 16; recorded
+samples stack to one. The material HUD and tooltip show their requirements.
+The blueprint replacer accepts a recorded blueprint plus “From” and “To” samples.
+It replaces matching block states/data, saves a new blueprint file and consumes the
+two samples only on success. The original file stays available. Its native screen
+shows a block-model preview and replacement status. Use
+`./scripts/full-smoke.ps1 -Replacer` for capture, exact material payment, replacement,
+saved-world restarts and construction of the changed blueprint.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

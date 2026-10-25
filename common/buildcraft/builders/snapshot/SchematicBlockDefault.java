@@ -119,7 +119,7 @@ public class SchematicBlockDefault implements ISchematicBlock {
     @Override public boolean isReadyToBuild(World world, BlockPos pos) {
         return placementState().canPlaceAt(world, pos);
     }
-    private BlockState placementState() {
+    public BlockState placementState() {
         BlockState state = placeBlock.getDefaultState();
         for (Property<?> property : blockState.getProperties()) if (state.contains(property) && !ignoredProperties.contains(property))
             state = copyProperty(state, blockState, property);

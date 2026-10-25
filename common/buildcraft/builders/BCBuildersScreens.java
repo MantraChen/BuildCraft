@@ -21,6 +21,12 @@ import net.minecraft.util.math.BlockPos;
 
 public final class BCBuildersScreens {
     private BCBuildersScreens() {}
+    public static final ScreenHandlerType<ContainerBC_Neptune> REPLACER=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
+        BlockPos pos=data.readBlockPos();
+        if(!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.builders.tile.TileReplacer tile))
+            throw new IllegalStateException("Replacer screen does not match block entity at "+pos);
+        return new buildcraft.builders.container.ContainerReplacer(inventory.player,syncId,tile);
+    });
     public static final ScreenHandlerType<ContainerBC_Neptune> ARCHITECT = new ExtendedScreenHandlerType<>((syncId, inventory, data) -> {
         BlockPos pos = data.readBlockPos();
         if (!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.builders.tile.TileArchitectTable tile))
@@ -40,9 +46,21 @@ public final class BCBuildersScreens {
         return new ContainerBuilder(inventory.player, syncId, tile);
     });
     public static void register() {
+        Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftbuilders","replacer"),REPLACER);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftbuilders", "architect"), ARCHITECT);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftbuilders", "filler"), FILLER);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftbuilders", "builder"), BUILDER);
+    }
+    public static void openReplacer(PlayerEntity player,BlockPos pos){
+        if(!(player instanceof ServerPlayerEntity)||!player.getWorld().isChunkLoaded(pos)
+            ||!(player.getWorld().getBlockEntity(pos) instanceof buildcraft.builders.tile.TileReplacer tile)||!tile.canInteractWith(player))return;
+        player.openHandledScreen(new ExtendedScreenHandlerFactory(){
+            public Text getDisplayName(){return Text.translatable("gui.buildcraftbuilders.replacer");}
+            public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf buffer){buffer.writeBlockPos(pos);}
+            public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user){
+                return tile.canInteractWith(user)?new buildcraft.builders.container.ContainerReplacer(user,syncId,tile):null;
+            }
+        });
     }
     public static void openArchitect(PlayerEntity player, BlockPos pos) {
         if (!(player instanceof ServerPlayerEntity) || !player.getWorld().isChunkLoaded(pos)

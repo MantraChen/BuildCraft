@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities, [switch]$Replacer)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -333,5 +333,17 @@ if ($Entities) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $entityOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runEntityBlueprintClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Replacer) {
+    $replacerRun = Join-Path $verification 'replacer-client-run'
+    $replacerConfig = Join-Path $replacerRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $replacerConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $replacerConfig 'main.cfg') -Force
+    $replacerOptions = Join-Path $replacerRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $replacerOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $replacerOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runReplacerClientSmoke --console=plain
 }
 exit $LASTEXITCODE

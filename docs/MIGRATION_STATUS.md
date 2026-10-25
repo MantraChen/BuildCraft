@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **473 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **488 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1547,7 +1547,63 @@ Remake by FelixMantra.
   No obsidian production fix or confirmed root cause is claimed for that transient failure.
   Shared regression also passes: 148 unit tests and 69 world tests in
   `verification/entities-shared-tests.log`.
-- Riding relationships, broader modded-entity compatibility, library/replacer screens
-  and the remaining migration backlog still need work. Existing guide-recipe and
+- At this milestone, riding relationships, broader modded-entity compatibility,
+  library/replacer screens and the remaining migration backlog still needed work. Existing guide-recipe and
   texture-animation/mipmap warnings remain; this milestone does not declare the entire
   port complete or free of issues.
+
+### Native single-block samples and blueprint replacer
+
+- Single schematics now capture native block state and block-entity data before the
+  block's normal interaction opens a screen. Client/server hooks run after Fabric's
+  use-block event, so a denied interaction cannot capture a chest or place a sample.
+  Capture converts one blank from the held stack, preserving the remainder. Blank
+  samples retain the original limit of sixteen, while recorded samples stack to one.
+  Sneak-use clears only schematic/legacy damage data and retains unrelated item data.
+- Recorded samples are reusable placement tools. The player pays the exact required
+  items, including saved inventory contents, in a native storage transaction. Missing
+  named items, denied placement, a changed held item, unsupported fluids, failed block
+  support and entity collisions preserve materials and the target. A replaceable
+  target is restored when construction fails. Fluid requirements still use a builder,
+  matching the original single-schematic restriction. Native tooltips and a material
+  HUD show the saved requirements, with the remake credit retained in the tooltip.
+- The replacer has a registered native screen, validated one-item input slots,
+  shift-click transfer, owner/distance/stale-tile checks and synchronized status/counts.
+  Successful replacement preserves the name, assigns the machine owner and a new date,
+  and points the output at the newly saved content hash. The old blueprint file and
+  its unrelated states/entities remain unchanged. Two samples are consumed only after
+  durable saving succeeds. No-op, malformed input, unavailable files and save failures
+  retain all inputs; a failed save retries. Work pauses inside open storage transactions.
+- Matching is computed once per palette entry before counting block positions. The
+  result count is split across two native 16-bit screen properties so large plans do
+  not wrap at 65,536. Completed status and count survive block-entity reloads.
+- The native GUI renders a cached, bounded preview of up to 4,096 block models from
+  the authorized snapshot response. It displays input roles, the blueprint name,
+  replacement feedback and “Remake by FelixMantra”. Preview rendering never places
+  blocks into a fake or real world. The single-schematic recipe uses two paper and
+  one lapis for four blanks. A new native replacer recipe uses four iron ingots, two
+  redstone, two gold gears and a crafting table; both recipes have recipe-book unlocks.
+- Library transfer/browsing, the filler planner, riding relationships and the remaining
+  migration backlog are still separate work. A block-model preview does not claim full
+  block-entity/entity rendering or unrestricted compatibility with every modded schematic.
+- Fifteen additional packaged-mod tests cover native use-first chest capture, split
+  blanks, legacy/native clearing and stack limits, exact chest-content payment,
+  rollback, native protection, reentrant held-item changes, failed support, fluids,
+  collision, malformed inputs, palette/state/entity preservation, failed-file retry,
+  no-op correction, screen filters/access, reloads, stale tiles and transactions,
+  native builder reconstruction and survival crafting. A 100,000-block replacement
+  also verifies the signed low/high property halves and persisted full data length.
+  All 488 required GameTests pass in `verification/replacer-full-client-5.log`.
+- That same jar passes the native client with `failures=0` and a clean 69-second
+  exit in the same log. Actual interaction packets capture a chest without opening
+  it, reject a missing named diamond, then copy its contents with exact payment.
+  Native sample capture, replacer placement and quick-move inputs reproduce the
+  partial-input workflow across a complete world restart. The changed preview and
+  count synchronize; collecting the new blueprint and restarting again preserves
+  its file. A native builder then constructs three bricks and one unchanged log,
+  consuming exactly their materials. All five screenshots were reviewed: the
+  material HUD, original/changed previews, builder inventory and finished world.
+- Existing guide-recipe and texture-animation/mipmap warnings remain outside this
+  milestone. The incomplete-port status remains in effect.
+- Shared construction regression also passes: 148 unit tests and 69 world tests in
+  `verification/replacer-shared-tests.log`.

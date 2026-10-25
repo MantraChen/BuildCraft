@@ -28,5 +28,20 @@
   "gui.buildcraftbuilders.path_progress": "Path: %s / %s",
   "block.buildcraftbuilders.builder.tip": "Insert a recorded blueprint/template; supply materials, fluids and MJ. Connected path markers repeat the plan.",
   "advancements.buildcraftbuilders.paving_the_way.title": "Paving the Way",
-  "advancements.buildcraftbuilders.paving_the_way.description": "Finish a construction path with a Builder. Remake by FelixMantra"
+  "advancements.buildcraftbuilders.paving_the_way.description": "Finish a construction path with a Builder. Remake by FelixMantra",
+  "gui.buildcraftbuilders.replacer": "Blueprint Replacer",
+  "gui.buildcraftbuilders.replacer.from": "From",
+  "gui.buildcraftbuilders.replacer.to": "To",
+  "gui.buildcraftbuilders.replacer.status.0": "Insert a blueprint and two captured samples",
+  "gui.buildcraftbuilders.replacer.status.1": "Replaced %s blocks — collect the blueprint",
+  "gui.buildcraftbuilders.replacer.status.2": "No matching change — inputs retained",
+  "gui.buildcraftbuilders.replacer.status.3": "Invalid blueprint or sample — inputs retained",
+  "gui.buildcraftbuilders.replacer.status.4": "Blueprint file unavailable — waiting",
+  "gui.buildcraftbuilders.replacer.status.5": "Could not save — inputs retained; retrying",
+  "item.buildcraftbuilders.schematic.blank": "Use on a block to capture one sample",
+  "item.buildcraftbuilders.schematic.used": "Use to place using exact items in your inventory",
+  "item.buildcraftbuilders.schematic.clear": "Sneak-use to clear this sample",
+  "item.buildcraftbuilders.schematic.invalid": "Invalid schematic data",
+  "item.buildcraftbuilders.schematic.fluids": "This sample requires fluids; use a builder",
+  "item.buildcraftbuilders.schematic.missing": "Missing exact materials or placement blocked"
 }

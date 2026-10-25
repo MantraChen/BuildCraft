@@ -28,5 +28,20 @@
   "gui.buildcraftbuilders.path_progress": "路径：%s / %s",
   "block.buildcraftbuilders.builder.tip": "放入已记录的蓝图或模板，供应材料、流体与 MJ。连接路径标记可沿路径重复建造。",
   "advancements.buildcraftbuilders.paving_the_way.title": "开辟道路",
-  "advancements.buildcraftbuilders.paving_the_way.description": "使用建造机完成一条建造路径。Remake by FelixMantra"
+  "advancements.buildcraftbuilders.paving_the_way.description": "使用建造机完成一条建造路径。Remake by FelixMantra",
+  "gui.buildcraftbuilders.replacer": "蓝图替换器",
+  "gui.buildcraftbuilders.replacer.from": "原方块",
+  "gui.buildcraftbuilders.replacer.to": "替换为",
+  "gui.buildcraftbuilders.replacer.status.0": "放入蓝图与两个已采集的样本",
+  "gui.buildcraftbuilders.replacer.status.1": "已替换 %s 个方块，请取回蓝图",
+  "gui.buildcraftbuilders.replacer.status.2": "没有可替换的匹配项，物品已保留",
+  "gui.buildcraftbuilders.replacer.status.3": "蓝图或样本无效，物品已保留",
+  "gui.buildcraftbuilders.replacer.status.4": "蓝图文件不可用，等待恢复",
+  "gui.buildcraftbuilders.replacer.status.5": "保存失败，已保留物品并重试",
+  "item.buildcraftbuilders.schematic.blank": "对方块使用以采集一个样本",
+  "item.buildcraftbuilders.schematic.used": "使用背包中的相同物品重建此方块",
+  "item.buildcraftbuilders.schematic.clear": "潜行使用以清空样本",
+  "item.buildcraftbuilders.schematic.invalid": "样本数据无效",
+  "item.buildcraftbuilders.schematic.fluids": "此样本需要流体，请使用建筑机",
+  "item.buildcraftbuilders.schematic.missing": "缺少相同材料，或当前位置无法放置"
 }

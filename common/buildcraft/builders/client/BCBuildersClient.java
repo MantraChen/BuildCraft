@@ -25,6 +25,9 @@ public final class BCBuildersClient {
     private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register(buildcraft.builders.client.render.HudSingleSchematic::render);
+        HandledScreens.<ContainerBC_Neptune,buildcraft.builders.gui.GuiReplacer>register(BCBuildersScreens.REPLACER,
+            (handler,inventory,title)->new buildcraft.builders.gui.GuiReplacer((buildcraft.builders.container.ContainerReplacer)handler,inventory,title));
         HandledScreens.<ContainerBC_Neptune, buildcraft.builders.gui.GuiArchitectTable>register(BCBuildersScreens.ARCHITECT,
             (handler, inventory, title) -> new buildcraft.builders.gui.GuiArchitectTable(
                 (buildcraft.builders.container.ContainerArchitectTable)handler, inventory, title));
@@ -34,9 +37,7 @@ public final class BCBuildersClient {
                 buildcraft.builders.BCBuildersBlocks.frame, net.minecraft.client.render.RenderLayer.getCutout());
         if (BCBuildersItems.schematicSingle != null) ModelPredicateProviderRegistry.register(
             BCBuildersItems.schematicSingle, new Identifier("buildcraftbuilders", "schematic_used"),
-            (stack, world, entity, seed) -> stack.getDamage() == buildcraft.builders.item.ItemSchematicSingle.DAMAGE_USED
-                || stack.getNbt() != null && stack.getNbt().contains(buildcraft.builders.item.ItemSchematicSingle.NBT_KEY,
-                    net.minecraft.nbt.NbtElement.COMPOUND_TYPE) ? 1 : 0);
+            (stack, world, entity, seed) -> buildcraft.builders.item.ItemSchematicSingle.isUsed(stack)?1:0);
         if (buildcraft.builders.BCBuildersBlocks.quarry != null) BlockEntityRendererFactories.register(
             BlockEntityRegistry.type(buildcraft.builders.tile.TileQuarry.class), buildcraft.builders.client.render.RenderQuarry::new);
         if (buildcraft.builders.BCBuildersBlocks.architect != null) BlockEntityRendererFactories.register(

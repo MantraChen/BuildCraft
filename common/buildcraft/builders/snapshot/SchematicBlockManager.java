@@ -56,7 +56,8 @@ public class SchematicBlockManager {
 
     @Nonnull
     public static ISchematicBlock readFromNBT(NbtCompound schematicBlockTag) throws InvalidInputDataException {
-        Identifier name = new Identifier(schematicBlockTag.getString("name"));
+        Identifier name = Identifier.tryParse(schematicBlockTag.getString("name"));
+        if (name == null) throw new InvalidInputDataException("Invalid schematic type identifier");
         SchematicBlockFactory<?> factory = SchematicBlockFactoryRegistry.getFactoryByName(name);
         if (factory == null) {
             throw new InvalidInputDataException("Unknown schematic type " + name);

@@ -15,12 +15,14 @@ import buildcraft.builders.tile.TileReplacer;
 
 public class ContainerReplacer extends ContainerBCTile<TileReplacer> {
     public ContainerReplacer(PlayerEntity player, TileReplacer tile) {
-        super(player, tile);
-
-        addSlot(new SlotBase(tile.invSnapshot, 0, 8, 115));
-        addSlot(new SlotBase(tile.invSchematicFrom, 0, 8, 137));
-        addSlot(new SlotBase(tile.invSchematicTo, 0, 56, 137));
-
-        addFullPlayerInventory(159);
+        this(player,0,tile);
+    }
+    public ContainerReplacer(PlayerEntity player,int syncId,TileReplacer tile){
+        super(buildcraft.builders.BCBuildersScreens.REPLACER,player,syncId,tile);
+        addSlot(new SlotBase(tile.invSnapshot,0,8,96));
+        addSlot(new SlotBase(tile.invSchematicFrom,0,92,96));
+        addSlot(new SlotBase(tile.invSchematicTo,0,140,96));
+        addFullPlayerInventory(48,130);
+        addProperties(tile.properties);
     }
 }

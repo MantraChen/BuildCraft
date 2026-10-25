@@ -14,6 +14,14 @@ public abstract class ServerPlayerInteractionManagerMixin {
     @Shadow protected ServerWorld world;
     @Shadow @Final protected ServerPlayerEntity player;
 
+    @Inject(method="interactBlock", at=@At(value="INVOKE", target="Lnet/minecraft/server/network/ServerPlayerEntity;getMainHandStack()Lnet/minecraft/item/ItemStack;"), cancellable=true)
+    private void buildcraft_useSchematicFirst(ServerPlayerEntity user, net.minecraft.world.World level,
+            net.minecraft.item.ItemStack stack, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit,
+            CallbackInfoReturnable<net.minecraft.util.ActionResult> result) {
+        var action=buildcraft.builders.item.ItemSchematicSingle.useFirst(user,level,hand,hit);
+        if(action!=net.minecraft.util.ActionResult.PASS)result.setReturnValue(action);
+    }
+
     // AFTER is deliberate: Fabric's protection event runs BEFORE this invocation.
     @Inject(method = "tryBreakBlock", at = @At(value = "INVOKE", target =
         "Lnet/minecraft/block/Block;onBreak(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)V",

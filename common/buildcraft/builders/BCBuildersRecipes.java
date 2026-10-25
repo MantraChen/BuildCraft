@@ -11,21 +11,6 @@ public class BCBuildersRecipes {
         net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,
             new net.minecraft.util.Identifier("buildcraftbuilders:snapshot"), SNAPSHOT);
 
-//        if (BCBuildersItems.schematicSingle != null) {
-//            ItemStack out = new ItemStack(BCBuildersItems.schematicSingle, 4);
-//            ShapelessOreRecipe recipe = new ShapelessOreRecipe(out, paper, paper, "gemLapis");
-//            GameRegistry.addRecipe(recipe);
-//        }
-
-        // if (BCBuildersItems.template != null) {
-        // ItemStack out = new ItemStack(BCBuildersItems.template);
-        // RecipeBuilderShaped recipe = new RecipeBuilderShaped(out);
-        // recipe.add("ppp");
-        // recipe.add("pip");
-        // recipe.add("ppp");
-        // recipe.map('i', "dyeBlack");
-        // recipe.map('p', paper);
-        // GameRegistry.addRecipe(recipe.build());
-        // }
+        // Native data-pack recipes provide blank samples, snapshots and builder machines.
     }
 }

@@ -55,11 +55,10 @@ public class BCBuildersInitializer implements ModInitializer {
         BCBuildersRecipes.init();
         buildcraft.builders.snapshot.RulesLoader.loadAll();
         buildcraft.builders.snapshot.RulesLoader.registerReloadListener();
-        // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
-        //               ARCHITECT_TABLE, LIBRARY, REPLACER, QUARRY.
+        // Library screen integration remains separate from the native builder tools.
 
         // --- Forge init (BCBuilders.init) ----------------------------------------
-        // Remaining library/replacer integrations are handled separately.
+        // Remaining library integration is handled separately.
 
         // --- Forge postInit (BCBuilders.postInit) --------------------------------
         buildcraft.core.BCCoreConfig.postInit();
