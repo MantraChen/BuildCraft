@@ -47,6 +47,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -GateCopier
 # Also verify flood gate buckets, outlets, engine/pipe supply and two world restarts:
 ./scripts/full-smoke.ps1 -FloodGate
+# Also verify obsidian collision, engine collection, native output and saved travelling items:
+./scripts/full-smoke.ps1 -Obsidian
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -503,3 +505,14 @@ resource reload. It exercises real bucket/wrench/break packets, two complete
 world restarts, an engine feeding wooden/stone fluid pipes, exactly three water
 sources and recovery of the remaining 37 droplets. Screenshots are stored in
 its `screenshots/` directory.
+
+Run `./scripts/full-smoke.ps1 -Obsidian` for the obsidian pipe client fixture in
+`verification/obsidian-client-run/`. Seventeen additional server tests cover all six
+mouth directions, single-output and blocked-mouth rules, native MJ endpoints,
+range and exact distance costs, harmless simulation, bounded idle energy use,
+nested item/projectile/inventory rollback, projectile permissions and metadata,
+drop/reload cooldowns, natural item collision, pending extraction recovery on removal, real barrel
+delivery and transactional RF conversion. The client fixture checks native pipe
+placement, collisions, resource reload, a full restart with items in transit,
+engine-powered collection of four entity types, exact item/NBT delivery, a native
+barrel screen and removal of stale MJ access. Its screenshots are saved locally.

@@ -26,6 +26,11 @@ import buildcraft.lib.compat.BCItemStorage;
 /** Resolves sided Fabric storage for pipes and machines. */
 public class ItemTransactorHelper {
 
+    /** Extracts native loose items, allowed projectiles and non-living inventory entities. */
+    @Nonnull public static IItemTransactor getTransactorForEntity(net.minecraft.entity.Entity entity,Direction face) {
+        return EntityItemExtraction.forEntity(entity,face);
+    }
+
     @Nonnull
     public static IItemTransactor getTransactor(BlockEntity provider, Direction face) {
         if (provider != null && !provider.isRemoved() && provider.getWorld() != null) {

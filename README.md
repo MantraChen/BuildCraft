@@ -39,6 +39,14 @@ separate Fabric GameTest project. It verifies the registered block entities, nat
 tank placement, transactional MJ Dynamo output and chute collection, output, screens,
 save data and crafting. It also verifies pipe placement, transactional item input,
 wooden MJ extraction, stone-pipe delivery and travelling-item save data.
+Obsidian pipes collect touching items for free when exactly one output is connected.
+With MJ they scan four expanding planes in front of the opposite mouth, charging
+0.5 MJ plus 0.25 MJ per metre per item (minimum distance one metre). Empty scans cost
+up to 1 MJ. Loose items, allowed arrows/tridents and inventory minecarts retain
+their native item data; living inventories are excluded. Own drops wait twenty
+ticks before recollection. Native power adaptors also support transactional RF
+conversion and rollback. Use `./scripts/full-smoke.ps1 -Obsidian` for real collision,
+engine-driven collection, native delivery and a complete saved-world restart.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

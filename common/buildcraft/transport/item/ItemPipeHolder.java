@@ -44,6 +44,14 @@ public class ItemPipeHolder extends BlockItem implements IItemPipe {
 
     @Override public String getTranslationKey() { return "item.buildcraft_pipe_" + definition.identifier.getPath() + ".name"; }
 
+    @Override public void appendTooltip(ItemStack stack,net.minecraft.world.World world,List<Text> lines,net.minecraft.client.item.TooltipContext context) {
+        super.appendTooltip(stack,world,lines,context);
+        if(definition==buildcraft.transport.BCTransportPipes.obsidianItem){
+            lines.add(Text.translatable("item.buildcrafttransport.obsidian.tip"));
+            lines.add(Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
+        }
+    }
+
     @Override public Text getName(ItemStack stack) {
         DyeColor colour = getColour(stack);
         Text name = super.getName(stack);

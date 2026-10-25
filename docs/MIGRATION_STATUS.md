@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **366 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **383 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -299,7 +299,7 @@ features explicitly as work proceeds.
   demand probes and actual delivery. Rollback restores buffers and tick quotas together.
   Native RF animation shares the matrix/atlas-safe geometry path, with 768 additional
   GPU cases. Redstone converts all nine MJ pipe materials to RF and undo preserves dye.
-  Obsidian/stripes behavior and remaining pluggables still require integration. Registration of a pipe type
+  Stripes behavior still requires integration; native obsidian collection is verified below. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
@@ -1256,3 +1256,47 @@ Remake by FelixMantra.
   allow vanilla water to enter the vacated block and carry the recovered shard;
   teleport acknowledgements complete before subsequent native interactions.
   Existing guide recipe and texture-animation/mipmap warnings remain.
+
+### Native obsidian item collection
+
+- Replaced the empty obsidian behavior with native entity collection and MJ
+  lookup on all six faces. Exactly one connected output defines the opposite
+  collection mouth; ambiguous/disconnected pipes, blocked mouths and removed
+  holders refuse work. Two obsidian pipes do not connect directly.
+- Native entity collisions collect without MJ. Powered scans retain the original
+  four forward planes, widening laterally with distance, and process one matching
+  item type per call. Each item costs 0.5 MJ plus 0.25 MJ per metre of Euclidean
+  distance from the pipe center, with a minimum distance of one metre. An empty
+  scan retains its original 1 MJ cost, capped by positive offered power. Nonpositive
+  offers are returned unchanged, and a scan never spends more than it is offered.
+- Restored the entity transactor resolver for dropped stacks, native persistent
+  projectiles and non-living inventory entities. Tipped/spectral arrows use their
+  native pickup stack; tridents retain damage, enchantments and names. Disallowed
+  and creative-only projectiles, living inventories and removed entities are
+  excluded. Inventory entities use Fabric's sided transactional adapter.
+- Loose stacks and projectiles share reservations across lookups. Nested aborts
+  restore both source contents and pending pipe inserts; entity removal waits for
+  final commit. Pipe removal during a pending extraction recovers the committed
+  stack at the original position. Native power adaptors include item work and
+  fractional RF credit in the same transaction. Existing standalone legacy
+  transactors remain unchanged.
+- Own pipe drops wait twenty ticks before recollection. Loading a saved collector
+  applies the same delay to collision and powered paths, while native travelling
+  item saves retain their exact items. Stale MJ references stop requesting or
+  accepting energy. The existing eight-pipe obsidian/glass recipe is retained;
+  English/Chinese usage text and `Remake by FelixMantra` appear in its tooltip.
+- Seventeen new tests bring the complete packaged-mod suite to 383 passing tests
+  in `verification/obsidian-final-4.log`, including all six orientations, range,
+  energy accounting, source/NBT preservation, transaction rollback, real barrel
+  delivery, RF conversion, cooldowns, native projectile types and natural falling
+  items triggering vanilla collision callbacks.
+- The real client completes in `verification/obsidian-client-5.log` with
+  `failures=0` and a clean shutdown. Native placement, natural item collision,
+  resource reload, a full restart while items are in transit, engine collection
+  from four entity types and native collector breaking are verified. The barrel
+  receives exactly seven diamonds, two emeralds, one spectral arrow and one
+  damaged/enchanted/named trident. Five reviewed screenshots show placement,
+  the travelling item, the collection scene and the native delivery inventory.
+  Delivery checks wait for actual arrival within a bounded timeout, accounting
+  for stone-pipe deceleration. The original purple obsidian texture is retained.
+  Existing guide recipe and texture-animation/mipmap warnings are unchanged.

@@ -1,4 +1,5 @@
 {
+  "item.buildcrafttransport.obsidian.tip": "One connected output: collects touching items; MJ draws items from up to 4 blocks ahead.",
   "item.buildcrafttransport.plug_blocker": "Pipe Plug",
   "item.buildcrafttransport.plug_blocker.tip": "Blocks connections on one pipe face.",
   "item.buildcrafttransport.plug_power_adaptor": "Power Adaptor",

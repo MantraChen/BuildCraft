@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        obsidianClientSmoke {
+            client()
+            runDir '../../verification/obsidian-client-run'
+            vmArg '-Dbuildcraft.obsidianClientSmoke=true'
+        }
         floodGateClientSmoke {
             client()
             runDir '../../verification/flood-gate-client-run'

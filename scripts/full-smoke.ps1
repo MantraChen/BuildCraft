@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -261,5 +261,17 @@ if ($FloodGate) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $floodOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFloodGateClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Obsidian) {
+    $obsidianRun = Join-Path $verification 'obsidian-client-run'
+    $obsidianConfig = Join-Path $obsidianRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $obsidianConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $obsidianConfig 'main.cfg') -Force
+    $obsidianOptions = Join-Path $obsidianRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $obsidianOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $obsidianOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runObsidianClientSmoke --console=plain
 }
 exit $LASTEXITCODE
