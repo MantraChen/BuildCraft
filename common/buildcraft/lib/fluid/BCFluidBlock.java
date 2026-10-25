@@ -1,35 +1,44 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team.
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
 package buildcraft.lib.fluid;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.fluid.FlowableFluid;
+import net.minecraft.block.*;
+import net.minecraft.entity.Entity;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 
-// STUB(R.Chen): original BCFluidBlock extended net.minecraftforge.fluids.BlockFluidClassic.
-// Replaced with a thin Fabric FluidBlock shell. Forge-specific overrides (isEntityInsideMaterial,
-// getFlammability, onEntityCollidedWithBlock) removed — TODO(R.Chen): re-implement via Fabric API.
-
+/** Fluid levels retain all legacy quanta instead of truncating them to vanilla's eight. */
 public class BCFluidBlock extends FluidBlock {
-
-    private boolean sticky = false;
-
-    public BCFluidBlock(FlowableFluid fluid, AbstractBlock.Settings settings) {
+    public static final BooleanProperty VERTICAL_FLOW = BooleanProperty.of("vertical_flow");
+    private boolean sticky;
+    public BCFluidBlock(BCFluid fluid, AbstractBlock.Settings settings) {
         super(fluid, settings);
+        setDefaultState(getDefaultState().with(LEVEL, 0).with(VERTICAL_FLOW, false));
     }
-
-    public void setSticky(boolean sticky) {
-        this.sticky = sticky;
+    public void setSticky(boolean value) { sticky = value; }
+    public boolean isSticky() { return sticky; }
+    @Override protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        super.appendProperties(builder);
+        builder.add(VERTICAL_FLOW);
     }
-
-    public boolean isSticky() {
-        return sticky;
+    @Override public FluidState getFluidState(BlockState state) {
+        BCFluid bc = (BCFluid) fluid;
+        int level = state.get(LEVEL);
+        return level == 0 ? bc.getStill(false)
+            : bc.getFlowing(Math.max(1, bc.getQuantaPerBlock() - level), state.get(VERTICAL_FLOW));
+    }
+    @Override public int getOpacity(BlockState state, BlockView world, BlockPos pos) {
+        return ((BCFluid) fluid).getLightOpacity();
+    }
+    @Override public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+        if (sticky) entity.slowMovement(state, new Vec3d(0.25, 0.05, 0.25));
+        super.onEntityCollision(state, world, pos, entity);
     }
 }

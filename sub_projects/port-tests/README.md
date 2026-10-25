@@ -23,7 +23,7 @@ native registry metadata.
 Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 
-For the regression tests followed by 25 tests in a real Minecraft world:
+For the regression tests followed by 31 tests in a real Minecraft world:
 
 ```powershell
 ./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
@@ -40,7 +40,11 @@ exercise the production registry with fixture tiles: placed coordinates/state/ty
 multiple types for one block, native ticking, NBT reconstruction, unsupported states,
 disabled blocks and duplicate registration. Machine-service tests verify native work,
 control, area and heat access, sided providers, and rejection of removed/unattached/unloaded
-tiles without loading chunks. Reports are written to
+tiles without loading chunks. Six fluid tests exercise all 30 production oil/fuel
+variants and native buckets, source-only collection, real scheduled gravity ticks,
+gas rising, spread beyond vanilla's eight levels, finite source removal, density-based
+water displacement and collision barriers. The 20×8×8 empty fluid template reserves
+each test's channel independently. Reports are written to
 `verification/gametest-results.xml`. This still loads selected production classes;
 full BuildCraft registration, rendering, machines and transport require separate checks.
 

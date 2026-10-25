@@ -45,7 +45,7 @@ public class BCEnergy {
         RegistryConfig.useOtherModConfigFor(MODID, BCCore.MODID);
         BCEnergyConfig.preInit();
         BCEnergyEntities.preInit();
-        BCEnergyFluids.fmlPreInit();
+        BCEnergyFluids.register(BCEnergyConfig.oilIsSticky, BCEnergyConfig.enableOilBurn);
         BCEnergyBlocks.preInit();
         BCEnergyItems.preInit();
 

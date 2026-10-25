@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "buildcraftenergy:block/fluid/fuel_gaseous_heat_0"
+    }
+  }
+}

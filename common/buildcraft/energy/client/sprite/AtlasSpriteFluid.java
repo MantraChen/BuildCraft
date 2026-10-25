@@ -1,75 +1,90 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team.
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.energy.client.sprite;
 
-import java.util.function.Function;
-
-import net.minecraft.client.texture.Sprite;
+import java.io.IOException;
+import java.io.InputStream;
+import com.mojang.serialization.Codec;
+import net.minecraft.client.resource.metadata.AnimationResourceMetadata;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.SpriteContents;
+import net.minecraft.client.texture.atlas.AtlasSource;
+import net.minecraft.client.texture.atlas.AtlasSourceType;
+import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
-
 import buildcraft.api.core.BCLog;
-
-import buildcraft.lib.client.sprite.AtlasSpriteSwappable;
+import buildcraft.energy.BCEnergyFluids;
 import buildcraft.lib.fluid.BCFluid;
-import buildcraft.lib.misc.SpriteUtil;
+import buildcraft.lib.mixin.client.AtlasSourceManagerAccessor;
 
-public class AtlasSpriteFluid extends AtlasSpriteSwappable {
-    final Identifier fromName;
-    final BCFluid fluid;
-    final int colourLight, colourDark;
+/** Adds recolored, animated heat templates to the native atlas during every resource reload. */
+public final class AtlasSpriteFluid implements AtlasSource {
+    public static final Codec<AtlasSpriteFluid> CODEC = Codec.unit(AtlasSpriteFluid::new);
+    private static AtlasSourceType type;
 
-    public AtlasSpriteFluid(String baseName, Identifier fromName, BCFluid fluid) {
-        super(baseName);
-        this.fromName = fromName;
-        this.fluid = fluid;
-        colourLight = fluid.getLightColour();
-        colourDark = fluid.getDarkColour();
+    public static void register() {
+        if (type == null) type = AtlasSourceManagerAccessor.buildcraft_register("buildcraftenergy:fluids", CODEC);
     }
 
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public boolean load(ResourceManager manager, Identifier location, Function<Identifier, Sprite> textureGetter) {
-        Identifier from = SpriteUtil.transformLocation(fromName);
-        Sprite sprite = loadSprite(manager, from.toString(), from, true);
-        if (sprite == null) {
-            BCLog.logger.warn("Unable to recolour " + from + " as it couldn't be loaded!");
-            return true;
+    @Override public AtlasSourceType getType() { return java.util.Objects.requireNonNull(type); }
+
+    @Override public void load(ResourceManager resources, SpriteRegions regions) {
+        for (BCFluid fluid : BCEnergyFluids.allFluids) {
+            add(resources, regions, fluid, fluid.getStillTexture(), "still");
+            add(resources, regions, fluid, fluid.getFlowTexture(), "flow");
         }
-        for (int f = 0; f < buildcraft.lib.compat.SpriteCompat.getFrameCount(sprite); f++) {
-            recolourFrame(sprite, f);
-        }
-        swapWith(sprite);
-        return false;
     }
 
-    private void recolourFrame(Sprite sprite, int f) {
-        int[][] frameData = buildcraft.lib.compat.SpriteCompat.getFrameTextureData(sprite, f);
-        if (frameData != null) {
-            // frameData[0] is mipmap 0
-            int[] pixels = frameData[0];
-            for (int i = 0; i < pixels.length; i++) {
-                recolourPixel(pixels, i);
+    private static void add(ResourceManager resources, SpriteRegions regions, BCFluid fluid, Identifier id, String kind) {
+        var override = resources.getResource(RESOURCE_FINDER.toResourcePath(id));
+        if (override.isPresent()) {
+            regions.add(id, override.get());
+            return;
+        }
+        Identifier template = new Identifier("buildcraftenergy", "blocks/fluids/heat_" + fluid.getHeatValue() + "_" + kind);
+        Resource resource = resources.getResource(RESOURCE_FINDER.toResourcePath(template)).orElse(null);
+        if (resource == null) {
+            BCLog.logger.warn("Missing fluid texture template {}", template);
+            return;
+        }
+        regions.add(id, () -> {
+            try (InputStream input = resource.getInputStream()) {
+                AnimationResourceMetadata animation = resource.getMetadata().decode(AnimationResourceMetadata.READER)
+                    .orElse(AnimationResourceMetadata.EMPTY);
+                return loadRecolored(id, input, animation, fluid.getLightColour(), fluid.getDarkColour());
+            } catch (IOException exception) {
+                BCLog.logger.warn("Failed to build fluid sprite " + id, exception);
+                return null;
             }
+        });
+    }
+
+    public static SpriteContents loadRecolored(Identifier id, InputStream input, AnimationResourceMetadata animation,
+            int light, int dark) throws IOException {
+        NativeImage image = NativeImage.read(input);
+        try {
+            for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+                image.setColor(x, y, recolorPixel(image.getColor(x, y), light, dark));
+            }
+            return new SpriteContents(id, animation.getSize(image.getWidth(), image.getHeight()), image, animation);
+        } catch (RuntimeException | Error exception) {
+            image.close();
+            throw exception;
         }
     }
 
-    private void recolourPixel(int[] pixels, int i) {
-        int rgba = pixels[i];
-        int r = recolourSubPixel(rgba, 0);
-        int g = recolourSubPixel(rgba, 8);
-        int b = recolourSubPixel(rgba, 16);
-        int a = 0xFF;// recolourSubPixel(rgba, 24);
-        pixels[i] = (a << 24) | (b << 16) | (g << 8) | r;
+    /** Minecraft's image pixels are ABGR; BuildCraft's configured endpoints are RGB. */
+    public static int recolorPixel(int pixel, int light, int dark) {
+        int red = interpolate(pixel & 255, (light >> 16) & 255, (dark >> 16) & 255);
+        int green = interpolate((pixel >> 8) & 255, (light >> 8) & 255, (dark >> 8) & 255);
+        int blue = interpolate((pixel >> 16) & 255, light & 255, dark & 255);
+        return (pixel & 0xFF000000) | (blue << 16) | (green << 8) | red;
     }
 
-    private int recolourSubPixel(int rgba, int offset) {
-        int data = (rgba >>> offset) & 0xFF;
-        int dark = (colourDark >>> offset) & 0xFF;
-        int light = (colourLight >>> offset) & 0xFF;
-        return (dark * (256 - data) + light * data) / 256;
+    private static int interpolate(int value, int light, int dark) {
+        return (dark * (255 - value) + light * value) / 255;
     }
 }

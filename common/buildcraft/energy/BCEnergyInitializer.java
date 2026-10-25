@@ -23,7 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
- * Blocks, items and tile factories register here. Fluid and world-generation integration remains.
+ * Blocks, fluids, buckets, items and tile factories register here. World generation remains unfinished.
  */
 public class BCEnergyInitializer implements ModInitializer {
 
@@ -40,10 +40,10 @@ public class BCEnergyInitializer implements ModInitializer {
         // --- Forge preInit (BCEnergy.preInit) ------------------------------------
         BCEnergyConfig.preInit();
         BCEnergyTags.register();
+        BCEnergyFluids.register(BCEnergyConfig.oilIsSticky, BCEnergyConfig.enableOilBurn);
         BCEnergyBlocks.preInit();
         BCEnergyItems.preInit();
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
-        // STUB(R.Chen): BCEnergyFluids.preInit() — oil/fuel fluids need Transfer-API FluidVariant.
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ENGINE_STONE, ENGINE_IRON, ENGINE_RF, DYNAMO_MJ.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCEnergyProxy) →

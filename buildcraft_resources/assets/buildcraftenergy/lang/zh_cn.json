@@ -1,0 +1,16 @@
+{
+  "fluid.buildcraftenergy.oil": "原油",
+  "fluid.buildcraftenergy.oil_residue": "残渣",
+  "fluid.buildcraftenergy.oil_heavy": "重油",
+  "fluid.buildcraftenergy.oil_dense": "稠油",
+  "fluid.buildcraftenergy.oil_distilled": "蒸馏油",
+  "fluid.buildcraftenergy.fuel_dense": "重质燃料",
+  "fluid.buildcraftenergy.fuel_mixed_heavy": "混合重质燃料",
+  "fluid.buildcraftenergy.fuel_light": "轻质燃料",
+  "fluid.buildcraftenergy.fuel_mixed_light": "混合轻质燃料",
+  "fluid.buildcraftenergy.fuel_gaseous": "气态燃料",
+  "buildcraft.fluid.heat_0": "%s（冷却）",
+  "buildcraft.fluid.heat_1": "%s（高温）",
+  "buildcraft.fluid.heat_2": "%s（炽热）",
+  "item.buildcraftenergy.fluid_bucket": "%s桶"
+}

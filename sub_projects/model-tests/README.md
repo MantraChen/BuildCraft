@@ -11,11 +11,13 @@ against Minecraft 1.20.1 and Yarn. It executes JUnit without starting Minecraft 
 OpenGL context, and includes the original expression project. The root build still
 compiles the entire mod; this fixture does not bypass failures in that build.
 
-The 11 client model tests cover all five engine assets across each facing and power
+The 14 client model tests cover all five engine assets across each facing and power
 stage, piston geometry, existing texture files, emission, LED coloring, texture UV
 aliases, recursive/shared parents, resource reload invalidation, all direction-to-
 direction rotations, signed packed normals and transformed entity vertex output.
-The expression dependency contributes 13 additional tests.
+Fluid tests cover RGB/ABGR/alpha conversion, all six original animated heat textures,
+and geometry for gas filling from a block's ceiling. The expression dependency
+contributes 13 additional tests.
 
 Reports are written to `build/reports/tests/test/index.html`. Successful tests do not
 verify native renderer registration at runtime, GPU output, resource pack reloads in

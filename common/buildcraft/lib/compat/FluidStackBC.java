@@ -162,10 +162,7 @@ public final class FluidStackBC {
 
     /** 1.12.2 compat: returns the localized name of the fluid. */
     public String getLocalizedName() {
-        if (fluid == null) return "null";
-        String key = "fluid." + FluidRegistryBC.getFluidName(fluid);
-        String localized = net.minecraft.text.Text.translatable(key).getString();
-        return localized.startsWith("fluid.") ? getFluidName() : localized;
+        return net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes.getName(fluid).getString();
     }
 
     /** Returns the registry name of the fluid. */

@@ -58,26 +58,42 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 157 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 150 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **93 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **25 world tests passed** after 93 regression tests.
+- Headless Fabric GameTest: **31 world tests passed** after 93 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
-- Client model fixture: **11 tests passed**, plus the expression library's 13 tests.
+- Client model fixture: **14 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
   All five engine variants bake across every power stage and facing; referenced textures
   exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
   reload invalidation, signed packed normals, matrix transforms and overlay/light output.
   These tests do not establish that a complete client can start or display the models.
+  Three fluid-render tests check RGB-to-ABGR coloring/alpha, all six animated heat
+  templates and gas geometry anchored to the top of a block.
 
 ## Repair progress
 
+- Restored all ten oil/fuel families at three heat levels as native source/flowing
+  pairs, world blocks and buckets, registered before the oil spring uses them.
+  Flow retains variable quanta, viscosity-dependent tick rates, gas rising, liquid
+  falling, density-based water displacement, collision barriers and finite sources.
+  Six world tests cover the registrations/attributes, every bucket's placement and
+  source-only collection, gas/liquid gravity, 12-quanta spread limits, source removal
+  and water/solid barriers. Legacy unnamespaced fluid names resolve for saves/scripts.
+- Fluid atlases now generate colored animated sprites from the original heat templates
+  at resource reload, while allowing direct texture overrides. Native liquid and gas
+  render handlers, bucket models and English/Chinese names are supplied. Gas geometry
+  fills from the ceiling rather than the floor. Atlas-source registration uses a client
+  Mixin invoker; its application and visual output still require the full client launch.
+  Engine fuel/coolant use, refinery recipes, swimming/breathing in custom fluids,
+  world generation and multiplayer behavior remain outstanding integration work.
 - Restored the original variable-model parser, expression-driven cuboids, nested models,
   texture aliases and transformation rules against native Minecraft/JOML APIs. Parent
   resources close reliably and recursive references fail with a useful error. Model

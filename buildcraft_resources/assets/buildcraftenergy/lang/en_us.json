@@ -1,0 +1,16 @@
+{
+  "fluid.buildcraftenergy.oil": "Oil",
+  "fluid.buildcraftenergy.oil_residue": "Residue",
+  "fluid.buildcraftenergy.oil_heavy": "Heavy Oil",
+  "fluid.buildcraftenergy.oil_dense": "Dense Oil",
+  "fluid.buildcraftenergy.oil_distilled": "Distilled Oil",
+  "fluid.buildcraftenergy.fuel_dense": "Dense Fuel",
+  "fluid.buildcraftenergy.fuel_mixed_heavy": "Mixed Heavy Fuels",
+  "fluid.buildcraftenergy.fuel_light": "Light Fuel",
+  "fluid.buildcraftenergy.fuel_mixed_light": "Mixed Light Fuels",
+  "fluid.buildcraftenergy.fuel_gaseous": "Gaseous Fuel",
+  "buildcraft.fluid.heat_0": "%s (Cool)",
+  "buildcraft.fluid.heat_1": "%s (Hot)",
+  "buildcraft.fluid.heat_2": "%s (Searing)",
+  "item.buildcraftenergy.fluid_bucket": "%s Bucket"
+}
