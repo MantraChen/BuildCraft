@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **20 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **29 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -80,6 +80,9 @@ features explicitly as work proceeds.
   Chute pickup/output, capacity and NBT conservation, minecart destinations, insert-only
   external storage, save reconstruction, drops, owner advancement, native screens and
   the gear/wrench/chute crafting chain are covered by ten additional world tests.
+  Nine pipe tests cover all 46 native pipe items, placement/picking, dye/material
+  connections, cross-face transaction rollback, chute-to-pipe delivery, saved travelling
+  stacks, MJ-powered wooden extraction, wrench use, flow packets and survival recipes.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -96,7 +99,10 @@ features explicitly as work proceeds.
   from the mouth increased the barrel contents to exactly 13. The owner advancement
   appeared, and an F3+T resource reload retained the working screen and world rendering.
   That world saved successfully and the client exited with code zero.
-- Packaged GPU client: **928 visible block states, 81 items and 20 item variants pass**
+  Plain and blue-dyed stone-pipe circuits now render in that world, with diamonds
+  visibly circulating through the native item renderer. F3+T resource reload and
+  saving/re-entering the world both retain the pipe models and moving contents.
+- Packaged GPU client: **928 visible block states, 127 items and 158 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
   parse errors or missing blockstate variants. Unavailable guide links, legacy fluid
@@ -133,10 +139,17 @@ features explicitly as work proceeds.
   The native four-slot screen supports manual transfers and shift-clicks, validates
   distance/use and leaves wrench rotation accessible. Native wood/stone gears, wrench
   and chute recipes, owner advancement and English/Chinese names are restored.
-- Restored the missing common transport entrypoint and native pipe-holder block/entity
-  registration. Pipe pluggable render methods are client-only, including their API base
-  declaration, so dedicated servers can load the common pipe definitions. Full pipe
-  item registration, placement and transport behavior still require integration.
+- Restored the common transport entrypoint, native pipe-holder block/entity and all
+  46 definition-specific pipe items. Native placement, picking and drops preserve dye;
+  17 structure/item pipe recipes and the original placement advancement are available.
+  Hollow pipe geometry follows immutable render attachments, separates stained glass
+  from cutout layers and rebuilds its bounded cache with each resource reload.
+  Native transactional item insertion feeds the original item routing logic. Wooden
+  MJ extraction, stone delivery, saved travel timing and server-authoritative item
+  animation snapshots are restored. Full fluid/power/RF transport, special filtering
+  and pluggable/gate gameplay still require integration. Registration of a pipe type
+  does not establish its special behavior. Pluggable render APIs remain client-only
+  so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
   classes shadowing Minecraft's native `Chunk` and LWJGL's `BufferUtils`; the latter
   prevented a real client from initializing LWJGL 3.

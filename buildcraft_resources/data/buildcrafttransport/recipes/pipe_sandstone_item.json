@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:sandstone"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:sandstone"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_sandstone_item",
+    "count": 8
+  }
+}

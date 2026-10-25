@@ -317,6 +317,19 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
 
     // Interactions
 
+    @Override public void onPlaced(World world, BlockPos pos, BlockState state,
+            net.minecraft.entity.LivingEntity placer, ItemStack stack) {
+        super.onPlaced(world, pos, state, placer, stack);
+        var tile = getPipe(world, pos);
+        if (tile != null) tile.onPlacedBy(placer, stack);
+    }
+
+    @Override public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
+        var tile = getPipe(world, pos);
+        if (tile == null || tile.getPipe() == null) return ItemStack.EMPTY;
+        return tile.getPipe().getItemStack();
+    }
+
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand,
         BlockHitResult hit) {
@@ -324,6 +337,7 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
         if (tile == null) {
             return ActionResult.PASS;
         }
+        if (!tile.canInteractWith(player)) return ActionResult.FAIL;
         PipeRayTraceResult trace = rayTrace(world, pos, player);
         if (trace == null) {
             return ActionResult.PASS;
@@ -348,6 +362,7 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
         ItemStack held = player.getStackInHand(hand);
         Item item = held.isEmpty() ? null : held.getItem();
         if (item instanceof IItemPluggable && existing == null) {
+            if (world.isClient) return ActionResult.SUCCESS;
             IItemPluggable itemPlug = (IItemPluggable) item;
             PipePluggable plug = itemPlug.onPlace(held, tile, realSide, player, hand);
             if (plug == null) {

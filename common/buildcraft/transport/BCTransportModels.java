@@ -10,10 +10,19 @@ package buildcraft.transport;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
-// STUB(R.Chen): model registration (Forge ModelLoader/ModelBakeEvent/BakedModel) → Fabric FRAPI Phase 5.
-// ModelHolderStatic/Variable, IPluggableStaticBaker fields and registerModels() restored in Phase 5.
+// Native pipe model baking. Pluggable models are restored separately.
 @Environment(EnvType.CLIENT)
 public class BCTransportModels {
     public static void preInit() {} // STUB Phase 5
-    public static void init() {}    // STUB Phase 5
+    public static void init() {
+        net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(plugin -> plugin.modifyModelAfterBake().register((model, context) -> {
+            if (model == null || !(context.id() instanceof net.minecraft.client.util.ModelIdentifier id)) return model;
+            var identifier = new net.minecraft.util.Identifier(id.getNamespace(), id.getPath());
+            if (id.getVariant().equals("inventory") && net.minecraft.registry.Registries.ITEM.get(identifier) instanceof buildcraft.transport.item.ItemPipeHolder item)
+                return new buildcraft.transport.client.model.ModelPipe(model, item.getDefinition(), context.textureGetter());
+            if (identifier.equals(net.minecraft.registry.Registries.BLOCK.getId(BCTransportBlocks.pipeHolder)))
+                return new buildcraft.transport.client.model.ModelPipe(model, null, context.textureGetter());
+            return model;
+        }));
+    }
 }

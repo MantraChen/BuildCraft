@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:stone"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:stone"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_stone_item",
+    "count": 8
+  }
+}

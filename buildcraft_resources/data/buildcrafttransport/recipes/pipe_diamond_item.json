@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:diamond"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_diamond_item",
+    "count": 8
+  }
+}

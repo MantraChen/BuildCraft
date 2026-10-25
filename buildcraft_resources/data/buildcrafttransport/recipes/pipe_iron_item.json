@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:iron_ingot"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_iron_item",
+    "count": 8
+  }
+}

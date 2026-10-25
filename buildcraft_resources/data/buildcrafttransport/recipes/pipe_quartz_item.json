@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:quartz_block"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:quartz_block"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_quartz_item",
+    "count": 8
+  }
+}

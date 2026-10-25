@@ -42,6 +42,8 @@ public class RenderPipeHolder implements BlockEntityRenderer<TilePipeHolder> {
         PipeWireRenderer.renderWires(entity, matrices, cutout, light);
         renderPluggables(entity, matrices, cutout, light, tickDelta);
         renderContents(entity, matrices, cutout, light, tickDelta);
+        if (entity.getPipe() != null && entity.getPipe().flow instanceof buildcraft.transport.pipe.flow.PipeFlowItems flow)
+            PipeFlowRendererItems.render(flow, matrices, vertexConsumers, light, overlay, tickDelta);
     }
 
     private static void renderPluggables(TilePipeHolder pipe, MatrixStack matrices,

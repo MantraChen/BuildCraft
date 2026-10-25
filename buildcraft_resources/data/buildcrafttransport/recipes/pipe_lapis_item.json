@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:lapis_block"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:lapis_block"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_lapis_item",
+    "count": 8
+  }
+}

@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The twenty server tests currently verify:
+The 29 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -54,14 +54,29 @@ The twenty server tests currently verify:
   a wrench rotates the chute without opening the screen.
 - A real crafting screen/recipe manager crafts wooden and stone gears, the wrench and
   chute from the restored native recipes.
+- All 46 pipe items place through native survival use, consume one item and preserve
+  their definition/dye through pick-block and unattached block-entity NBT loading.
+- Pipe connections respect dye and cobblestone/stone boundaries. Native insertion
+  shares transaction rollback across faces, preserves item NBT and rejects stale views.
+- A chute sends nine named items through two stone pipes into a barrel without loss
+  or duplication. Travelling stacks survive native save/reconstruction and delivery.
+- Wooden pipes receive native MJ, simulate extraction without mutations, extract the
+  corresponding item count and deliver it through a stone pipe. Saved extraction
+  direction loads before a world exists; wrench rotation rejects distant players.
+- Authoritative item-flow snapshots include their message discriminator, preserve
+  directions, clear old client contents and reject oversized snapshots.
+- Native recipes return eight basic transport pipes; all 17 structure/item recipes
+  are loaded, and placement awards the pipe advancement.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
-81 default item models and 20 explicit item variants. It rejects missing models,
+127 default item models and 158 explicit item/pipe variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map
 locations, decorated blocks, lists, snapshots and single-block schematics. It also
 checks that the chute, tank and gear/wrench crafting chain have translated names and
-that registry-reload command text remains available. It requires
+that registry-reload command text remains available. All 46 pipe models have nonempty
+geometry, valid textures and vertices within block bounds, both plain and with red/blue
+dye. Pipe item names are localized. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.
@@ -69,6 +84,6 @@ artifact/config through `full-smoke.ps1 -Client`.
 Reports are written to `verification/full-gametest-results.xml`. Test worlds/configs
 are under `verification/full-gametest-run/`. These checks establish full common-side
 initialization and the specific behaviors above, not working gameplay for every
-machine, pipes or the RF engine. The client check verifies resource baking and item
+machine, pipe behavior or the RF engine. The client check verifies resource baking and item
 selection, not every renderer, machine animation, UI or gameplay interaction. Legacy
 guide links and some texture-animation/mipmap warnings remain.

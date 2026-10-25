@@ -208,6 +208,11 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
+        if (pipe != null) {
+            eventBus.unregisterHandler(pipe.behaviour);
+            eventBus.unregisterHandler(pipe.flow);
+            pipe = null;
+        }
         if (nbt.contains("pipe")) {
             try {
                 pipe = new Pipe(this, nbt.getCompound("pipe"));
@@ -244,22 +249,25 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
         Item item = stack.getItem();
         if (item instanceof IItemPipe) {
             PipeDefinition definition = ((IItemPipe) item).getDefinition();
+            if (pipe != null) {
+                eventBus.unregisterHandler(pipe.behaviour);
+                eventBus.unregisterHandler(pipe.flow);
+            }
             this.pipe = new Pipe(this, definition);
             eventBus.registerHandler(pipe.behaviour);
             eventBus.registerHandler(pipe.flow);
             if (pipe.flow instanceof IFlowItems && isSiliconLoaded()) {
                 eventBus.registerHandler(FilterEventHandler.class);
             }
-            // STUB(R.Chen): item metadata→pipe colour was lost in the 1.13 flattening. Coloured pipe items
-            // now carry their colour via the item/NBT instead of stack.getDamage(); restore in Phase 4F.
-            //   int meta = stack.getDamage();
-            //   if (meta > 0 && meta <= 16) { pipe.setColour(DyeColor.byId(meta - 1)); }
+            pipe.setColour(buildcraft.transport.item.ItemPipeHolder.getColour(stack));
             eventBus.fireEvent(new PipeEventPlaced(this, placer, stack));
+            markChunkDirty();
+            if (!world.isClient) sendNetworkUpdate(NET_RENDER_DATA);
         }
         scheduleRenderUpdate();
 
-        if (!world.isClient && hasOwner()) {
-            AdvancementUtil.unlockAdvancement(getOwner().getId(), ADVANCEMENT_PLACE_PIPE);
+        if (!world.isClient && placer instanceof PlayerEntity player) {
+            AdvancementUtil.unlockAdvancement(player, ADVANCEMENT_PLACE_PIPE);
         }
     }
 
@@ -397,6 +405,7 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
                 buffer.writeBoolean(false);
             } else {
                 buffer.writeBoolean(true);
+                buffer.writeShort(PipeFlow.NET_ID_UPDATE);
                 pipe.flow.writePayload(PipeFlow.NET_ID_UPDATE, buffer, env);
             }
         } else if (id == NET_UPDATE_PLUG_DOWN) pluggables.get(Direction.DOWN).writePayload(buffer, env);
@@ -414,6 +423,10 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
         if (side == NetSide.CLIENT) {
             if (id == NET_RENDER_DATA) {
                 if (buffer.readBoolean()) {
+                    if (pipe != null) {
+                        eventBus.unregisterHandler(pipe.behaviour);
+                        eventBus.unregisterHandler(pipe.flow);
+                    }
                     pipe = new Pipe(this, buffer, ctx);
                     eventBus.registerHandler(pipe.behaviour);
                     eventBus.registerHandler(pipe.flow);

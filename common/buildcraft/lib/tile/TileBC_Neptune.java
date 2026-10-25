@@ -312,6 +312,8 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     }
 
     public void onPlacedBy(LivingEntity placer, ItemStack stack) {
+        // Native placement contexts used by automation may have no living placer.
+        if (placer == null) return;
         if (!placer.getWorld().isClient) {
             if (placer instanceof PlayerEntity) {
                 PlayerEntity player = (PlayerEntity) placer;

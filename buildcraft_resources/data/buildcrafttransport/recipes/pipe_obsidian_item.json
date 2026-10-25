@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:obsidian"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "minecraft:obsidian"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_obsidian_item",
+    "count": 8
+  }
+}

@@ -47,7 +47,7 @@ public final class FullClientSmoke implements ClientModInitializer {
                     if (!model.isBuiltin()) checkQuads(model, null, id.toString(), failures);
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
-            int variants = checkItemVariants(client, failures);
+            int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures);
             for (var item : new net.minecraft.item.Item[] {buildcraft.factory.BCFactoryBlocks.chute.asItem(), buildcraft.factory.BCFactoryBlocks.tank.asItem(),
                     buildcraft.core.BCCoreItems.gearWood, buildcraft.core.BCCoreItems.gearStone, buildcraft.core.BCCoreItems.wrench}) {
                 var stack = new ItemStack(item);
@@ -63,6 +63,36 @@ public final class FullClientSmoke implements ClientModInitializer {
             client.scheduleStop();
         });
     }
+
+    private static int checkPipeGeometry(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
+        int count = 0;
+        for (var def : buildcraft.transport.pipe.PipeRegistry.INSTANCE.getAllRegisteredPipes()) {
+            var stack = new ItemStack((net.minecraft.item.Item) buildcraft.transport.pipe.PipeRegistry.INSTANCE.getItemForPipe(def));
+            if (stack.getName().getString().equals(stack.getTranslationKey())) failures.add(def.identifier + ": missing pipe name");
+            var baked = client.getItemRenderer().getModel(stack, null, null, 0);
+            if (!(baked instanceof buildcraft.transport.client.model.ModelPipe model)) {
+                failures.add(def.identifier + ": native pipe model missing"); continue;
+            }
+            for (var colour : new net.minecraft.util.DyeColor[] {null, net.minecraft.util.DyeColor.BLUE, net.minecraft.util.DyeColor.RED}) {
+                var key = buildcraft.transport.client.model.ModelPipe.itemKey(def, colour);
+                var geometry = model.getGeometry(key);
+                if (geometry.cutout().isEmpty()) failures.add(def.identifier + ": empty pipe geometry");
+                for (var quad : geometry.all()) {
+                    if (quad.getSprite().getContents().getId().equals(MissingSprite.getMissingSpriteId()))
+                        failures.add(def.identifier + ": missing pipe face/overlay");
+                    var data = quad.getVertexData();
+                    for (int vertex = 0; vertex < 4; vertex++) for (int axis = 0; axis < 3; axis++) {
+                        float position = Float.intBitsToFloat(data[vertex * 8 + axis]);
+                        if (!Float.isFinite(position) || position < -0.001 || position > 1.001)
+                            failures.add(def.identifier + ": pipe geometry outside native block bounds");
+                    }
+                }
+                count++;
+            }
+        }
+        return count;
+    }
+
     private static int checkItemVariants(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
         int count = 0;
         for (var type : buildcraft.api.items.IMapLocation.MapLocationType.values()) {

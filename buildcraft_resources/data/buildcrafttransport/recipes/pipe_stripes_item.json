@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "buildcraftcore:gear_gold"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "r": {
+      "item": "buildcraftcore:gear_gold"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_stripes_item",
+    "count": 8
+  }
+}

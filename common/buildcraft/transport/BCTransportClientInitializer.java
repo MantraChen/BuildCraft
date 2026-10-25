@@ -16,14 +16,12 @@ import buildcraft.api.transport.pipe.PipeApiClient;
 
 import buildcraft.transport.client.PipeRegistryClient;
 import buildcraft.transport.client.render.PipeFlowRendererFluids;
-import buildcraft.transport.client.render.PipeFlowRendererItems;
 import buildcraft.transport.client.render.PipeFlowRendererPower;
 import buildcraft.transport.client.render.PipeFlowRendererRf;
 import buildcraft.transport.client.render.PipeBehaviourRendererStripes;
 import buildcraft.transport.client.render.RenderPipeHolder;
 import buildcraft.transport.pipe.behaviour.PipeBehaviourStripes;
 import buildcraft.transport.pipe.flow.PipeFlowFluids;
-import buildcraft.transport.pipe.flow.PipeFlowItems;
 import buildcraft.transport.pipe.flow.PipeFlowPower;
 import buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux;
 
@@ -32,6 +30,8 @@ public class BCTransportClientInitializer implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        BCTransportModels.init();
+        net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(BCTransportBlocks.pipeHolder, net.minecraft.client.render.RenderLayer.getCutout());
         // Register pipe tile entity renderer
         BlockEntityRendererRegistry.INSTANCE.register(
             BCTransportBlocks.pipeHolderTile, RenderPipeHolder::new);
@@ -40,7 +40,6 @@ public class BCTransportClientInitializer implements ClientModInitializer {
         PipeApiClient.registry = PipeRegistryClient.INSTANCE;
 
         // Register flow renderers
-        PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowItems.class,        PipeFlowRendererItems.INSTANCE);
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowPower.class,        PipeFlowRendererPower.INSTANCE);
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowFluids.class,       PipeFlowRendererFluids.INSTANCE);
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowRedstoneFlux.class, PipeFlowRendererRf.INSTANCE);
@@ -49,6 +48,5 @@ public class BCTransportClientInitializer implements ClientModInitializer {
         PipeRegistryClient.INSTANCE.registerRenderer(PipeBehaviourStripes.class, PipeBehaviourRendererStripes.INSTANCE);
 
         // STUB(R.Chen): block colour registration → Phase 5 ColorProviderRegistry.BLOCK.register.
-        // STUB(R.Chen): model loading plugin / sprite atlas registration → Phase 5.
     }
 }

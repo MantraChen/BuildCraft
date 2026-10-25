@@ -58,7 +58,6 @@ import buildcraft.lib.net.cache.BuildCraftObjectCaches;
 
 import buildcraft.transport.BCTransportStatements;
 import buildcraft.transport.net.MessageMultiPipeItem.TravellingItemData;
-import buildcraft.transport.net.PipeItemMessageQueue;
 import buildcraft.transport.pipe.behaviour.PipeBehaviourStone;
 
 public final class PipeFlowItems extends PipeFlow implements IFlowItems {
@@ -67,6 +66,18 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
 
     private final DelayedList<TravellingItem> items = new DelayedList<>();
     private final List<ItemStack> postDropCache = new ArrayList<>();
+    private boolean needsTimeBase;
+    private PipeItemStorage nativeStorage;
+
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant> getStorage(Direction face) {
+        if (!(pipe.getHolder() instanceof buildcraft.transport.tile.TilePipeHolder holder)) return null;
+        if (nativeStorage == null) nativeStorage = new PipeItemStorage(holder, this);
+        return nativeStorage.side(face);
+    }
+
+    void commitAutomationInsert(ItemStack stack, Direction face) {
+        insertItemEvents(stack, null, EXTRACT_SPEED, face);
+    }
 
     public PipeFlowItems(IPipe pipe) {
         super(pipe);
@@ -75,7 +86,9 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
     public PipeFlowItems(IPipe pipe, NbtCompound nbt) {
         super(pipe, nbt);
         NbtList list = nbt.getList("items", NbtElement.COMPOUND_TYPE);
-        long tickNow = pipe.getHolder().getPipeWorld().getTime();
+        World world = pipe.getHolder().getPipeWorld();
+        needsTimeBase = world == null;
+        long tickNow = needsTimeBase ? 0 : world.getTime();
         for (int i = 0; i < list.size(); i++) {
             TravellingItem item = new TravellingItem(list.getCompound(i), tickNow);
             if (!item.stack.isEmpty()) {
@@ -90,7 +103,8 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         List<List<TravellingItem>> allItems = items.getAllElements();
         NbtList list = new NbtList();
 
-        long tickNow = pipe.getHolder().getPipeWorld().getTime();
+        World world = pipe.getHolder().getPipeWorld();
+        long tickNow = world == null || needsTimeBase ? 0 : world.getTime();
         for (List<TravellingItem> l : allItems) {
             for (TravellingItem item : l) {
                 list.add(item.writeToNbt(tickNow));
@@ -102,10 +116,55 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
 
     // Network
 
+    private static final int MAX_RENDER_ITEMS = 512, MAX_RENDER_DELAY = 4096;
+
+    @Override public void writePayload(int id, PacketByteBuf output, EnvType side) {
+        if (side != EnvType.SERVER || (id != NET_ID_FULL_STATE && id != NET_ID_UPDATE)) return;
+        PacketBufferBC buffer = PacketBufferBC.asPacketBufferBc(output);
+        var visible = items.getAllElements().stream().flatMap(List::stream).limit(MAX_RENDER_ITEMS).toList();
+        buffer.writeVarInt(visible.size());
+        long now = needsTimeBase ? 0 : pipe.getHolder().getPipeWorld().getTime();
+        for (var item : visible) {
+            buffer.writeVarInt(BuildCraftObjectCaches.storeItemStack(item.stack));
+            buffer.writeVarInt(item.stack.getCount());
+            buffer.writeBoolean(item.toCenter);
+            buffer.writeByte((item.side == null ? Direction.UP : item.side).ordinal());
+            buffer.writeByte(item.colour == null ? 0 : item.colour.getId() + 1);
+            int duration = Math.max(1, Math.min(MAX_RENDER_DELAY, item.timeToDest));
+            buffer.writeVarInt(duration);
+            buffer.writeVarInt((int) Math.max(0, Math.min(duration, item.tickFinished - now)));
+        }
+    }
+
     @Override
     public void readPayload(int id, PacketByteBuf bufIn, EnvType msgSide) throws IOException {
         PacketBufferBC buffer = PacketBufferBC.asPacketBufferBc(bufIn);
         if (msgSide == EnvType.CLIENT) {
+            if (id == NET_ID_FULL_STATE || id == NET_ID_UPDATE) {
+                int count = buffer.readVarInt();
+                if (count < 0 || count > MAX_RENDER_ITEMS) throw new IOException("Invalid travelling item count: " + count);
+                items.clear();
+                long now = pipe.getHolder().getPipeWorld().getTime();
+                for (int i = 0; i < count; i++) {
+                    int stackId = buffer.readVarInt(), amount = buffer.readVarInt();
+                    if (stackId < 0 || amount < 1 || amount > 65535) throw new IOException("Invalid travelling item stack");
+                    var item = new TravellingItem(BuildCraftObjectCaches.retrieveItemStack(stackId), amount);
+                    item.toCenter = buffer.readBoolean();
+                    int direction = buffer.readUnsignedByte();
+                    if (direction >= Direction.values().length) throw new IOException("Invalid travelling item direction");
+                    item.side = Direction.values()[direction];
+                    int colour = buffer.readUnsignedByte();
+                    if (colour > 16) throw new IOException("Invalid pipe dye colour");
+                    item.colour = colour == 0 ? null : DyeColor.byId(colour - 1);
+                    int duration = buffer.readVarInt(), remaining = buffer.readVarInt();
+                    if (duration < 1 || duration > MAX_RENDER_DELAY || remaining < 0 || remaining > duration)
+                        throw new IOException("Invalid travelling item timing");
+                    item.timeToDest = duration;
+                    item.tickFinished = now + remaining;
+                    item.tickStarted = item.tickFinished - duration;
+                    items.add(remaining + 1, item);
+                }
+            }
             if (id == NET_CREATE_ITEM) {
                 int stackId = buffer.readInt();
                 Supplier<ItemStack> link = BuildCraftObjectCaches.retrieveItemStack(stackId);
@@ -143,12 +202,8 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
     }
 
     void sendItemDataToClient(TravellingItem item) {
-        final int stackId = BuildCraftObjectCaches.storeItemStack(item.stack);
-        PipeItemMessageQueue.appendTravellingItem(
-            pipe.getHolder().getPipeWorld(), pipe.getHolder().getPipePos(), stackId, (byte) item.stack.getCount(),
-            item.toCenter, item.side, item.colour, item.timeToDest > Byte.MAX_VALUE ? Byte.MAX_VALUE
-                : (byte) item.timeToDest
-        );
+        // One authoritative snapshot per changed pipe/tick also updates merged stacks and removes old legs.
+        pipe.getHolder().scheduleNetworkUpdate(IPipeHolder.PipeMessageReceiver.FLOW);
     }
 
     @Override
@@ -272,8 +327,16 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
     @Override
     public void onTick() {
         World world = pipe.getHolder().getPipeWorld();
+        if (needsTimeBase) {
+            for (var group : items.getAllElements()) for (var item : group) {
+                item.tickStarted += world.getTime();
+                item.tickFinished += world.getTime();
+            }
+            needsTimeBase = false;
+        }
 
         List<TravellingItem> toTick = items.advance();
+        if (!world.isClient && !toTick.isEmpty()) pipe.getHolder().scheduleNetworkUpdate(IPipeHolder.PipeMessageReceiver.FLOW);
         long currentTime = world.getTime();
 
         for (TravellingItem item : toTick) {
@@ -610,6 +673,7 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         for (List<TravellingItem> list : items.getAllElements()) {
             for (TravellingItem item2 : list) {
                 if (item2.mergeWith(item)) {
+                    sendItemDataToClient(item2);
                     return;
                 }
             }

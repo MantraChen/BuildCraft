@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "lgr"
+  ],
+  "key": {
+    "l": {
+      "item": "minecraft:cobblestone"
+    },
+    "g": {
+      "item": "minecraft:gravel"
+    },
+    "r": {
+      "item": "minecraft:cobblestone"
+    }
+  },
+  "result": {
+    "item": "buildcrafttransport:pipe_structure",
+    "count": 8
+  }
+}

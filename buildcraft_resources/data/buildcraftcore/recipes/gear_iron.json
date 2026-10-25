@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " m ",
+    "mgm",
+    " m "
+  ],
+  "key": {
+    "m": {
+      "item": "minecraft:iron_ingot"
+    },
+    "g": {
+      "item": "buildcraftcore:gear_stone"
+    }
+  },
+  "result": {
+    "item": "buildcraftcore:gear_iron"
+  }
+}

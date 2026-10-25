@@ -1,31 +1,33 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.transport.client.render;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-
-import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
-
-import buildcraft.api.transport.pipe.IPipeFlowRenderer;
-
+import net.minecraft.util.math.BlockPos;
 import buildcraft.transport.pipe.flow.PipeFlowItems;
 
-// STUB(R.Chen): PipeFlowRendererItems — Fabric VertexConsumer skeleton. Full item-in-transit
-// rendering deferred to Phase 5 (blocked by ItemRenderUtil Forge migration).
+/** Native item renderer retains the stack's own model, tint, enchantment and NBT. */
 @Environment(EnvType.CLIENT)
-public enum PipeFlowRendererItems implements IPipeFlowRenderer<PipeFlowItems> {
-    INSTANCE;
-
-    @Override
-    public void render(PipeFlowItems flow, MatrixStack matrices, VertexConsumer vc,
-            int light, float partialTicks) {
-        // STUB(R.Chen): Phase 5 — ItemRenderUtil needs Fabric port before item-in-pipe rendering.
+public final class PipeFlowRendererItems {
+    private PipeFlowRendererItems() {}
+    public static void render(PipeFlowItems flow, MatrixStack matrices, VertexConsumerProvider consumers,
+            int light, int overlay, float partialTicks) {
+        var world = flow.pipe.getHolder().getPipeWorld();
+        var renderer = MinecraftClient.getInstance().getItemRenderer();
+        for (var item : flow.getAllItemsForRender()) {
+            var stack = item.clientItemLink.get();
+            if (stack.isEmpty() || !item.isVisible()) continue;
+            stack = stack.copyWithCount(item.stackSize);
+            var point = item.getRenderPosition(BlockPos.ORIGIN, world.getTime(), partialTicks, flow);
+            matrices.push();
+            matrices.translate(point.x, point.y, point.z);
+            matrices.scale(0.65f, 0.65f, 0.65f);
+            renderer.renderItem(stack, ModelTransformationMode.GROUND, light, overlay, matrices, consumers, world, 0);
+            matrices.pop();
+        }
     }
 }

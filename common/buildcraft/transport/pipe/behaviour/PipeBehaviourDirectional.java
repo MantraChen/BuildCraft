@@ -9,7 +9,6 @@
 package buildcraft.transport.pipe.behaviour;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -22,6 +21,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Direction;
 
 import buildcraft.api.core.EnumPipePart;
+import buildcraft.api.tools.IToolWrench;
 import buildcraft.api.transport.pipe.IPipe;
 import buildcraft.api.transport.pipe.IPipeHolder.PipeMessageReceiver;
 import buildcraft.api.transport.pipe.PipeBehaviour;
@@ -30,6 +30,7 @@ import buildcraft.api.transport.pipe.PipeEventStatement;
 
 import buildcraft.lib.block.VanillaRotationHandlers;
 import buildcraft.lib.misc.NBTUtilBC;
+import buildcraft.lib.misc.EntityUtil;
 import buildcraft.lib.misc.collect.OrderedEnumMap;
 import buildcraft.lib.net.PacketBufferBC;
 
@@ -70,8 +71,15 @@ public abstract class PipeBehaviourDirectional extends PipeBehaviour {
     @Override
     public boolean onPipeActivate(PlayerEntity player, HitResult trace, float hitX, float hitY, float hitZ,
         EnumPipePart part) {
-        // STUB(R.Chen): EntityUtil.getWrenchHand not migrated — wrench detection disabled.
-        return false;
+        var hand = EntityUtil.getWrenchHand(player);
+        if (hand == null || !pipe.getHolder().canPlayerInteract(player)) return false;
+        var stack = player.getStackInHand(hand);
+        var wrench = (IToolWrench) stack.getItem();
+        if (!wrench.canWrench(player, hand, stack, trace)) return false;
+        if (!pipe.getHolder().getPipeWorld().isClient && advanceFacing()) {
+            wrench.wrenchUsed(player, hand, stack, trace);
+        }
+        return true;
     }
 
     @Override
@@ -112,7 +120,9 @@ public abstract class PipeBehaviourDirectional extends PipeBehaviour {
             return;
         }
         this.currentDir = EnumPipePart.fromFacing(setTo);
-        if (!pipe.getHolder().getPipeWorld().isClient) {
+        var world = pipe.getHolder().getPipeWorld();
+        if (world != null && !world.isClient) {
+            world.markDirty(pipe.getHolder().getPipePos());
             pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
         }
     }

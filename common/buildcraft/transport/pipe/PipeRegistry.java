@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import buildcraft.lib.compat.forge_stubs.OreDictionaryStub;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import buildcraft.transport.item.ItemPipeHolder;
+import buildcraft.lib.registry.RegistryConfig;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -35,7 +38,8 @@ public enum PipeRegistry implements IPipeRegistry {
 
     @Override
     public void registerPipe(PipeDefinition definition) {
-        definitions.put(definition.identifier, definition);
+        PipeDefinition previous = definitions.putIfAbsent(definition.identifier, definition);
+        if (previous != null && previous != definition) throw new IllegalArgumentException("Duplicate pipe definition: " + definition.identifier);
     }
 
     @Override
@@ -51,19 +55,25 @@ public enum PipeRegistry implements IPipeRegistry {
     }
 
     @Override
-    public IItemPipe createItemForPipe(PipeDefinition definition) {
-        // STUB(R.Chen): item creation deferred — blocked by transport.item.ItemPipeHolder
-        // (extends BlockItem, pulls in BCTransportBlocks.pipeHolder / BlockPipeHolder) and
-        // lib.registry.RegistrationHelper (Forge RegistryEvent / OreDictionaryStub / GameRegistry).
-        // Restore once those migrate. The definition→item map (setItemForPipe/getItemForPipe)
-        // and the lookup half (registerPipe/getDefinition/loadDefinition) remain fully functional.
-        throw new UnsupportedOperationException("createItemForPipe is not yet migrated to Fabric");
+    public ItemPipeHolder createItemForPipe(PipeDefinition definition) {
+        return createUnnamedItemForPipe(definition, item -> {});
     }
 
     @Override
-    public IItemPipe createUnnamedItemForPipe(PipeDefinition definition, Consumer<Item> postCreate) {
-        // STUB(R.Chen): see createItemForPipe — deferred alongside ItemPipeHolder / RegistrationHelper.
-        throw new UnsupportedOperationException("createUnnamedItemForPipe is not yet migrated to Fabric");
+    public ItemPipeHolder createUnnamedItemForPipe(PipeDefinition definition, Consumer<Item> postCreate) {
+        java.util.Objects.requireNonNull(definition, "definition");
+        var id = new Identifier(definition.identifier.getNamespace(), "pipe_" + definition.identifier.getPath());
+        if (!RegistryConfig.isEnabled("pipes", id, "item.buildcraft_pipe_" + definition.identifier.getPath() + ".name")) return null;
+        if (pipeItems.containsKey(definition)) throw new IllegalArgumentException("Pipe already has an item: " + definition.identifier);
+        var item = new ItemPipeHolder(definition);
+        postCreate.accept(item);
+        if (Registries.ITEM.getKey(item).isEmpty()) {
+            if (Registries.ITEM.containsId(id)) throw new IllegalArgumentException("Duplicate pipe item: " + id);
+            Registry.register(Registries.ITEM, id, item);
+        }
+        if (definitions.get(definition.identifier) == definition) setItemForPipe(definition, item);
+        ItemPipeHolder.items.add(item);
+        return item;
     }
 
     @Override

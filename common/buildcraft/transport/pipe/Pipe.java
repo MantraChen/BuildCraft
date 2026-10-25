@@ -220,6 +220,8 @@ public final class Pipe implements IPipe, IDebuggable {
         if (definition.canBeColoured) {
             this.colour = colour;
             markForUpdate();
+            if (holder.getPipeWorld() != null && !holder.getPipeWorld().isClient)
+                holder.getPipeWorld().markDirty(holder.getPipePos());
         }
     }
 
@@ -278,9 +280,7 @@ public final class Pipe implements IPipe, IDebuggable {
                 if (oBehaviour == null) {
                     continue;
                 }
-                // STUB(R.Chen): pluggable capability lookup via Fabric BlockApiLookup — Phase 4F.
-                // Was: oTile.getCapability(PipeApi.CAP_PLUG, facing.getOpposite()).
-                PipePluggable oPlug = null;
+                PipePluggable oPlug = oPipe.getHolder().getPluggable(facing.getOpposite());
                 if (oPlug == null || !oPlug.isBlocking()) {
                     if (canPipesConnect(facing, this, oPipe)) {
                         connected.put(facing, DEFAULT_CONNECTION_DISTANCE);
@@ -288,6 +288,7 @@ public final class Pipe implements IPipe, IDebuggable {
                     }
                     continue;
                 }
+                continue; // A blocked pipe must not fall back to an inventory connection.
             }
 
             BlockPos nPos = holder.getPipePos().offset(facing);
@@ -323,14 +324,16 @@ public final class Pipe implements IPipe, IDebuggable {
     }
 
     public void addDrops(DefaultedList<ItemStack> toDrop, int fortune) {
-        Item item = (Item) PipeApi.pipeRegistry.getItemForPipe(definition);
-        if (item != null) {
-            // TODO(R.Chen): item metadata dropped in 1.20 — encode pipe colour via NBT/components.
-            // Was: new ItemStack(item, 1).
-            toDrop.add(new ItemStack(item, 1));
-        }
+        ItemStack stack = getItemStack();
+        if (!stack.isEmpty()) toDrop.add(stack);
         flow.addDrops(toDrop, fortune);
         behaviour.addDrops(toDrop, fortune);
+    }
+
+    public ItemStack getItemStack() {
+        var item = PipeApi.pipeRegistry.getItemForPipe(definition);
+        return item instanceof Item nativeItem
+            ? buildcraft.transport.item.ItemPipeHolder.withColour(new ItemStack(nativeItem), colour) : ItemStack.EMPTY;
     }
 
     public static boolean canPipesConnect(Direction to, IPipe one, IPipe two) {
