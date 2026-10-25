@@ -64,6 +64,7 @@ public final class PluggableHolder {
     }
 
     public void readFromNbt(NbtCompound nbt) {
+        holder.eventBus.unregisterHandler(pluggable);
         if (nbt.isEmpty()) {
             pluggable = null;
             return;

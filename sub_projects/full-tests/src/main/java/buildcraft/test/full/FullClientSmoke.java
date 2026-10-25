@@ -21,6 +21,8 @@ public final class FullClientSmoke implements ClientModInitializer {
             if (finished || client.getOverlay() != null || !(client.currentScreen instanceof TitleScreen)) return;
             finished = true;
             var failures = new ArrayList<String>();
+            if (!buildcraft.api.statements.StatementManager.statements.containsKey("buildcraftcore:trigger.true"))
+                failures.add("Core statements were not registered during normal startup");
             var missing = client.getBakedModelManager().getMissingModel();
             int states = 0, items = 0;
             for (var block : Registries.BLOCK) {
@@ -48,6 +50,10 @@ public final class FullClientSmoke implements ClientModInitializer {
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
             int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures);
+            for (var slot : buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli.SlotIndex.VALUES) {
+                var sprite = buildcraft.transport.BCTransportSprites.ACTION_EXTRACTION_PRESET.get(slot).getSprite();
+                if (sprite == null || sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add(slot + ": missing gate extraction preset sprite");
+            }
             for (var item : new net.minecraft.item.Item[] {buildcraft.factory.BCFactoryBlocks.chute.asItem(), buildcraft.factory.BCFactoryBlocks.tank.asItem(),
                     buildcraft.core.BCCoreItems.gearWood, buildcraft.core.BCCoreItems.gearStone, buildcraft.core.BCCoreItems.wrench}) {
                 var stack = new ItemStack(item);

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **40 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **44 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -89,6 +89,10 @@ features explicitly as work proceeds.
   Four wooden-diamond tests cover exact-NBT whitelist/blacklist matching, one-item
   MJ pulses, side-effect-free simulation, ordered round-robin starvation, native screen
   controls, saved cursors/travelling items, payloads and malformed saved indexes.
+  Four Emzuli tests attach actual gate logic, select extraction presets, deliver painted
+  items through Daizuli outputs after save/reload, expire inactive/removed gates, keep
+  power queries side-effect-free, validate native paint controls and round-trip live
+  gate/preset packets. Gate item placement/configuration UI remain unfinished.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -115,6 +119,11 @@ features explicitly as work proceeds.
   blacklist and round-robin buttons synchronize, and the active-slot indicator follows
   a ghost sample in the third slot. F3+T and saving/re-entering retain the round-robin
   setting and sample while all seven real diamonds remain in the player's hotbar.
+  In a scene with a preconfigured attached gate, the Emzuli screen shows the enabled
+  preset and current-slot arrow. Editing a diamond sample preserves all seven real
+  diamonds; left/right/middle paint controls select, reverse and clear colours. White
+  and black settings on different presets, activation and the sample survive F3+T
+  and saving/re-entering. This validates Emzuli's screen, not player gate configuration.
 - Packaged GPU client: **928 visible block states, 127 items and 158 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
@@ -168,7 +177,14 @@ features explicitly as work proceeds.
   never advance the cursor; missing items wait at the current filter. Each pulse
   extracts one item and returns unused MJ. Native mode buttons validate screen access,
   and mode/cursor state persists and synchronizes through native screen properties.
-  Full fluid/power/RF transport, Emzuli/obsidian/stripes behavior
+  Emzuli item pipes now preserve four filters/paint colours, honor gate extraction
+  presets with two-tick expiry and rotate only after successful extraction. Native
+  paint controls support next/previous/clear without materializing ghost items.
+  Gate/pulsar definitions and transport statement providers are registered; the
+  extraction preset icons use their actual authored textures in the block atlas.
+  Core statements now register during normal startup, before saved gates are loaded;
+  tests resolve trigger IDs from the registry instead of initializing them implicitly.
+  Full fluid/power/RF transport, obsidian/stripes behavior
   and pluggable/gate gameplay still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
@@ -470,8 +486,8 @@ features explicitly as work proceeds.
   reload, GPU rendering and live guide input remain unverified. The Stirling engine
   screen has now been opened in the full client; other screens still need validation.
 
-Remaining work includes legacy resource/model/recipe migration, transport items and
-placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
+Remaining work includes remaining resource/model/recipe migration, gate/pluggable/wire
+items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
 integration, full quarry operation, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is
 ready for a survival world.

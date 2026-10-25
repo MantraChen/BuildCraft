@@ -51,7 +51,7 @@ public class BCCoreInitializer implements ModInitializer {
         buildcraft.lib.BCLibItems.fmlPreInit();
         // STUB(R.Chen): CreativeTabManager.createTab("buildcraft.main") — port to
         //               FabricItemGroup once lib.registry is migrated.
-        // TODO: wire statements and native recipes.
+        BCCoreStatements.preInit();
         // STUB(R.Chen): NetworkRegistry GUI handler — port to ExtendedScreenHandlerType.
         // STUB(R.Chen): OreDictionaryStub.registerOre("craftingTableWood", ...) — port to
         //               Fabric item tags (c:crafting_tables / data-driven tag json).

@@ -42,8 +42,7 @@ public class BCSiliconInitializer implements ModInitializer {
         BCSiliconTags.register();
         BCSiliconBlocks.preInit();
         // STUB(R.Chen): BCSiliconItems.preInit() — migrate items to Registries.ITEM once lib.item lands.
-        // STUB(R.Chen): BCSiliconPlugs.preInit() — register gate/lens/pulsar/lightSensor/timer/facade
-        //               pluggables via PipeApi.pluggableRegistry once transport Phase 4E lands.
+        BCSiliconPlugs.preInit();
         // STUB(R.Chen): BCSiliconSprites.fmlPreInit() — register sprites via Fabric Atlas event.
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for each of:
         //               ASSEMBLY_TABLE, ADVANCED_CRAFTING_TABLE, INTEGRATION_TABLE, GATE.

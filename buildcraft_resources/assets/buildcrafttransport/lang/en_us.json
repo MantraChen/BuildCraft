@@ -1,4 +1,11 @@
 {
+  "gui.buildcrafttransport.emzuli.title": "Extraction Presets",
+  "gui.buildcrafttransport.emzuli.no_paint": "No paint",
+  "gui.buildcrafttransport.emzuli.paint": "Paint: %s",
+  "gui.buildcrafttransport.emzuli.paint_controls": "Left: next · Right: previous · Middle: clear",
+  "gui.buildcrafttransport.emzuli.current": "Next extraction preset",
+  "gui.buildcrafttransport.emzuli.active": "Enabled by a gate",
+  "gui.buildcrafttransport.emzuli.inactive": "Enable this preset with a gate action",
   "gui.buildcrafttransport.filter.whitelist": "Whitelist: extract matching items (empty allows all)",
   "gui.buildcrafttransport.filter.blacklist": "Blacklist: exclude matching items",
   "gui.buildcrafttransport.filter.round_robin": "Round robin: wait for each filter in order",

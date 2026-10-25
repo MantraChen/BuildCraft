@@ -42,6 +42,8 @@ wooden MJ extraction, stone-pipe delivery and travelling-item save data.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.
+Emzuli presets, paint and actual gate-driven item routing are covered by the fixture;
+gate item placement and the gate configuration screen are still being restored.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

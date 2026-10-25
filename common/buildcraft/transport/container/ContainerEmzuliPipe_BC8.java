@@ -1,91 +1,67 @@
 /*
  * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
+ * SPDX-License-Identifier: MPL-2.0
  * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
  */
-
 package buildcraft.transport.container;
 
-import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
-
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.util.DyeColor;
-
-import buildcraft.api.transport.pipe.IPipeHolder.PipeMessageReceiver;
-
 import buildcraft.lib.gui.ContainerPipe;
-import buildcraft.lib.gui.Widget_Neptune;
 import buildcraft.lib.gui.slot.SlotPhantom;
-import buildcraft.lib.misc.MessageUtil;
-import buildcraft.lib.net.PacketBufferBC;
-import buildcraft.lib.tile.item.ItemHandlerSimple;
-
+import buildcraft.transport.BCTransportScreens;
 import buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli;
 import buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli.SlotIndex;
 
+/** Native paint controls with server-authoritative preset status. Remake by FelixMantra. */
 public class ContainerEmzuliPipe_BC8 extends ContainerPipe {
-
     public final PipeBehaviourEmzuli behaviour;
-    public final EnumMap<SlotIndex, PaintWidget> paintWidgets = new EnumMap<>(SlotIndex.class);
-    private final ItemHandlerSimple filterInv;
+    private final int[] clientState = new int[6];
+    private final PropertyDelegate properties = new PropertyDelegate() {
+        public int size() { return 6; }
+        public int get(int index) {
+            if (player.getWorld().isClient) return clientState[index];
+            if (index < 4) {
+                var colour = behaviour.slotColours.get(SlotIndex.VALUES[index]);
+                return colour == null ? 0 : colour.getId() + 1;
+            }
+            if (index == 4) return behaviour.activeMask();
+            var current = behaviour.getCurrentSlot();
+            return current == null ? 0 : current.ordinal() + 1;
+        }
+        public void set(int index, int value) { clientState[index] = value; }
+    };
 
     public ContainerEmzuliPipe_BC8(PlayerEntity player, int syncId, PipeBehaviourEmzuli behaviour) {
-        super(player, syncId, behaviour.pipe.getHolder());
+        super(BCTransportScreens.EMZULI, player, syncId, behaviour.pipe.getHolder());
         this.behaviour = behaviour;
-        this.filterInv = behaviour.invFilters;
-        behaviour.pipe.getHolder().onPlayerOpen(player);
-
+        if (!player.getWorld().isClient) behaviour.pipe.getHolder().onPlayerOpen(player);
+        addProperties(properties);
         addFullPlayerInventory(84);
-
-        addSlot(new SlotPhantom(filterInv, 0, 25, 21));
-        addSlot(new SlotPhantom(filterInv, 1, 25, 49));
-        addSlot(new SlotPhantom(filterInv, 2, 134, 21));
-        addSlot(new SlotPhantom(filterInv, 3, 134, 49));
-
-        for (SlotIndex index : SlotIndex.VALUES) {
-            createPaintWidget(index);
-        }
+        addSlot(new SlotPhantom(behaviour.invFilters, 0, 25, 21));
+        addSlot(new SlotPhantom(behaviour.invFilters, 1, 25, 49));
+        addSlot(new SlotPhantom(behaviour.invFilters, 2, 134, 21));
+        addSlot(new SlotPhantom(behaviour.invFilters, 3, 134, 49));
     }
 
-    private void createPaintWidget(SlotIndex index) {
-        PaintWidget widget = new PaintWidget(this, index);
-        addWidget(widget);
-        paintWidgets.put(index, widget);
+    public DyeColor getColour(SlotIndex slot) {
+        int value = properties.get(slot.ordinal());
+        return value > 0 && value <= 16 ? DyeColor.byId(value - 1) : null;
+    }
+    public boolean isActive(SlotIndex slot) { return (properties.get(4) & 1 << slot.ordinal()) != 0; }
+    public boolean isCurrent(SlotIndex slot) { return properties.get(5) == slot.ordinal() + 1; }
+
+    @Override public boolean onButtonClick(PlayerEntity player, int id) {
+        if (player.getWorld().isClient || !canUse(player) || id < 0 || id >= 4 * 17) return false;
+        int colour = id % 17;
+        behaviour.setColour(SlotIndex.VALUES[id / 17], colour == 0 ? null : DyeColor.byId(colour - 1));
+        sendContentUpdates();
+        return true;
     }
 
-    @Override
-    public void onClosed(PlayerEntity player) {
+    @Override public void onClosed(PlayerEntity player) {
         super.onClosed(player);
         behaviour.pipe.getHolder().onPlayerClose(player);
-    }
-
-    public static class PaintWidget extends Widget_Neptune<ContainerEmzuliPipe_BC8> {
-        public final SlotIndex index;
-
-        public PaintWidget(ContainerEmzuliPipe_BC8 container, SlotIndex index) {
-            super(container);
-            this.index = index;
-        }
-
-        public void setColour(DyeColor colour) {
-            sendWidgetData((buffer) -> MessageUtil.writeEnumOrNull(buffer, colour));
-        }
-
-        @Override
-        public buildcraft.lib.net.MessageUpdateTile handleWidgetDataServer(Object ctx,
-            PacketBufferBC buffer) throws IOException {
-            DyeColor colour = MessageUtil.readEnumOrNull(buffer, DyeColor.class);
-            if (colour == null) {
-                container.behaviour.slotColours.remove(index);
-            } else {
-                container.behaviour.slotColours.put(index, colour);
-            }
-            container.behaviour.pipe.getHolder().scheduleNetworkGuiUpdate(PipeMessageReceiver.BEHAVIOUR);
-            return null;
-        }
     }
 }

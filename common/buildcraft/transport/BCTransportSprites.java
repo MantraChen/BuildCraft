@@ -66,7 +66,7 @@ public class BCTransportSprites {
         ACTION_EXTRACTION_PRESET = new EnumMap<>(SlotIndex.class);
         for (SlotIndex slot : SlotIndex.values()) {
             ACTION_EXTRACTION_PRESET.put(slot,
-                getHolder("actions/action_extraction_preset_" + slot.name().toLowerCase()));
+                getHolder("triggers/extraction_preset_" + slot.colour.getName()));
         }
         for (Direction face : Direction.values()) {
             ACTION_PIPE_DIRECTION.put(face,

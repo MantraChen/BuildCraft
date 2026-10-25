@@ -46,6 +46,6 @@ public class ActionExtractionPreset extends BCStatement implements IActionIntern
     @Override
     @Environment(EnvType.CLIENT)
     public ISprite getSprite() {
-        return null; // STUB(R.Chen): Phase 5 — BCTransportSprites.ACTION_EXTRACTION_PRESET.
+        return buildcraft.transport.BCTransportSprites.ACTION_EXTRACTION_PRESET.get(index);
     }
 }

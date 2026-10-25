@@ -38,5 +38,9 @@ public enum BCTransportGuis {
                 && holder.getPipe() != null && holder.getPipe().behaviour instanceof buildcraft.transport.pipe.behaviour.PipeBehaviourWoodDiamond diamond) {
             BCTransportScreens.openDiamondWood(player, diamond);
         }
+        if (this == PIPE_EMZULI && player.getWorld().getBlockEntity(pos) instanceof buildcraft.transport.tile.TilePipeHolder holder
+                && holder.getPipe() != null && holder.getPipe().behaviour instanceof buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli emzuli) {
+            BCTransportScreens.openEmzuli(player, emzuli);
+        }
     }
 }
