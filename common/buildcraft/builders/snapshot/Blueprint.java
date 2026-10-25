@@ -124,10 +124,12 @@ public class Blueprint extends Snapshot {
         entities.clear();
         if(nbt.contains("entities") && !(nbt.get("entities") instanceof NbtList))throw new InvalidInputDataException("Invalid blueprint entity list");
         if(nbt.get("entities") instanceof NbtList list && (list.size()>MAX_ENTITIES || !list.isEmpty() && list.getHeldType()!=NbtElement.COMPOUND_TYPE))throw new InvalidInputDataException("Invalid blueprint entity count/type");
+        int entityCount=0;
         for (NbtCompound schematicEntityTag :
             NBTUtilBC.readCompoundList(nbt.get("entities")).collect(Collectors.toList())) {
-            var entity=SchematicEntityManager.readFromNBT(schematicEntityTag);var p=entity.getPos();
-            if(p==null || !Double.isFinite(p.x)||!Double.isFinite(p.y)||!Double.isFinite(p.z)||p.x<0||p.y<0||p.z<0||p.x>=size.getX()||p.y>=size.getY()||p.z>=size.getZ())throw new InvalidInputDataException("Entity outside blueprint volume");
+            var entity=SchematicEntityManager.readFromNBT(schematicEntityTag);entityCount+=SchematicEntityManager.count(entity);
+            if(entityCount>MAX_ENTITIES)throw new InvalidInputDataException("Too many blueprint entity members");
+            for(var p:SchematicEntityManager.positions(entity))if(p==null || !Double.isFinite(p.x)||!Double.isFinite(p.y)||!Double.isFinite(p.z)||p.x<0||p.y<0||p.z<0||p.x>=size.getX()||p.y>=size.getY()||p.z>=size.getZ())throw new InvalidInputDataException("Entity outside blueprint volume");
             entities.add(entity);
         }
     }

@@ -22,6 +22,7 @@ import buildcraft.api.schematics.SchematicEntityFactoryRegistry;
 public class SchematicEntityManager {
     @SuppressWarnings("WeakerAccess")
     public static ISchematicEntity getSchematicEntity(SchematicEntityContext context) {
+        if(context.entity.hasVehicle())return null;
         for (SchematicEntityFactory<?> schematicEntityFactory : Lists.reverse(SchematicEntityFactoryRegistry.getFactories())) {
             if (schematicEntityFactory.predicate.test(context)) {
                 ISchematicEntity schematicEntity = schematicEntityFactory.supplier.get();
@@ -30,6 +31,11 @@ public class SchematicEntityManager {
             }
         }
         return null;
+    }
+
+    public static int count(ISchematicEntity entity){return entity instanceof SchematicEntityGroup group?group.size():1;}
+    public static java.util.List<net.minecraft.util.math.Vec3d> positions(ISchematicEntity entity){
+        return entity instanceof SchematicEntityGroup group?group.positions():java.util.List.of(entity.getPos());
     }
 
     @SuppressWarnings("WeakerAccess")

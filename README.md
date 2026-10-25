@@ -12,7 +12,8 @@ authors and dates. `archive/pr-4754` preserves the exact imported revision
 **Status: incomplete experimental port.** The complete production source compiles and
 the packaged mod starts native Fabric test servers and real Minecraft clients.
 Transport, machines, construction, zone planning and paintbrushes have verified
-workflows. Riding groups and broader mod compatibility remain unfinished.
+workflows. Rule-selected riding groups are preserved as complete units; broader
+third-party mod compatibility remains outside the verified scope.
 See [the migration assessment](docs/MIGRATION_STATUS.md)
 and [the history/contributions record](docs/HISTORY.md).
 
@@ -126,9 +127,16 @@ Blueprints also capture rule-selected armor stands, paintings, item/glow frames,
 boats and minecarts, including their equipment, displayed items and cargo. Supply
 the exact saved item data, including custom names. Entity construction starts after
 block work with a full 16,000 MJ battery; this original entity stage does not spend
-additional MJ. Existing matching entities are retained across saves. Riding groups
-are excluded. Use `./scripts/full-smoke.ps1 -Entities` for native capture, rotated
-reconstruction, missing-material recovery and three complete world restarts.
+additional MJ. Existing matching entities are retained across saves. A vehicle and
+its passengers form one unit: every member must be allowed by capture rules and
+inside the selected area. The builder reserves all equipment/cargo costs, checks
+each member's protection and rolls back the entire group if placement fails.
+Passenger order and native rotated seat positions survive reconstruction; new
+groups receive new UUIDs, while matching existing groups retain theirs. A blueprint
+supports at most 4,096 entity members with riding depth limited to 64. Players and
+unlisted mobs remain excluded. Use `./scripts/full-smoke.ps1 -Entities` for native
+capture, rotated reconstruction, whole-group material recovery and three complete
+world restarts.
 Single-block schematics now capture a block before its normal interaction opens a
 screen. Two paper and one lapis craft four blanks. Use a recorded sample to place
 the saved block using exact inventory materials, including chest contents; sneak-use

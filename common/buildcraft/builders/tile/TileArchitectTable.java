@@ -150,10 +150,14 @@ public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib
         if (scanning instanceof Blueprint blueprint) {
             for(int x=box.min().getX()>>4;x<=box.max().getX()>>4;x++)for(int z=box.min().getZ()>>4;z<=box.max().getZ()>>4;z++)if(!world.isChunkLoaded(x,z) || world instanceof net.minecraft.server.world.ServerWorld server && !server.isChunkLoaded(ChunkPos.toLong(x,z))){status=3;return;}
             blueprint.entities.clear();
-            world.getEntitiesByClass(Entity.class,box.getBoundingBox(),entity -> box.getBoundingBox().contains(entity.getPos())).stream()
-                .map(entity -> SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(world,box.min(),entity)))
-                .filter(Objects::nonNull).limit(Blueprint.MAX_ENTITIES+1).forEach(blueprint.entities::add);
-            if(blueprint.entities.size()>Blueprint.MAX_ENTITIES){status=4;retryTicks=20;return;}
+            int entityCount=0;
+            for(var entity:world.getEntitiesByClass(Entity.class,box.getBoundingBox(),e -> box.getBoundingBox().contains(e.getPos()))){
+                var schematic=SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(world,box.min(),entity));
+                if(schematic==null || SchematicEntityManager.positions(schematic).stream().anyMatch(p->!box.getBoundingBox().contains(p.add(Vec3d.of(box.min())))))continue;
+                entityCount+=SchematicEntityManager.count(schematic);
+                if(entityCount>Blueprint.MAX_ENTITIES){status=4;retryTicks=20;return;}
+                blueprint.entities.add(schematic);
+            }
         }
         scanning.computeKey();
         if (!GlobalSavedDataSnapshots.get(world).addSnapshot(scanning)) { status=4; retryTicks=20; return; }

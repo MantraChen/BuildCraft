@@ -1886,3 +1886,46 @@ Remake by FelixMantra.
 - This restores the existing planner/brush workflow rather than introducing robot
   entities absent from the original 1.12.2 module. Riding groups and broader
   compatibility remain open; this is still an experimental port.
+
+### Native riding groups in blueprints
+
+- Architect tables now capture an eligible vehicle and all of its passengers as
+  one ordered group. Every member must match capture rules and remain inside the
+  selected area. A player, unlisted mob or outside passenger excludes the entire
+  group; passengers never become duplicate independent schematic entries.
+- The saved representation is a flat list with validated parent indices. It
+  preserves passenger order and nested rides, limits riding depth to 64, and counts
+  every member against the blueprint-wide limit of 4,096 entities. Rotation uses
+  native vehicle seat positioning. Each newly constructed member receives a fresh
+  UUID; already matching groups keep all their existing identities. Exported and
+  imported parent arrays are copied so editing NBT cannot mutate a live schematic.
+- The builder reserves the combined vehicle, equipment and cargo costs in one
+  transaction. Protection callbacks run for every member. A rejected spawn,
+  obstruction or changed active plan removes all newly created members before
+  refunding the reservation. Excavation similarly checks the complete group before
+  removing any member or recovering its materials. Existing standalone entities
+  no longer incorrectly match a vehicle that has unpaid passengers.
+- Fifteen new GameTests cover ordered/nested capture, all four rotations, exact
+  cargo and equipment, rejected members, duplicate prevention, missing materials,
+  passenger protection, an actual second-entity spawn failure, changing a blueprint
+  during spawn, head obstruction, native ground/rail seats, UUID preservation,
+  whole-group recovery, malformed parent/depth data, aggregate limits and selection
+  boundaries. Fixtures explicitly wait for native entity sections to load. The
+  older filler marker tests use separate heights so nearby tests cannot join the
+  same real marker network.
+- The native client fixture now includes a boat with an equipped armor-stand
+  passenger, alongside a painting and both frame types. It captures through the
+  real architect screen, rotates construction, waits without spending any group
+  materials when the named helmet is missing, resumes through the builder's native
+  inventory, and preserves every UUID across three complete world restarts.
+- Final validation in `verification/riding-final-5.log` passes **555 required
+  GameTests** and **853 block-entity states** using the complete packaged mod.
+  Native client checks bake **932 block states, 140 items and 249 item variants**
+  with `failures=0`. The connected fixture uses a normal gravity-affected boat on
+  the captured stone floor, verifies the client passenger relationship both before
+  and after the final restart, and exits cleanly with `failures=0`. Screenshots in
+  `verification/entity-blueprint-client-run/screenshots` show the reconstructed
+  vehicle, named helmet, frames, painting and completed builder inventory.
+- This continues the existing code and its original history. It does not establish
+  unrestricted compatibility with third-party entity rules or every modpack; the
+  repository remains an experimental port with the tested workflows documented here.

@@ -46,11 +46,15 @@ public class SchematicEntityDefault implements ISchematicEntity {
             && RulesLoader.READ_DOMAINS.contains(id.getNamespace()) && RulesLoader.getRules(id,nbt).stream().anyMatch(rule->rule.capture);
     }
     public static boolean predicate(SchematicEntityContext context) {
-        return !(context.entity instanceof PlayerEntity) && context.entity.isAlive()
-            && !context.entity.hasPassengers() && !context.entity.hasVehicle() && allowed(data(context.entity));
+        return !context.entity.hasPassengers() && !context.entity.hasVehicle() && eligible(context.entity);
     }
+    static boolean eligible(Entity entity){return !(entity instanceof PlayerEntity) && entity.isAlive() && allowed(data(entity));}
     @Override public void init(SchematicEntityContext context) {
         if(!predicate(context))throw new IllegalArgumentException("Entity is not eligible for schematic capture");
+        initMember(context);
+    }
+    void initMember(SchematicEntityContext context) {
+        if(!eligible(context.entity))throw new IllegalArgumentException("Ineligible riding group member");
         entityNbt=data(context.entity);pos=context.entity.getPos().subtract(Vec3d.of(context.basePos));
         hanging=context.entity instanceof AbstractDecorationEntity;
         if(hanging){var decoration=(AbstractDecorationEntity)context.entity;hangingPos=decoration.getDecorationBlockPos().subtract(context.basePos);
@@ -96,9 +100,11 @@ public class SchematicEntityDefault implements ISchematicEntity {
     }
     public Entity preview(World world,BlockPos base){var nbt=placementNbt(base);return nbt==null?null:EntityType.getEntityFromNbt(nbt,world).orElse(null);}
     public boolean matches(Entity entity,BlockPos base){
-        if(entity.isRemoved() || !Registries.ENTITY_TYPE.getId(entity.getType()).toString().equals(entityNbt.getString("id"))
-            || entity.getPos().squaredDistanceTo(Vec3d.of(base).add(pos))>.01)return false;
-        var expected=preview(entity.getWorld(),base);if(expected==null)return false;
+        return !entity.hasVehicle() && !entity.hasPassengers() && matchesMember(preview(entity.getWorld(),base),entity);
+    }
+    static boolean matchesMember(Entity expected,Entity entity){
+        if(expected==null || entity.isRemoved() || entity.getType()!=expected.getType()
+            || entity.getPos().squaredDistanceTo(expected.getPos())>.01)return false;
         if(Math.abs(MathHelper.wrapDegrees(expected.getYaw()-entity.getYaw()))>1 || Math.abs(expected.getPitch()-entity.getPitch())>1)return false;
         var a=data(expected);var b=data(entity);TRANSIENT.forEach(key->{a.remove(key);b.remove(key);});return a.equals(b);
     }
@@ -109,8 +115,9 @@ public class SchematicEntityDefault implements ISchematicEntity {
         for(int x=MathHelper.floor(box.minX)>>4;x<=MathHelper.floor(box.maxX)>>4;x++)for(int z=MathHelper.floor(box.minZ)>>4;z<=MathHelper.floor(box.maxZ)>>4;z++)if(!world.isChunkLoaded(x,z) || world instanceof net.minecraft.server.world.ServerWorld server && !server.isChunkLoaded(ChunkPos.toLong(x,z)))return false;
         return true;
     }
-    private boolean canPlace(World world,Entity entity){
+    static boolean canPlace(World world,Entity entity){
         if(!accessible(world,entity))return false;
+        if(entity.hasVehicle())return world.isSpaceEmpty(entity,entity.getBoundingBox());
         if(entity instanceof AbstractDecorationEntity decoration)return decoration.canStayAttached();
         if(entity instanceof EndCrystalEntity){var floor=world.getBlockState(entity.getBlockPos().down());if(!floor.isOf(Blocks.OBSIDIAN)&&!floor.isOf(Blocks.BEDROCK))return false;}
         if(entity instanceof AbstractMinecartEntity && !world.getBlockState(entity.getBlockPos()).isIn(net.minecraft.registry.tag.BlockTags.RAILS))return false;

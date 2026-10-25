@@ -26,6 +26,7 @@ import buildcraft.builders.snapshot.SchematicBlockAir;
 import buildcraft.builders.snapshot.SchematicBlockDefault;
 import buildcraft.builders.snapshot.SchematicBlockFluid;
 import buildcraft.builders.snapshot.SchematicEntityDefault;
+import buildcraft.builders.snapshot.SchematicEntityGroup;
 
 public class BCBuildersSchematics {
     public static void preInit() {
@@ -38,6 +39,8 @@ public class BCBuildersSchematics {
 
         SchematicEntityFactoryRegistry.registerFactory("buildcraftbuilders:default", 100, SchematicEntityDefault::predicate,
             SchematicEntityDefault::new);
+        SchematicEntityFactoryRegistry.registerFactory("buildcraftbuilders:riding_group", 200, SchematicEntityGroup::predicate,
+            SchematicEntityGroup::new);
     }
 
     private static <S extends ISchematicBlock> void registerSchematicFactory(String name, int priority,

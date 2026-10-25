@@ -34,9 +34,12 @@ public final class FillerGameTests implements FabricGameTest {
         PlayerBlockBreakEvents.BEFORE.register((world,player,pos,state,tile)->!BREAK_DENIED.getOrDefault(world,Set.of()).contains(pos));
     }
     private static TileFiller place(TestContext c) {
-        c.setBlockState(POS,Blocks.AIR);
-        c.setBlockState(POS,BCBuildersBlocks.filler.getDefaultState().with(BCBuildersBlocks.filler.getFacingProperty(),Direction.NORTH));
-        var tile=(TileFiller)c.getBlockEntity(POS);tile.onPlacedBy(c.createMockCreativeServerPlayerInWorld(),new ItemStack(BCBuildersBlocks.filler));return tile;
+        return place(c,POS);
+    }
+    private static TileFiller place(TestContext c,BlockPos at) {
+        c.setBlockState(at,Blocks.AIR);
+        c.setBlockState(at,BCBuildersBlocks.filler.getDefaultState().with(BCBuildersBlocks.filler.getFacingProperty(),Direction.NORTH));
+        var tile=(TileFiller)c.getBlockEntity(at);tile.onPlacedBy(c.createMockCreativeServerPlayerInWorld(),new ItemStack(BCBuildersBlocks.filler));return tile;
     }
     private static TileFiller small(TestContext c,int size) {
         for(var p:BlockPos.iterate(POS.south(),POS.add(size-1,size-1,size)))c.setBlockState(p,Blocks.AIR);
@@ -140,26 +143,27 @@ public final class FillerGameTests implements FabricGameTest {
             bits.xor(inverted);c.assertTrue(bits.cardinality()==27,"Inversion did not complement entire volume: "+p.getUniqueTag());
         }c.complete();
     }
-    private static TileMarkerVolume markers(TestContext c){
-        var near=POS.south();for(var p:List.of(near,near.south(2),near.east(2))){c.setBlockState(p.down(),Blocks.STONE);c.setBlockState(p,BCCoreBlocks.markerVolume.getDefaultState().with(BCCoreBlocks.markerVolume.getFacingProperty(),Direction.UP));((TileMarkerVolume)c.getBlockEntity(p)).onLoad();}
+    private static TileMarkerVolume markers(TestContext c,BlockPos at){
+        var near=at.south();for(var p:List.of(near,near.south(2),near.east(2))){c.setBlockState(p.down(),Blocks.STONE);c.setBlockState(p,BCCoreBlocks.markerVolume.getDefaultState().with(BCCoreBlocks.markerVolume.getFacingProperty(),Direction.UP));((TileMarkerVolume)c.getBlockEntity(p)).onLoad();}
         var marker=(TileMarkerVolume)c.getBlockEntity(near);marker.onManualConnectionAttempt(c.createMockCreativeServerPlayerInWorld());c.assertTrue(marker.getCurrentConnection()!=null,"Markers did not connect");return marker;
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void nativeMarkersAreAdoptedAndConsumedWithOwnerPersisted(TestContext c){
-        var marker=markers(c);var min=marker.min();var max=marker.max();var tile=place(c);
-        c.assertTrue(tile.hasBox() && tile.box.min().equals(min) && tile.box.max().equals(max) && c.getWorld().isAir(min),"Filler did not acquire native markers");
+        // Distinct heights prevent real marker searches from connecting neighbouring fixtures.
+        var at=POS.up(80);var marker=markers(c,at);var min=marker.min();var max=marker.max();var tile=place(c,at);
+        c.assertTrue(tile.hasBox() && tile.box.min().equals(min) && tile.box.max().equals(max) && c.getWorld().isAir(min),"Filler did not acquire native markers: machine="+tile.getPos()+", selected="+min+".."+max+", actual="+tile.box+", marker="+c.getWorld().getBlockState(min));
         var owner=tile.getOwner();tile=reload(tile);c.assertTrue(tile.box.min().equals(min) && tile.getOwner().equals(owner),"Selection/owner lost on reload");c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void protectedMarkerLeavesWholeConnectionAndMachineUnconfigured(TestContext c){
-        var marker=markers(c);var protectedPos=marker.getPos().south(2);BREAK_DENIED.computeIfAbsent(c.getWorld(),w->new HashSet<>()).add(protectedPos);
-        try{var tile=place(c);c.assertTrue(!tile.hasBox() && marker.getCurrentConnection()!=null && !c.getWorld().isAir(protectedPos) && c.getWorld().getBlockEntity(marker.getPos())==marker,"Denied marker was consumed or adopted");}
+        var at=POS.up(96);var marker=markers(c,at);var protectedPos=marker.getPos().south(2);BREAK_DENIED.computeIfAbsent(c.getWorld(),w->new HashSet<>()).add(protectedPos);
+        try{var tile=place(c,at);c.assertTrue(!tile.hasBox() && marker.getCurrentConnection()!=null && !c.getWorld().isAir(protectedPos) && c.getWorld().getBlockEntity(marker.getPos())==marker,"Denied marker was consumed or adopted");}
         finally{BREAK_DENIED.get(c.getWorld()).remove(protectedPos);}c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void disconnectedMarkerDoesNotBecomeOneBlockWorkArea(TestContext c){
-        var near=POS.south();c.setBlockState(near.down(),Blocks.STONE);c.setBlockState(near,BCCoreBlocks.markerVolume.getDefaultState().with(BCCoreBlocks.markerVolume.getFacingProperty(),Direction.UP));((TileMarkerVolume)c.getBlockEntity(near)).onLoad();
-        var tile=place(c);c.assertTrue(!tile.hasBox() && c.getWorld().getBlockEntity(c.getAbsolutePos(near)) instanceof TileMarkerVolume,"Unconnected marker was accepted");c.complete();
+        var at=POS.up(112);var near=at.south();c.setBlockState(near.down(),Blocks.STONE);c.setBlockState(near,BCCoreBlocks.markerVolume.getDefaultState().with(BCCoreBlocks.markerVolume.getFacingProperty(),Direction.UP));((TileMarkerVolume)c.getBlockEntity(near)).onLoad();
+        var tile=place(c,at);c.assertTrue(!tile.hasBox() && c.getWorld().getBlockEntity(c.getAbsolutePos(near)) instanceof TileMarkerVolume,"Unconnected marker was accepted");c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void malformedStatusAndWorkPacketsDoNotPartiallyReplaceState(TestContext c)throws Exception{
