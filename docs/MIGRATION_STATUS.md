@@ -30,8 +30,8 @@ A source scan found 1,265 Java files under
   `net.minecraftforge`, including compatibility shims with unfinished behavior.
 - `TileQuarry` defers output storage, frame placement and several world integration
   paths. Merely making this class compile would not validate mining behavior.
-- `BlockUtil.breakBlockAndGetDrops` removes a block and returns no drops. This must
-  be repaired and tested before enabling a quarry in a real world.
+- The imported `BlockUtil.breakBlockAndGetDrops` removed blocks and returned no drops.
+  The helper is now repaired and tested below; full quarry operation remains unverified.
 - Resources still include old `.lang` files and historical model/recipe formats.
 - Expression and energy dependencies need verification in the distributable jar,
   not just the development classpath.
@@ -58,12 +58,15 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 223 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 218 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **55 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
+- Headless Fabric GameTest: **8 world tests passed** after the 55 regression tests.
+  A real Minecraft test server loaded a world, exercised selected production mining
+  helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
 
@@ -99,9 +102,16 @@ features explicitly as work proceeds.
   pass regression tests. The native lookup path and transport in a world still require
   integration validation. Passive extraction and the Team Reborn conversion bridge remain
   unfinished; micro-MJ units are not treated as interchangeable with external energy units.
+- Block harvesting now uses Fabric's native fake player and Minecraft's interaction manager,
+  retaining the owner's UUID and invoking Fabric block-break protection callbacks. World
+  tests verify ore loot, Silk Touch, chest contents/NBT, cancellation, unbreakable blocks,
+  insufficient tools, preservation of unrelated dropped items and collection without
+  duplication. The `grabAll` flag again means collecting existing nearby items. Temporary
+  tools are restored, and machine profile names are safe on Windows. Native fluid probes
+  now recognize flowing water and waterlogged blocks.
 
 Remaining work includes full compilation, block/entity and screen registration, network
-payload routing, renderers, fluid/energy integration, lossless block harvesting, packaged
+payload routing, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.
 

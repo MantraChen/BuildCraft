@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "name": "BuildCraft port regression tests",
   "environment": "server",
-  "entrypoints": { "server": ["buildcraft.test.PortTestRunner"] },
+  "entrypoints": {
+    "server": ["buildcraft.test.PortTestRunner"],
+    "fabric-gametest": ["buildcraft.test.lib.world.MiningGameTests"]
+  },
   "depends": {
     "fabricloader": ">=0.15.11",
     "fabric-api": "*",

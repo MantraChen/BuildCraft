@@ -17,6 +17,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class ListHandlerTest {
+    private static final Item LIST_ITEM = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+        new net.minecraft.util.Identifier("buildcraft_port_tests", "list"), new TestListItem());
     @BeforeClass public static void registerHandlers() { ListRegistry.registerHandler(new ListMatchHandlerClass()); }
 
     @Test public void listRowsAndOptionsSurviveSaveReload() {
@@ -104,8 +106,7 @@ public class ListHandlerTest {
     }
 
     @Test public void listItemsParticipateInInventoryMatching() {
-        Item listItem = new TestListItem();
-        ItemStack list = new ItemStack(listItem);
+        ItemStack list = new ItemStack(LIST_ITEM);
         ItemStack matching = new ItemStack(Items.DIAMOND);
         ItemStack other = new ItemStack(Items.STONE);
         assertTrue(StackUtil.matchesStackOrList(list, matching));

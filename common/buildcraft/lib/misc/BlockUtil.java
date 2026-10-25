@@ -7,6 +7,10 @@
 package buildcraft.lib.misc;
 
 import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +21,10 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.entity.ItemEntity;
+import net.fabricmc.fabric.api.entity.FakePlayer;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.Box;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -53,11 +61,12 @@ public class BlockUtil {
             .thenComparingInt(BlockPos::getZ);
     }
 
-    // STUB(R.Chen): Forge fluid API (FluidBlock / IFluidBlock / FluidRegistry.lookupFluidForBlock) has no
-    // direct Yarn equivalent; the viscosity-aware fluid probing the quarry/pump use is deferred to the
-    // Transfer-API fluid migration pass. Returns null (treat as "no fluid") until then.
+    /** Includes flowing fluids and waterlogged blocks, normalized to the still-fluid identity. */
     public static Fluid getFluidWithFlowing(World world, BlockPos pos) {
-        return null;
+        FluidState state = world.getFluidState(pos);
+        if (state.isEmpty()) return null;
+        Fluid fluid = state.getFluid();
+        return fluid instanceof net.minecraft.fluid.FlowableFluid flowing ? flowing.getStill() : fluid;
     }
 
     // STUB(R.Chen): Forge block-hardness → MJ break-power curve deferred. Returns a flat placeholder cost so
@@ -66,15 +75,39 @@ public class BlockUtil {
         return 16 * buildcraft.api.mj.MjAPI.MJ;
     }
 
-    // STUB(R.Chen): Forge breakBlockAndGetDrops (BreakEvent firing, fake-player tool sim, getDrops) deferred.
-    // Removes the block server-side and returns an empty drop list so the quarry progresses without dupes.
+    /** Harvests with native player break callbacks, loot tables and block-entity drops.
+     * @param grabAll whether to also collect items already lying next to the block
+     * @return empty when the break is refused; otherwise the collected drops, removed from the world exactly once
+     */
     public static Optional<List<ItemStack>> breakBlockAndGetDrops(ServerWorld world, BlockPos pos, ItemStack tool,
-        GameProfile owner, boolean dropBlock) {
-        if (world.isAir(pos)) {
+        GameProfile owner, boolean grabAll) {
+        BlockState state = world.getBlockState(pos);
+        if (state.isAir() || state.getHardness(world, pos) < 0 || !world.getWorldBorder().contains(pos)
+            || !world.isInBuildLimit(pos)) {
             return Optional.empty();
         }
-        world.breakBlock(pos, false);
-        return Optional.of(java.util.Collections.emptyList());
+        FakePlayer player = FakePlayerProvider.INSTANCE.getFakePlayer(world, owner, pos);
+        ItemStack previous = player.getMainHandStack();
+        player.setStackInHand(Hand.MAIN_HAND, tool.copy());
+        try {
+            if (!world.canPlayerModifyAt(player, pos) || (state.isToolRequired() && !player.canHarvest(state))) {
+                return Optional.empty();
+            }
+            Box area = new Box(pos).expand(1);
+            Set<ItemEntity> existing = Collections.newSetFromMap(new IdentityHashMap<>());
+            if (!grabAll) existing.addAll(world.getEntitiesByClass(ItemEntity.class, area, entity -> true));
+            if (!player.interactionManager.tryBreakBlock(pos)) return Optional.empty();
+            List<ItemStack> drops = new ArrayList<>();
+            for (ItemEntity entity : world.getEntitiesByClass(ItemEntity.class, area, entity -> !entity.isRemoved())) {
+                if (!existing.contains(entity) && !entity.getStack().isEmpty()) {
+                    drops.add(entity.getStack().copy());
+                    entity.discard();
+                }
+            }
+            return Optional.of(drops);
+        } finally {
+            player.setStackInHand(Hand.MAIN_HAND, previous);
+        }
     }
 
     // STUB(R.Chen): missing getFluidWithoutFlowing / getFluid helpers.

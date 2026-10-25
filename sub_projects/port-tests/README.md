@@ -19,4 +19,17 @@ resource-pack projection, list filters, damage/NBT matching, MJ conservation and
 policy. Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 
+For the same 55 regression tests followed by 8 tests in a real Minecraft world:
+
+```powershell
+./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
+```
+
+The headless GameTest server starts a test world, verifies native block harvesting and
+fluid detection, then saves and exits. Coverage includes ore loot, Silk Touch, chest
+contents/NBT, protection-event cancellation, unbreakable blocks, inadequate tools,
+collection of nearby items, and owner/held-tool preservation. Reports are written to
+`verification/gametest-results.xml`. This still loads selected production classes;
+full BuildCraft registration, rendering, machines and transport require separate checks.
+
 Remake by FelixMantra.

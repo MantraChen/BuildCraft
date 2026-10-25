@@ -11,7 +11,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.server.world.ServerWorld;
 
-import net.minecraftforge.common.util.FakePlayer;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 
 public class FakePlayerBC extends FakePlayer {
     public FakePlayerBC(ServerWorld world, GameProfile name) {

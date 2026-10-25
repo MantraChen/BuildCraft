@@ -26,7 +26,12 @@ public final class PortTestRunner implements DedicatedServerModInitializer {
         }
         System.out.printf("BUILDCRAFT PORT TESTS: %d run, %d failed, %d ignored%n",
             result.getRunCount(), result.getFailureCount(), result.getIgnoreCount());
-        // Only this dedicated test JVM exits; no server/world is started by the fixture.
+        if (System.getProperty("fabric-api.gametest") != null) {
+            if (!result.wasSuccessful()) throw new IllegalStateException("Port regression tests failed");
+            // GameTest starts a real test world after the common regression tests pass.
+            return;
+        }
+        // Only this dedicated test JVM exits; the ordinary regression run creates no world.
         System.exit(result.wasSuccessful() ? 0 : 1);
     }
 }

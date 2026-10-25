@@ -24,7 +24,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.RenderHelper;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.client.util.TooltipContext;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;

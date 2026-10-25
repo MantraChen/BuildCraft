@@ -6,7 +6,7 @@ package buildcraft.lib.item;
 
 import java.util.List;
 
-import net.minecraft.client.util.TooltipContext;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;

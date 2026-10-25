@@ -37,6 +37,9 @@ Focused regression tests run with
 `./scripts/gradle.ps1 -p sub_projects/port-tests runServer --console=plain` on Windows,
 or `./gradlew -p sub_projects/port-tests runServer --console=plain` elsewhere. This
 dedicated test fixture exits before world startup; it is not the full mod.
+Use `runGameTest` in place of `runServer` to also run mining tests in a real headless
+Minecraft test world. See [the fixture documentation](sub_projects/port-tests/README.md)
+for the tested scope and report location.
 
 Report issues with this remake in
 [MantraChen/BuildCraft-Fabric](https://github.com/MantraChen/BuildCraft-Fabric/issues).

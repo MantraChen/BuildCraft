@@ -26,6 +26,10 @@ sourceSets.main.java {
     srcDir '../../BuildCraftAPI/api'
     srcDir '../../src/test/java'
     include 'buildcraft/test/PortTestRunner.java'
+    include 'buildcraft/test/lib/world/MiningGameTests.java'
+    include 'buildcraft/api/core/IFakePlayerProvider.java'
+    include 'buildcraft/lib/misc/FakePlayerProvider.java'
+    include 'buildcraft/lib/misc/BlockUtil.java'
     include 'buildcraft/api/mj/MjAPI.java'
     include 'buildcraft/api/mj/MjBattery.java'
     include 'buildcraft/api/mj/MjCapabilityHelper.java'
@@ -77,6 +81,12 @@ loom {
             server()
             runDir '../../verification/port-tests-run'
             programArgs 'nogui'
+        }
+        gameTest {
+            server()
+            runDir '../../verification/gametest-run'
+            vmArg '-Dfabric-api.gametest'
+            vmArg '-Dfabric-api.gametest.report-file=../gametest-results.xml'
         }
     }
 }

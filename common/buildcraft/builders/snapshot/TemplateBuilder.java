@@ -13,7 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 
-import net.minecraftforge.common.util.FakePlayer;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 
 import buildcraft.api.core.BuildCraftAPI;
 import buildcraft.api.template.TemplateApi;
