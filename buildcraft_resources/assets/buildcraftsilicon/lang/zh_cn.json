@@ -51,5 +51,19 @@
   "item.buildcraftsilicon.plug_facade.hollow": "镂空 · 允许管道连接",
   "item.buildcraftsilicon.plug_facade.default": "默认",
   "item.buildcraftsilicon.plug_facade.phase": "%s：%s",
-  "item.buildcraftsilicon.plug_facade": "外观板"
+  "item.buildcraftsilicon.plug_facade": "外观板",
+  "item.buildcraftsilicon.gate_copier": "门配置复制器",
+  "item.buildcraftsilicon.gate_copier.empty": "尚未存储门配置",
+  "item.buildcraftsilicon.gate_copier.loaded": "已存储门配置",
+  "item.buildcraftsilicon.gate_copier.tip": "右键门以复制或粘贴；潜行使用以清空。",
+  "message.buildcraftsilicon.gate_copier.copied": "已复制门配置。",
+  "message.buildcraftsilicon.gate_copier.pasted": "已粘贴门配置。",
+  "message.buildcraftsilicon.gate_copier.cleared": "已清空存储的门配置。",
+  "message.buildcraftsilicon.gate_copier.no_gate": "请瞄准门附件以复制或粘贴。",
+  "message.buildcraftsilicon.gate_copier.invalid": "无法读取存储的门配置，目标门未被更改。",
+  "message.buildcraftsilicon.gate_copier.warning.logic": "目标门的与／或逻辑不同，已保留目标门原有逻辑。",
+  "message.buildcraftsilicon.gate_copier.warning.slots": "目标门槽位较少，仅粘贴可容纳的配置行。",
+  "message.buildcraftsilicon.gate_copier.warning.trigger_parameters": "目标门的条件参数槽较少，超出的参数已省略。",
+  "message.buildcraftsilicon.gate_copier.warning.action_parameters": "目标门的动作参数槽较少，超出的参数已省略。",
+  "message.buildcraftsilicon.gate_copier.warning.missing_data": "部分条件、动作或参数缺失或不兼容。"
 }

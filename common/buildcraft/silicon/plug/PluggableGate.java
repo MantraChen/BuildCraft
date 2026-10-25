@@ -116,7 +116,12 @@ public class PluggableGate extends PipePluggable implements IWireEmitter {
     }
 
     @Override public boolean onPluggableActivate(net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.hit.HitResult hit, float x, float y, float z) {
-        if (!holder.canPlayerInteract(player)) return false;
+        if (!holder.canPlayerInteract(player) || holder.getPluggable(side)!=this) return false;
+        // Preserve the original main-hand priority while supporting an off-hand copier.
+        for(var hand:net.minecraft.util.Hand.values()){
+            var stack=player.getStackInHand(hand);
+            if(stack.getItem() instanceof buildcraft.silicon.item.ItemGateCopier copier){copier.interact(stack,player,this);return true;}
+        }
         buildcraft.silicon.BCSiliconScreens.open(player, this);
         return true;
     }

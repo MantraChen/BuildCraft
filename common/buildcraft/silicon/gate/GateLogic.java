@@ -141,29 +141,20 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
         }
 
         for (int i = 0; i < statements.length; i++) {
-            String tName = "trigger[" + i + "]";
-            String aName = "action[" + i + "]";
-            // Legacy: string-form triggers
-            if (nbt.contains(tName, NbtElement.STRING_TYPE)) {
-                NbtCompound nbt2 = new NbtCompound();
-                nbt2.putString("kind", nbt.getString(tName));
-                nbt2.putByte("side", nbt.getByte(tName + ".side"));
-                nbt.put(tName, nbt2);
-            }
-            // Legacy: string-form actions
-            if (nbt.contains(aName, NbtElement.STRING_TYPE)) {
-                NbtCompound nbt2 = new NbtCompound();
-                nbt2.putString("kind", nbt.getString(aName));
-                nbt2.putByte("side", nbt.getByte(aName + ".side"));
-                nbt.put(aName, nbt2);
-            }
-
-            statements[i].trigger.readFromNbt(nbt.getCompound(tName));
-            statements[i].action.readFromNbt(nbt.getCompound(aName));
+            statements[i].trigger.readFromNbt(configStatement(nbt,"trigger["+i+"]"));
+            statements[i].action.readFromNbt(configStatement(nbt,"action["+i+"]"));
         }
     }
 
-    public NbtCompound writeToNbt() {
+    /** Normalize old string-form entries without mutating the item or saved source tag. */
+    static NbtCompound configStatement(NbtCompound nbt,String name) {
+        if(!nbt.contains(name,NbtElement.STRING_TYPE))return nbt.getCompound(name).copy();
+        var statement=new NbtCompound();statement.putString("kind",nbt.getString(name));
+        statement.putByte("side",nbt.contains(name+".side",NbtElement.NUMBER_TYPE)?nbt.getByte(name+".side"):(byte)6);
+        var full=new NbtCompound();full.put("s",statement);return full;
+    }
+
+    public NbtCompound writeConfigData() {
         NbtCompound nbt = new NbtCompound();
         nbt.put("variant", variant.writeToNBT());
 
@@ -183,6 +174,11 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
                 nbt.put("action[" + s + "]", statements[s].action.writeToNbt());
             }
         }
+        return nbt;
+    }
+
+    public NbtCompound writeToNbt() {
+        NbtCompound nbt=writeConfigData();
         nbt.put("wireBroadcasts", NBTUtilBC.writeEnumSet(wireBroadcasts, DyeColor.class));
         int latches=0;
         for(int i=0;i<statements.length;i++) {

@@ -33,6 +33,14 @@ import net.minecraft.world.explosion.Explosion;
 /** Packaged-world removal tests: actual loot, exact recovery, and cached automation references. */
 public final class MachineRecoveryGameTests implements FabricGameTest {
     private static final BlockPos POS = new BlockPos(3, 3, 3);
+    @Override public void invokeTestMethod(TestContext context, java.lang.reflect.Method method) {
+        // The exact drop query extends beyond the template. Clear previous saved-world
+        // residue before any setup; newly produced drops must still match one-for-one.
+        var residue = drops(context, context.getAbsolutePos(POS));
+        if (!residue.isEmpty()) System.out.println("MACHINE LOOT FIXTURE " + method.getName() + " clearing previous drops: " + residue.stream().map(ItemEntity::getStack).toList());
+        residue.forEach(ItemEntity::discard);
+        FabricGameTest.super.invokeTestMethod(context, method);
+    }
     private static FluidVariant taggedWater() {
         var tag = new NbtCompound(); tag.putString("batch", "Remake by FelixMantra");
         return FluidVariant.of(Fluids.WATER, tag);

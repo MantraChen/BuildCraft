@@ -27,6 +27,9 @@ public class BCSiliconItems {
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
+        gateCopier=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","gate_copier"),new ItemGateCopier(new net.minecraft.item.Item.Settings()));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE).register(entries->entries.add(gateCopier));
         plugFacade=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcraftsilicon","plug_facade"),new ItemPluggableFacade(new net.minecraft.item.Item.Settings()));
         buildcraft.api.facades.FacadeAPI.facadeItem=plugFacade;

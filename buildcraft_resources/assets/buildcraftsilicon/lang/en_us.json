@@ -51,5 +51,19 @@
   "item.buildcraftsilicon.plug_facade.hollow": "Hollow · allows pipe connections",
   "item.buildcraftsilicon.plug_facade.default": "Default",
   "item.buildcraftsilicon.plug_facade.phase": "%s: %s",
-  "item.buildcraftsilicon.plug_facade": "Facade"
+  "item.buildcraftsilicon.plug_facade": "Facade",
+  "item.buildcraftsilicon.gate_copier": "Gate Copier",
+  "item.buildcraftsilicon.gate_copier.empty": "No gate settings stored",
+  "item.buildcraftsilicon.gate_copier.loaded": "Gate settings stored",
+  "item.buildcraftsilicon.gate_copier.tip": "Right-click a gate to copy or paste. Sneak-use to clear.",
+  "message.buildcraftsilicon.gate_copier.copied": "Copied gate settings.",
+  "message.buildcraftsilicon.gate_copier.pasted": "Pasted gate settings.",
+  "message.buildcraftsilicon.gate_copier.cleared": "Cleared stored gate settings.",
+  "message.buildcraftsilicon.gate_copier.no_gate": "Aim at a gate attachment to copy or paste.",
+  "message.buildcraftsilicon.gate_copier.invalid": "Stored gate data could not be read. The target was unchanged.",
+  "message.buildcraftsilicon.gate_copier.warning.logic": "Target AND/OR logic differs; the target keeps its logic type.",
+  "message.buildcraftsilicon.gate_copier.warning.slots": "Target has fewer slots; only the rows that fit were pasted.",
+  "message.buildcraftsilicon.gate_copier.warning.trigger_parameters": "Target has fewer trigger parameters; excess parameters were omitted.",
+  "message.buildcraftsilicon.gate_copier.warning.action_parameters": "Target has fewer action parameters; excess parameters were omitted.",
+  "message.buildcraftsilicon.gate_copier.warning.missing_data": "Some statements or parameters were unavailable or incompatible."
 }

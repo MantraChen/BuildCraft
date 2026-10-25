@@ -1,0 +1,4 @@
+{
+  "parent":"buildcraftsilicon:item/gatecopier_empty",
+  "overrides":[{"predicate":{"buildcraftsilicon:copied":1},"model":"buildcraftsilicon:item/gatecopier_full"}]
+}

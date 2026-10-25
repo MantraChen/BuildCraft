@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **332 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **346 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1167,3 +1167,47 @@ Remake by FelixMantra.
   The four reviewed screenshots under `verification/facades-client-run/screenshots/`
   show transparent/active facades, the hollow log opening, the default phase and
   correctly sized inventory variants with the remake credit.
+
+### Native gate copier
+
+- Registered `buildcraftsilicon:gate_copier` as a single-stack native tool with
+  the original empty/full models, translated usage/status messages and
+  `Remake by FelixMantra` in its tooltip. Assembly consumes one BuildCraft wrench,
+  one iron chipset and exactly 500 MJ; this brings the fixed assembly list to 83
+  recipes, alongside the generated facade recipes.
+- An empty copier captures statements, parameters, absolute sides and group
+  connections. A filled copier pastes those settings while retaining the target's
+  material, modifier and AND/OR logic. Smaller targets receive only fitting rows
+  and parameters with explicit warnings. A copied blank gate clears destination
+  settings. Main-hand priority and offhand use match the original interaction.
+- Copying excludes live wire broadcasts, activation flags and single-action
+  latches. Pasted actions start with their own runtime state. Item/NBT copies do
+  not alias source or destination parameters. Sneak-use clears only `gate_data`,
+  retaining custom names and other item tags.
+- Paste decodes and validates every fitting row before changing the live gate;
+  malformed readers or variants leave the destination untouched. Missing add-on
+  statements/parameter types are removed or defaulted with a warning. Detached
+  gates, spectators, distant players and native interaction denial cannot edit
+  the gate. Existing gate screens receive row/group updates without being replaced.
+- Fixed legacy string statement loading to construct the full statement wrapper
+  without mutating the saved tag. This handles the original string representation,
+  not a general conversion of arbitrary renamed third-party statements.
+- The save/reload regression exposed missing registration of wire action and
+  trigger parameter readers. Both NBT and packet readers are now registered;
+  all 16 colours, trigger polarities and empty parameters round-trip. Named item
+  samples, gate-side-only redstone parameters and wire parameters survive copying
+  and persisted tile reload.
+- Fourteen new GameTests bring the complete packaged-mod suite to 346 passing
+  tests. They cover both hands on all six faces, capacity/logic warnings, clearing,
+  invalid/missing data, access checks, independent single-action latches, saves,
+  all wire parameter encodings and the real assembly recipe.
+- Final validation: `verification/gate-copier-final-7.log` records all 346 required
+  server tests passing and the real client fixture completing with `failures=0`.
+  The client uses native copy/paste and sneak-use packets, verifies empty/full
+  models across resource reload, updates an already open gate screen and restarts
+  the complete saved world. Four reviewed screenshots show the filled/cleared
+  tools and matching pasted/live gate screens. Empty optional parameters now
+  render as empty cells instead of misleading question marks.
+  Machine-recovery test setup also clears old item entities from its expanded
+  counting volume, retaining the original exact drop assertions on reused worlds.
+  Existing guide recipe and texture-animation/mipmap warnings are unchanged.

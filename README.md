@@ -50,7 +50,7 @@ use sided Fabric storage, including non-consuming sample and capacity checks.
 All 16 wire colours place on pipe corners, connect matching networks and carry gate
 signals. Breaking an attachment preserves the pipe and honours native break protection.
 Native laser assembly restores five chipsets, all 24 modified gate variants,
-16 wire colours, three control attachments and 34 lens/filter variants through 82
+16 wire colours, three control attachments, a gate copier and 34 lens/filter variants through 83
 data-pack recipes. Directional lasers receive MJ through
 native pipes, stop at obstructions and retain bounded batteries across saves. The
 assembly screen queues recipes, keeps selections while ingredients are missing and
@@ -91,6 +91,12 @@ Phased facades follow live coloured-wire signals and keep their states across sa
 The native registry supplies 4,204 basic assembly variants in the current mod set,
 plus the original phased creative example. Use `./scripts/full-smoke.ps1 -Facades`
 for resource reload, routing, native breaking and a complete client-world restart.
+Gate copiers store statements, item samples, sides and groups without copying live
+signals or single-action latches. Right-click a gate to copy into an empty tool or
+paste stored settings; sneak-use clears only those settings. The target keeps its
+own gate type, with warnings when its capacity is smaller. Assembly uses a wrench,
+an iron chipset and 500 MJ. Use `./scripts/full-smoke.ps1 -GateCopier` for native
+client interactions, open-screen synchronization and a complete world restart.
 Pipe plugs and power adaptors also have native crafting, six-face placement,
 models, picking and drops. A plug blocks the face; an adaptor keeps material flow
 blocked while accepting MJ for the extraction behavior. With automatic RF conversion

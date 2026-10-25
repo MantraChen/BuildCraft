@@ -81,7 +81,7 @@ public final class FacadeGameTests implements FabricGameTest {
                 c.assertTrue(copy.allocate(List.of(state.getRequiredStack(),new ItemStack(BCTransportItems.pipeStructure,3)))!=null,"Facade recipe rejected its inputs");
             }finally{packet.release();}
         }
-        c.assertTrue(c.getWorld().getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY).size()==82+generated,"Generated recipes missing or duplicated");
+        c.assertTrue(c.getWorld().getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY).size()==83+generated,"Generated recipes missing or duplicated");
         System.out.println("BUILDCRAFT FACADES: states="+states.size()+", recipes="+generated+", recipe payload bytes="+totalBytes);c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)

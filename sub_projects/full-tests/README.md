@@ -41,6 +41,10 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -TransportPlugs
 # Also verify all 34 lenses/filters, transparency, routing and a world restart:
 ./scripts/full-smoke.ps1 -Lenses
+# Also verify solid/hollow/phased facades, native routing and a world restart:
+./scripts/full-smoke.ps1 -Facades
+# Also verify gate copier packets, empty/full models, live GUI updates and saved settings:
+./scripts/full-smoke.ps1 -GateCopier
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -48,8 +52,10 @@ strips nested jars while remapping a development dependency, the script also ext
 the dependencies bundled in that exact artifact into `verification/full-test-libs/`.
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
-Chute fixtures clear old item/inventory entities within their own setup volume, so
-reusing the generated test world cannot introduce unintended minecart outputs.
+Chute fixtures clear old item/inventory entities within their own setup volume.
+The machine-recovery fixtures also clear old item entities in their expanded
+drop-query box. These setup steps prevent residue in reused test worlds from
+being counted as newly produced outputs.
 The optional interaction client creates its own world under
 `verification/full-client-interaction-run`, attacks a wire and gate through the native
 client interaction manager, verifies the same pipe block entity survives server replies,
@@ -219,7 +225,7 @@ The 332 server tests currently verify:
   packets, survival unlocks/distance checks, real laser supply, wooden extraction,
   exact removal, native NBT-aware machine crafting and bounded saved energy.
 
-- Twenty-one assembly tests cover all 82 native recipes and packet synchronization,
+- Twenty-one assembly tests cover all 83 native recipes and packet synchronization,
   counted/overlapping/exact-NBT ingredients, original costs and variants, round-robin
   selections, paid work across missing inputs/deselection/reload, sided transactions,
   pipe-priority output, full-inventory spills, exact removal and bucket remainders.
@@ -470,3 +476,14 @@ solid/hollow geometry, native UV orientation, inventory icon bounds, textures,
 resource reload, live wire phase synchronization, exact item routing, native
 partial breaking and full-world save/restart. Screenshots are stored in its
 `screenshots/` directory.
+
+Run `./scripts/full-smoke.ps1 -GateCopier` for the copier client fixture in
+`verification/gate-copier-client-run/`. Fourteen additional server tests cover
+both hands/all six faces, complete statements and parameter NBT, reduced gate
+capacity, blank/invalid/add-on configurations, native protection, independent
+action latches, persistent saves and exact 500 MJ assembly. All wire parameter
+colours and polarities round-trip through both registered NBT and packet readers.
+The client fixture exercises native copy/paste packets, empty/full model predicates
+before and after resource reload, open gate-screen row/group synchronization,
+a complete world restart and native sneak-clear retaining unrelated item tags.
+It stores filled/cleared item and pasted/live screen captures in `screenshots/`.

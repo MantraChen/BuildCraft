@@ -111,6 +111,8 @@ public class BCTransportStatements {
 
         ACTION_PARAM_SIGNAL_EMPTY = ActionParameterSignal.EMPTY;
         TRIGGER_PARAM_SIGNAL_EMPTY = TriggerParameterSignal.EMPTY;
+        buildcraft.api.statements.StatementManager.registerParameter(ActionParameterSignal::readFromNbt);
+        buildcraft.api.statements.StatementManager.registerParameter(TriggerParameterSignal::readFromNbt);
         buildcraft.api.statements.StatementManager.registerActionProvider(ACTION_PROVIDER);
         buildcraft.api.statements.StatementManager.registerTriggerProvider(TRIGGER_PROVIDER);
     }

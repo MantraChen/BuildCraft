@@ -1,0 +1,9 @@
+{
+  "type":"buildcraftsilicon:assembly",
+  "mj":500,
+  "ingredients":[
+    {"ingredient":{"item":"buildcraftcore:wrench"}},
+    {"ingredient":{"item":"buildcraftsilicon:redstone_chipset"},"nbt":"{chipset:\"iron\"}"}
+  ],
+  "result":{"item":"buildcraftsilicon:gate_copier"}
+}

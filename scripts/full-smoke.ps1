@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -237,5 +237,17 @@ if ($Facades) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $facadeOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFacadeClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($GateCopier) {
+    $copierRun = Join-Path $verification 'gate-copier-client-run'
+    $copierConfig = Join-Path $copierRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $copierConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $copierConfig 'main.cfg') -Force
+    $copierOptions = Join-Path $copierRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $copierOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $copierOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runGateCopierClientSmoke --console=plain
 }
 exit $LASTEXITCODE

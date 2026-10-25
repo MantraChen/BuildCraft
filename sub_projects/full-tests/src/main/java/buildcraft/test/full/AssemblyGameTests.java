@@ -50,7 +50,7 @@ public final class AssemblyGameTests implements FabricGameTest {
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void allNativeAssemblyRecipesRoundTripAndProduceExactOutput(TestContext c) {
         var recipes=c.getWorld().getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY).stream().filter(r->!r.getId().getPath().startsWith("assembly/facades/")).toList();
-        c.assertTrue(recipes.size()==82,"Expected five chipsets, 24 gates, sixteen wires, three controls and 34 lenses/filters");
+        c.assertTrue(recipes.size()==83,"Expected five chipsets, 24 gates, sixteen wires, three controls, 34 lenses/filters and the gate copier");
         var tile=table(c);c.setBlockState(POS.down(),Blocks.BARREL);var barrel=(BarrelBlockEntity)c.getBlockEntity(POS.down());
         for(var original:recipes) {
             var packet=new net.minecraft.network.PacketByteBuf(io.netty.buffer.Unpooled.buffer());

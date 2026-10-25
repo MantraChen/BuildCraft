@@ -79,7 +79,8 @@ public final class GuiGate extends HandledScreen<ContainerGate> {
         if (value instanceof IStatementParameter param && !param.getItemStack().isEmpty()) {
             context.drawItem(param.getItemStack(), sx+1, sy+1);
             context.drawItemInSlot(textRenderer, param.getItemStack(), sx+1, sy+1);
-        } else if (value != null && value.getSprite() == null) context.drawText(textRenderer, "?", sx+6, sy+5, 0xffffffff, false);
+        // Empty optional parameters deliberately have neither an item nor a sprite.
+        } else if (value instanceof StatementWrapper && value.getSprite() == null) context.drawText(textRenderer, "?", sx+6, sy+5, 0xffffffff, false);
     }
     @Override protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         if (selectedRow >= 0) return;

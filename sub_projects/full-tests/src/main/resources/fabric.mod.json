@@ -6,6 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "buildcraft.test.full.GateCopierGameTests",
       "buildcraft.test.full.FacadeGameTests",
       "buildcraft.test.full.LensGameTests",
       "buildcraft.test.full.TransportPlugGameTests",
@@ -38,6 +39,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.GateCopierClientSmoke",
       "buildcraft.test.full.FacadeClientSmoke",
       "buildcraft.test.full.LensClientSmoke",
       "buildcraft.test.full.TransportPlugClientSmoke",

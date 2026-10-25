@@ -16,6 +16,8 @@ public final class BCSiliconClient {
     public static final LensModel LENS_MODEL = new LensModel();
     public static final FacadeModel FACADE_MODEL = new FacadeModel();
     public static void register() {
+        net.minecraft.client.item.ModelPredicateProviderRegistry.register(BCSiliconItems.gateCopier,new net.minecraft.util.Identifier("buildcraftsilicon","copied"),
+            (stack,world,entity,seed)->buildcraft.silicon.item.ItemGateCopier.hasCopiedGateData(stack)?1:0);
         PipeRegistryClient.INSTANCE.registerLayeredRenderer(buildcraft.silicon.plug.PluggableFacade.class,(plug,matrices,consumers,light,overlay,delta)->
             FACADE_MODEL.render(plug.active().state,plug.side,plug.isHollow(),plug.holder.getPipeWorld(),plug.holder.getPipePos(),matrices,consumers,light,overlay));
         net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCSiliconItems.plugFacade,buildcraft.silicon.client.model.plug.ModelFacadeItem.INSTANCE);

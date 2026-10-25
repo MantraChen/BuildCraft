@@ -198,6 +198,16 @@ public class FullStatement<S extends IStatement> implements IReference<S> {
         }
     }
 
+    /** Transfers an already decoded and validated configuration without invoking parameter factories again.
+     * The caller owns the prepared parameters and must stop modifying them after this call. */
+    public void takePreparedConfiguration(FullStatement<S> prepared) {
+        if (type != prepared.type || params.length != prepared.params.length) {
+            throw new IllegalArgumentException("Incompatible prepared statement");
+        }
+        statement = prepared.statement;
+        System.arraycopy(prepared.params, 0, params, 0, params.length);
+    }
+
     public boolean canSet(int index, IStatementParameter param) {
         return getParamRef(index).canSet(param);
     }
