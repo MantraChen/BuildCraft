@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        heatExchangeClientSmoke {
+            client()
+            runDir '../../verification/heat-exchange-client-run'
+            vmArg '-Dbuildcraft.heatExchangeClientSmoke=true'
+        }
         distillerClientSmoke {
             client()
             runDir '../../verification/distiller-client-run'

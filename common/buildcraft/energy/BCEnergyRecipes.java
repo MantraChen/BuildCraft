@@ -12,8 +12,8 @@ public class BCEnergyRecipes {
         BCEnergyFuels.registerDefaults(buildcraft.api.fuels.BuildcraftFuelRegistry.fuel,
             buildcraft.api.fuels.BuildcraftFuelRegistry.coolant);
         registerDistillation();
+        registerHeatExchange();
         initialized = true;
-        // Heat exchange is restored with its separate machine simulation.
     }
 
     /** Original BuildCraft ratios, in mB; FluidStackBC converts to exact native droplets. */
@@ -49,4 +49,21 @@ public class BCEnergyRecipes {
             mj * buildcraft.api.mj.MjAPI.MJ / divisor);
     }
     private static int gcd(int a, int b) { return b == 0 ? a : gcd(b, a % b); }
+
+    private static void registerHeatExchange() {
+        var manager = buildcraft.api.recipes.BuildcraftRecipeRegistry.refineryRecipes;
+        for (var fluids : new buildcraft.lib.fluid.BCFluid[][] {
+                BCEnergyFluids.crudeOil, BCEnergyFluids.oilDistilled, BCEnergyFluids.oilHeavy,
+                BCEnergyFluids.fuelMixedLight, BCEnergyFluids.fuelMixedHeavy, BCEnergyFluids.oilDense,
+                BCEnergyFluids.fuelGaseous, BCEnergyFluids.fuelLight, BCEnergyFluids.fuelDense, BCEnergyFluids.oilResidue}) {
+            for (int heat = 0; heat < fluids.length - 1; heat++) {
+                var cold = new buildcraft.lib.compat.FluidStackBC(fluids[heat], 10);
+                var hot = new buildcraft.lib.compat.FluidStackBC(fluids[heat + 1], 10);
+                manager.addHeatableRecipe(cold, hot, heat, heat + 1);
+                manager.addCoolableRecipe(hot, cold, heat + 1, heat);
+            }
+        }
+        manager.addHeatableRecipe(new buildcraft.lib.compat.FluidStackBC(net.minecraft.fluid.Fluids.WATER, 10), null, 0, 1);
+        manager.addCoolableRecipe(new buildcraft.lib.compat.FluidStackBC(net.minecraft.fluid.Fluids.LAVA, 5), null, 4, 2);
+    }
 }

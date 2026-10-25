@@ -115,7 +115,11 @@ and pipe supply, exact refining products, tank GUI extraction and fluid renderin
 Distillers restore all ten original temperature-specific recipes and sided ports:
 horizontal input, gas above and liquid below. Each batch commits all three tanks
 together. The native screen shows tank contents/MJ progress and **Remake by FelixMantra**.
-Heat exchangers still need restoration, so heated refining chains remain incomplete.
+Add `-HeatExchange` to place a native three-block exchanger, save/reopen its warmup,
+heat one oil bucket with lava, feed the warm oil into a powered distiller, and verify
+the exact products, wrench reversal and fluid recovery. Exchangers support three to
+five blocks, all 42 original heating/cooling recipes, four transactional tanks and
+automatic output. Their tooltip and advancement include **Remake by FelixMantra**.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

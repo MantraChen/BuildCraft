@@ -456,6 +456,11 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
         return canPlayerEdit(player);
     }
 
+    /** Native wrench hook for machines whose rotation changes more than the clicked block. */
+    public net.minecraft.util.ActionResult attemptRotation(PlayerEntity player, Direction side) {
+        return net.minecraft.util.ActionResult.PASS;
+    }
+
     // ##################
     //
     // Network helpers

@@ -1,4 +1,8 @@
 {
+  "block.buildcraftfactory.heat_exchange": "热交换器",
+  "block.buildcraftfactory.heat_exchange.remake_hint": "将 3～5 个方块同向排列，使用扳手反转整组机器。",
+  "advancements.buildcraftfactory.heat_exchange.remake_title": "热量交换",
+  "advancements.buildcraftfactory.heat_exchange.remake_description": "同时加热和冷却液体。Remake by FelixMantra。",
   "block.buildcraftfactory.distiller": "蒸馏器",
   "advancements.buildcraftfactory.refining.title": "石油精炼",
   "advancements.buildcraftfactory.refining.remake_description": "将石油蒸馏为不同组分。Remake by FelixMantra。",

@@ -23,6 +23,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -AutoCraft
 # Also verify distillation, bucket GUI packets, saved MJ and exact oil products:
 ./scripts/full-smoke.ps1 -Distiller
+# Also verify multiblock heat exchange, saved warmup, warm-oil refining and reversal:
+./scripts/full-smoke.ps1 -HeatExchange
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -89,7 +91,23 @@ rejects reverse output filling, verifies the advancement and recovers remaining 
 on removal. It captures `distiller-progress.png`, `distiller-refined.png` and
 `distiller-world.png` under that run's `screenshots/` directory.
 
-The 179 server tests currently verify:
+The heat-exchanger client uses `verification/heat-exchange-client-run/`. It places a
+three-block structure, loads survival oil/lava buckets, and reopens saved warmup.
+Exactly one bucket of warm oil reaches a native tank, is collected through a real
+interaction, and enters a distiller powered by an engine and MJ pipes. The result is
+1,250 mB warm mixed-light fuel and 250 mB warm dense oil. Native wrench reversal,
+stale-port rejection, middle-block removal and exact product recovery must pass.
+Screenshots are `heat-warming.png`, `heat-running.png`, `heat-refinery.png` and
+`heat-reversed.png` under that run's `screenshots/` directory.
+
+The 200 server tests currently verify:
+
+- Twenty-one heat-exchanger tests cover all 42 heating/cooling recipes, three-to-five
+  block rates/warmup, temperature rejection, atomic blocked outputs, exact droplets,
+  water/lava consumption, sided/NBT filters, saved tanks/warmup, detached and oversized
+  structures, endpoint extension, native wrench reversal, dormant-section merging,
+  exact recovery, automatic outputs, survival buckets/crafting, owner advancement,
+  atomic snapshots and runtime recipe replacement/removal.
 
 - Thirteen distiller tests cover all ten original recipes, exact ratios/MJ costs,
   fractional shortage and blocked-output rollback, sided/filtered access, bounded

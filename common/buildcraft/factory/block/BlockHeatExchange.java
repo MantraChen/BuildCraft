@@ -3,7 +3,6 @@
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
  */
-// STUB(R.Chen): BlockHeatExchange multiblock connection logic deferred
 package buildcraft.factory.block;
 
 import java.util.Locale;
@@ -72,5 +71,13 @@ public class BlockHeatExchange extends BlockBCTile_Neptune implements ICustomPip
     @Override
     public float getExtension(World world, BlockPos pos, Direction face, BlockState state) {
         return 0;
+    }
+
+    @Override
+    public void appendTooltip(net.minecraft.item.ItemStack stack, BlockView world, java.util.List<net.minecraft.text.Text> tooltip,
+            net.minecraft.client.item.TooltipContext context) {
+        super.appendTooltip(stack, world, tooltip, context);
+        tooltip.add(net.minecraft.text.Text.translatable("block.buildcraftfactory.heat_exchange.remake_hint"));
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
     }
 }

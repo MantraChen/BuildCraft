@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -124,5 +124,17 @@ if ($Distiller) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $distillerOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runDistillerClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($HeatExchange) {
+    $heatRun = Join-Path $verification 'heat-exchange-client-run'
+    $heatConfig = Join-Path $heatRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $heatConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $heatConfig 'main.cfg') -Force
+    $heatOptions = Join-Path $heatRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $heatOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $heatOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runHeatExchangeClientSmoke --console=plain
 }
 exit $LASTEXITCODE

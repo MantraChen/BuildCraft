@@ -17,6 +17,11 @@ import buildcraft.lib.registry.BlockEntityRegistry;
 public final class BCFactoryClient {
     private BCFactoryClient() {}
     public static void register() {
+        if (BCFactoryBlocks.heatExchange != null) {
+            BlockRenderLayerMap.INSTANCE.putBlock(BCFactoryBlocks.heatExchange, RenderLayer.getCutout());
+            BlockEntityRendererFactories.register(BlockEntityRegistry.type(buildcraft.factory.tile.TileHeatExchange.class),
+                buildcraft.factory.client.render.RenderHeatExchange::new);
+        }
         HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, buildcraft.factory.gui.GuiDistiller>register(BCFactoryScreens.DISTILLER,
             (handler, inventory, title) -> new buildcraft.factory.gui.GuiDistiller((buildcraft.factory.container.ContainerDistiller) handler, inventory, title));
         HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, buildcraft.factory.gui.GuiAutoCraftItems>register(BCFactoryScreens.AUTO_WORKBENCH_ITEMS,

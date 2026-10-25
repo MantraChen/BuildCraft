@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **179 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **200 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -127,8 +127,8 @@ features explicitly as work proceeds.
   `doTileDrops` rule. Twenty new native block loot tables restore machine/marker items
   and preserve every engine/decoration subtype. Neighbor state changes and temporary
   block-entity detachment retain contents without producing drops. This applies to
-  registered machine inventories/tanks; unfinished refinery/heat-exchanger storage
-  integration and optional development/configuration-only block loot remain pending.
+  registered machine inventories/tanks, including the restored refinery and heat
+  exchanger; optional development/configuration-only block loot remains pending.
   Eleven MJ tests restore all nine material rates, exact factory loss units, bounded
   native input/simulation, delayed demand routing, sided providers without block
   entities, NBT reconstruction, partial/full/replaced sinks, weighted branches,
@@ -323,7 +323,7 @@ features explicitly as work proceeds.
 - Heat-exchanger models now use a native baked-model wrapper with a reload-aware state
   cache. The auto-workbench recipe preview uses the real crafting recipe manager.
   Actual item auto-workbench crafting and its native screen are now restored;
-  heat-exchanger multiblock operation remains open.
+  heat-exchanger multiblock operation and fluid rendering are restored below.
 
 - The laser path now emits native vertex consumers with real original texture rows,
   atlas-backed marker/power/stripe types, sampled light and world-to-local coordinates.
@@ -753,8 +753,7 @@ features explicitly as work proceeds.
   exact-NBT rejection, bounded/simulated MJ, all ten recipes, paid-work reload,
   runtime recipe changes, wooden-pipe extraction, exact shard recovery and a
   truncated synchronization packet.
-- Heat exchangers are still unfinished. Cold oil can now be refined, but a complete
-  temperature-changing refinery chain is not yet supported in survival gameplay.
+- Heat exchangers now support the temperature-changing refinery chain described below.
 - The real client places the distiller and loads a bucket through native shift-click,
   preserves exactly 4 MJ through a complete world restart, then uses a live engine/MJ
   network to refine 1,000 mB oil into 2,000 mB gas and 375 mB heavy oil. Native GUI
@@ -762,6 +761,41 @@ features explicitly as work proceeds.
   tank levels. Removal recovers exactly the remaining 1,375 mB as shards. Fluid
   rendering and the progress/refined screens were visually inspected; screenshots
   are in `verification/distiller-client-run/screenshots/`.
+
+### Native multiblock heat exchange
+
+- Restored three-to-five-block structures with four 2,000 mB tanks, the original
+  120-tick warmup and 5/10/20 mB per tick rates. All 42 original heating/cooling
+  recipes are registered, including water/lava consumption and all ten oil/fuel
+  families. Both inputs and products commit in one native fluid transaction, with
+  exact fractional droplets and no loss when an output is full or incompatible.
+- Cold input enters below the starting block and heated output leaves above the
+  ending block. Hot input and cooled output use the two outer horizontal ends.
+  Output tanks reject insertion and automatically transfer to neighboring storage;
+  native survival bucket interactions can also recover dormant contents.
+- Structure scans never load chunks. Incomplete, oversized or detached structures
+  stop, and retained storage handles validate every member. Extension and native
+  wrench reversal move tank ownership without duplicating contents. Merged dormant
+  sections keep compatible fluid and recover excess/incompatible fluid as exact
+  shards. Every affected block receives the wrench permission check.
+- Tank contents and warmup survive a complete world restart. Native client snapshots
+  validate before changing visible state. Restored fluid levels, counterflow
+  animation, water/lava particles, survival crafting and owner advancement; the
+  tooltip and advancement include **Remake by FelixMantra**.
+- Twenty-one new world tests bring the complete packaged-mod suite to **200 passing
+  tests**. They exercise every thermal conversion, all three rates, output blocking,
+  fractional capacities, exact-NBT filters, rollback, save/reload, topology changes,
+  stale views, native wrench/buckets, automatic output, shard recovery, malformed
+  snapshots and runtime recipe replacement/removal.
+- The real client places the structure, loads oil/lava through native survival
+  interactions and reopens saved warmup. It delivers exactly 1,000 mB warm oil to a
+  tank, withdraws the bucket and refines it using a live engine and MJ pipes into
+  1,250 mB warm mixed-light fuel and 250 mB warm dense oil. It verifies native
+  advancements, reverses the whole structure with a wrench, rejects the old port,
+  invalidates a broken structure and recovers all 1,500 mB of distiller products.
+  The client exits cleanly with zero fixture failures. Running, refinery and reversed
+  screenshots were visually inspected in
+  `verification/heat-exchange-client-run/screenshots/`.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

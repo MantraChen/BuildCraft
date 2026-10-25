@@ -1,0 +1,5 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {"has_gear": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": ["buildcraftcore:gear_iron"]}]}}},
+  "rewards": {"recipes": ["buildcraftfactory:heat_exchange"]}
+}

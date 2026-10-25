@@ -1,4 +1,8 @@
 {
+  "block.buildcraftfactory.heat_exchange": "Heat Exchanger",
+  "block.buildcraftfactory.heat_exchange.remake_hint": "Align 3–5 blocks; use a wrench to reverse the structure.",
+  "advancements.buildcraftfactory.heat_exchange.remake_title": "Heat Exchange",
+  "advancements.buildcraftfactory.heat_exchange.remake_description": "Heat and cool fluids together. Remake by FelixMantra.",
   "block.buildcraftfactory.distiller": "Distiller",
   "advancements.buildcraftfactory.refining.title": "Oil Refining",
   "advancements.buildcraftfactory.refining.remake_description": "Distill oil into useful fractions. Remake by FelixMantra.",

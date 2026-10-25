@@ -1,0 +1,9 @@
+{
+  "parent": "buildcraftcore:wrenched",
+  "display": {
+    "icon": {"item": "buildcraftfactory:heat_exchange"},
+    "title": {"translate": "advancements.buildcraftfactory.heat_exchange.remake_title"},
+    "description": {"translate": "advancements.buildcraftfactory.heat_exchange.remake_description"}
+  },
+  "criteria": {"code_trigger": {"trigger": "minecraft:impossible"}}
+}

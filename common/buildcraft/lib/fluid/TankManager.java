@@ -24,6 +24,15 @@ public class TankManager extends CombinedStorage<FluidVariant, Tank> {
         return tank;
     }
     public void addAll(Tank... tanks) { for (Tank tank : tanks) add(tank); }
+    /** Rebinds a movable machine section without draining it or retaining duplicate removal drops. */
+    public void replace(Tank... tanks) {
+        java.util.Set<String> names = new java.util.HashSet<>();
+        for (Tank tank : tanks) {
+            if (tank == null || !names.add(tank.getTankName())) throw new IllegalArgumentException("Invalid replacement tanks");
+        }
+        parts.clear();
+        java.util.Collections.addAll(parts, tanks);
+    }
     public List<Tank> getTanks() { return List.copyOf(parts); }
     public boolean isEmpty() { return parts.isEmpty(); }
     /** Breaking a machine recovers even input-only and output-only tanks. */
