@@ -47,7 +47,7 @@ public class BCFactoryInitializer implements ModInitializer {
         BCFactoryScreens.register();
         net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) ->
             !(state.getBlock() instanceof buildcraft.factory.block.BlockTube tube) || !tube.isConnectedToMiner(world, pos));
-        // Remaining native screens: AUTO_WORKBENCH_ITEMS, CHUTE, DISTILLER.
+        // Remaining native screens: DISTILLER and the unregistered fluid workbench.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCFactoryEventDist.INSTANCE) —
         //               port TextureStitchEvent to Fabric ClientSpriteRegistryCallback once
         //               factory render layer is migrated.

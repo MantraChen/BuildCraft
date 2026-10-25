@@ -24,9 +24,11 @@
       "buildcraft.test.full.RfPipeGameTests",
       "buildcraft.test.full.QuarryGameTests",
       "buildcraft.test.full.MiningWellGameTests",
-      "buildcraft.test.full.PumpGameTests"
+      "buildcraft.test.full.PumpGameTests",
+      "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.AutoCraftClientSmoke",
       "buildcraft.test.full.PumpClientSmoke",
       "buildcraft.test.full.MiningWellClientSmoke",
       "buildcraft.test.full.QuarryClientSmoke",

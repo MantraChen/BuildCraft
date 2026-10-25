@@ -91,6 +91,11 @@ or tanks. Renewable water respects real source neighbors, support, config and th
 native game rule. Protected cells, waterlogged hosts, full/incompatible tanks and saved
 partial work are handled without duplicating fluid. Manual buckets, removal recovery,
 the survival recipe and owner advancements are restored.
+Automatic item workbenches now craft from a ghost pattern using native recipes and
+atomic item transfers. They complete a passive craft in ten seconds, or use up to
+40 MJ to accelerate it. Exact item/NBT filters, dynamic results, recipe remainders,
+saved progress, output backpressure and native pipe extraction are covered. Their
+native screen includes progress, material filters and searchable unlocked recipes.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
@@ -103,6 +108,8 @@ Add `-MiningWell` to inspect its visible shaft and LED state, reopen partially p
 work, and finish excavation using an engine and MJ pipes before testing removal.
 Add `-Pump` to reopen partially paid pumping work, collect nine finite oil sources
 using an engine and pipes, and verify exact delivery, client state and advancements.
+Add `-AutoCraft` to exercise real ghost-slot and shift-click packets, save partial
+work, and use an engine plus the recipe browser to turn eight logs into 64 sticks.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

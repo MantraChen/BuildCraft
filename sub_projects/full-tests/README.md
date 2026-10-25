@@ -19,6 +19,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -MiningWell
 # Also verify pump placement, saved paid work and finite oil delivery through pipes:
 ./scripts/full-smoke.ps1 -Pump
+# Also verify automatic crafting, native GUI editing, recipe search and saved progress:
+./scripts/full-smoke.ps1 -AutoCraft
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -69,8 +71,21 @@ checks localized remake credit and owner advancements, then verifies retraction,
 empty client fluid state, native removal and stale energy rejection. Screenshots are
 `screenshots/pump-active.png` and `screenshots/pump-complete.png`.
 
-The 154 server tests currently verify:
+The automatic-workbench client uses `verification/autocraft-client-run/`. Native
+placement opens the registered screen; real click/shift-click packets set a ghost
+pattern and transfer eight logs without consuming phantom items. The client observes
+filters, preview and passive progress, then saves and reopens the world. Engine/MJ
+pipes finish the planks, and the searchable unlocked-recipe browser selects sticks.
+The result must be exactly 64 sticks, with native owner advancement and removal drops.
+Screenshots are `screenshots/autocraft-progress.png` and `screenshots/autocraft-recipes.png`.
 
+The 166 server tests currently verify:
+
+- Twelve automatic-workbench tests verify 200-tick passive crafting, bounded/simulated
+  MJ input, complete rollback on missing ingredients or full output, exact-NBT dynamic
+  repairs, cake bucket remainders, sided filters, native recipe replacement/removal,
+  paid-work reload, stale handles, protected ghost/derived slots and atomic packets,
+  wooden-pipe extraction, the survival recipe and owner advancement.
 - Sixteen pump tests cover finite/renewable/flowing/unsupported water, source-conversion
   rules and live config, exact MJ costs, native oil/gas and waterlogged drains, protected
   shafts/sources, disconnected paths, redstone, partial-work reload, old storage handles,

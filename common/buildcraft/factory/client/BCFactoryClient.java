@@ -17,6 +17,8 @@ import buildcraft.lib.registry.BlockEntityRegistry;
 public final class BCFactoryClient {
     private BCFactoryClient() {}
     public static void register() {
+        HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, buildcraft.factory.gui.GuiAutoCraftItems>register(BCFactoryScreens.AUTO_WORKBENCH_ITEMS,
+            (handler, inventory, title) -> new buildcraft.factory.gui.GuiAutoCraftItems((buildcraft.factory.container.ContainerAutoCraftItems) handler, inventory, title));
         HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, buildcraft.factory.gui.GuiChute>register(BCFactoryScreens.CHUTE,
             (handler, inventory, title) -> new buildcraft.factory.gui.GuiChute((buildcraft.factory.container.ContainerChute) handler, inventory, title));
         if (BCFactoryBlocks.chute != null) BlockRenderLayerMap.INSTANCE.putBlock(BCFactoryBlocks.chute, RenderLayer.getCutout());

@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -100,5 +100,17 @@ if ($Pump) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $pumpOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runPumpClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($AutoCraft) {
+    $craftRun = Join-Path $verification 'autocraft-client-run'
+    $craftConfig = Join-Path $craftRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $craftConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $craftConfig 'main.cfg') -Force
+    $craftOptions = Join-Path $craftRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $craftOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $craftOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runAutoCraftClientSmoke --console=plain
 }
 exit $LASTEXITCODE

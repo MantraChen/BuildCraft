@@ -243,12 +243,14 @@ public final class PumpGameTests implements FabricGameTest {
     public void nativeOilSpringRecordsOwnerAndAwardsBlackGoldAtWorldBottom(TestContext c) {
         var tile=pump(c);BlockPos springPos=new BlockPos(tile.getPos().getX(),c.getWorld().getBottomY(),tile.getPos().getZ());
         for(int y=tile.getPos().getY()-1;y>springPos.getY();y--)c.getWorld().setBlockState(new BlockPos(tile.getPos().getX(),y,tile.getPos().getZ()),Blocks.AIR.getDefaultState());
+        // The bottom marker is below the GameTest structure's reset bounds. Replace any previous run's tile.
+        c.getWorld().setBlockState(springPos,Blocks.AIR.getDefaultState());
         c.getWorld().setBlockState(springPos,buildcraft.core.BCCoreBlocks.spring.getDefaultState()
             .with(buildcraft.core.block.BlockSpring.SPRING_TYPE,buildcraft.api.enums.EnumSpring.OIL));
         var spring=(buildcraft.energy.tile.TileSpringOil)c.getWorld().getBlockEntity(springPos);spring.totalSources=1;
         c.getWorld().setBlockState(springPos.up(),BCEnergyFluids.crudeOil[0].getBlock().getDefaultState());power(tile,10*MjAPI.MJ);tile.tick();
         var progress=spring.createNbt().getList("pumpProgress",NbtElement.COMPOUND_TYPE);
-        c.assertTrue(progress.size()==1 && progress.getCompound(0).getInt("sourcesPumped")==1,"Oil spring did not record pump owner");
+        c.assertTrue(progress.size()==1 && progress.getCompound(0).getInt("sourcesPumped")==1,"Oil spring did not record pump owner: "+progress);
         var player=c.getWorld().getServer().getPlayerManager().getPlayer(tile.getOwner().getId());
         var advancement=c.getWorld().getServer().getAdvancementLoader().get(new Identifier("buildcraftfactory:black_gold"));
         c.assertTrue(player!=null && player.getAdvancementTracker().getProgress(advancement).isDone(),"World-bottom oil spring did not award Black Gold");c.complete();

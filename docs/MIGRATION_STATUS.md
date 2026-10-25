@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **154 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **166 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -322,7 +322,8 @@ features explicitly as work proceeds.
   integration remains unfinished.
 - Heat-exchanger models now use a native baked-model wrapper with a reload-aware state
   cache. The auto-workbench recipe preview uses the real crafting recipe manager.
-  Heat-exchanger multiblock operation and actual auto-workbench crafting are still open.
+  Actual item auto-workbench crafting and its native screen are now restored;
+  heat-exchanger multiblock operation remains open.
 
 - The laser path now emits native vertex consumers with real original texture rows,
   atlas-backed marker/power/stripe types, sampled light and world-to-local coordinates.
@@ -697,6 +698,37 @@ features explicitly as work proceeds.
   delivered through a stone fluid pipe. Owner advancements, client empty state,
   retraction and native removal are checked. Screenshots are under
   `verification/pump-client-run/screenshots/`.
+
+### Native automatic item workbenches
+
+- Restored native crafting from exact item/NBT ghost patterns. A complete ingredient
+  extraction and result insertion share one Fabric transaction; missing ingredients
+  or insufficient output space roll back the whole operation. Native dynamic recipes
+  calculate the actual result, including repaired-item durability. Recipe remainders
+  return to compatible material slots or leave through native adjacent output/spill.
+- Original passive crafting and external MJ now share the same saved progress:
+  0.2 MJ/tick, 40 MJ per craft, and the original 2 MJ/tick decay while unable to craft.
+  Input is bounded and supports simulation; removed machines reject cached energy
+  and item references. Recipe editing/replacement resets unrelated progress, while
+  loading NBT before world attachment preserves the original pattern and payment.
+- Restored proportional material filters and all-sided insert-only materials /
+  extract-only output. Real materials remain accessible in the GUI after a pattern
+  change. Phantom pattern/filter stacks cannot be extracted or dropped on removal.
+- The registered native screen synchronizes preview, materials, filters and bounded
+  progress properties. It provides searchable unlocked recipes and a visible
+  **Remake by FelixMantra** credit. Recipe IDs are validated on the server; derived
+  filters/preview reject editing, and phantom packets validate fully before applying.
+- Restored the two-stone-gears/crafting-table recipe, recipe-book unlock and native
+  owner advancement. Twelve added world tests pass, bringing the complete suite to
+  **166**. A previous oil-spring fixture now replaces its below-structure marker so
+  repeated runs cannot retain another run's pumped-source counter.
+- The real client places the workbench, uses native ghost/shift clicks, observes
+  passive progress, reopens paid work, and connects an engine through MJ pipes.
+  Searchable recipe selection produces exactly eight logs → 32 planks → 64 sticks;
+  owner advancement and removal preserve only the real output. Screenshots are in
+  `verification/autocraft-client-run/screenshots/`.
+- The unregistered experimental fluid workbench and silicon advanced crafting table
+  still require their separate integrations; this milestone restores the item machine.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
