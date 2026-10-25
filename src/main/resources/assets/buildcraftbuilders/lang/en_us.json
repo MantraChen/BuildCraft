@@ -1,5 +1,10 @@
 {
   "gui.buildcraftbuilders.filler": "Filler",
+  "gui.buildcraftbuilders.builder": "Builder",
+  "gui.buildcraftbuilders.materials": "Materials",
+  "gui.buildcraftbuilders.finished": "Construction complete",
+  "gui.buildcraftbuilders.entities_pending": "%s entities still need reconstruction",
+  "gui.buildcraftbuilders.builder_remaining": "Remaining: %s to break, %s to place",
   "gui.buildcraftbuilders.invert": "Invert: %s",
   "gui.buildcraftbuilders.excavate": "Dig: %s",
   "gui.buildcraftbuilders.remaining": "Remaining: %s to break, %s to place. Shift-click to cycle backwards."

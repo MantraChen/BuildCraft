@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 47 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 38 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **137 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **140 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **60 world tests passed** after 137 regression tests.
+- Headless Fabric GameTest: **69 world tests passed** after 140 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -93,8 +93,29 @@ features explicitly as work proceeds.
   when restoring a machine; unopened structure loot is not generated again.
   Ten new GameTests cover these foundations, malformed block-entity rejection and all
   vanilla default-state rule lookups. That registry test checks metadata/cost evaluation,
-  not placement of every vanilla block/state. Multi-block construction, entity capture,
-  blueprint item/fluid transactions and the builder machine remain unfinished.
+  not placement of every vanilla block/state. Multi-block construction and entity capture
+  still need further work and whole-mod validation.
+- Blueprints now use native item/fluid storage in one transaction: simulation, missing
+  duplicate requirements, exact-NBT matching and rejected placement return all resources.
+  Successful placement commits both resources together. The real blueprint builder uses
+  rotated schematics, support dependencies and the bounded MJ work queue. Remaining item
+  totals update with surveyed world changes; the screen displays up to 24 item variants.
+  Nine new world tests cover split slots/tanks, sub-mB residue, rollback/exceptions,
+  waterlogged stairs, paid chest contents, support order, queued-energy reload, rejected
+  block-entity placement, existing/missing blocks and template selection past non-block items.
+- The builder machine now has a snapshot slot, 27 resource slots, four native tanks,
+  MJ reception, server ticking, bounded path expansion, persistent path progress and
+  queue/battery NBT. Selecting another plan refunds queued credit before the next save.
+  Native screen registration, tank interaction widgets, material display, excavation
+  control, snapshot block-state changes and the working-volume outline are connected.
+  These machine/UI/path integrations are not yet validated in a full BuildCraft world.
+  Entity reconstruction remains unimplemented, and blueprints containing entities are
+  deliberately not reported as finished after only their blocks have been built.
+- Snapshot items now encode blueprint/template and used/blank kinds in NBT, retain
+  legacy damage/header-only reads, use native names/tooltips and have item-model predicates.
+  Three real-Fabric item tests cover stack serialization, old formats and malformed input;
+  they caught a missing-owner UUID crash. The item tooltip and builder screen include
+  **Remake by FelixMantra**. Actual item-model and screen rendering await the full client.
 - Restored the template work executor with bounded surveys/queues, MJ credit, live material
   checks, break-before-place ordering, native owner-aware harvesting/placement, cancellation
   refunds, saved work identity and chunk-loaded checks. Queued jobs reserve no items.
@@ -112,9 +133,8 @@ features explicitly as work proceeds.
   snapshot dimension/facing/palette validation, repeated blueprint entity reads, missing
   filler facing/hash, and statement parameter-zero/max-count handling. Five snapshot
   tests exercise the actual serialization, hashing, copying, rotation and malformed inputs.
-  Build volumes are currently bounded to 1,048,576 positions. Blueprint placement and
-  entity/fluid construction remain unfinished; the restored executor does not establish
-  support for those features. Filler work animation is not yet restored (region outline only).
+  Build volumes are currently bounded to 1,048,576 positions. Entity reconstruction
+  remains unfinished. Filler/builder work animation is not yet restored (region outlines only).
 - Registered the native Brigadier `/buildcraft` command tree: installed version and
   remake credit, a link to this repository's real commit history, and operator-only
   data-registry reload with error reporting. Native client resource access now supplies

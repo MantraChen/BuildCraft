@@ -13,7 +13,7 @@ The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not crea
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
 compilation or startup; the root `build` and real client/server checks remain required.
 
-Current coverage: 137 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 140 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
 resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
 policy, persistent configuration (legacy files, reloads, migrations, defaults and bounds),
@@ -39,7 +39,7 @@ Five snapshot regressions cover template/blueprint NBT and stable hashes, copy i
 rotated coordinate transforms, false-valued plane edits, bounded dimensions/facing/data,
 legacy blueprint lists and invalid palette indices.
 
-For the regression tests followed by 60 tests in a real Minecraft world:
+For the regression tests followed by 69 tests in a real Minecraft world:
 
 ```powershell
 ./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
@@ -77,6 +77,13 @@ container contents and native block-entity restoration, modern inventory costs,
 furnace work/XP clearing, multi-item counts, waterlogging/source fluids, malformed tile
 types, nested paths and piston-head omission. A metadata pass checks rule evaluation
 for every vanilla block's default state; it does not claim every state can be built.
+Nine blueprint-builder tests exercise the real snapshot builders and native material
+transactions: shared item/fluid rollback, repeated requirements, exact NBT, split storage,
+sub-mB residue, paid waterlogging and chest contents, dependencies, saved MJ credit,
+invalid block-entity rejection, live material totals and template selection past non-block
+items. Three item tests cover native snapshot kinds/headers, legacy damage and header-only
+items, stack NBT round trips and malformed headers. Machine block integration, paths and
+screens still require whole-mod tests.
 The fixture now includes the expression dependency used by the production rule JSON
 utilities. Run it sequentially with root/model builds because expression generation
 shares its output directory.

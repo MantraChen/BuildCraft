@@ -1,0 +1,8 @@
+{
+  "parent": "buildcraftbuilders:item/snapshot/template_clean",
+  "overrides": [
+    { "predicate": { "buildcraftbuilders:snapshot_type": 1 }, "model": "buildcraftbuilders:item/snapshot/template_used" },
+    { "predicate": { "buildcraftbuilders:snapshot_type": 2 }, "model": "buildcraftbuilders:item/snapshot/blueprint_clean" },
+    { "predicate": { "buildcraftbuilders:snapshot_type": 3 }, "model": "buildcraftbuilders:item/snapshot/blueprint_used" }
+  ]
+}

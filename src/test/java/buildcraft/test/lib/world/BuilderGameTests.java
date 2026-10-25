@@ -267,13 +267,13 @@ public class BuilderGameTests implements FabricGameTest {
         @Override protected boolean canPlace(BlockPos pos) { return context.getWorld().isAir(pos); }
         @Override protected boolean isReadyToPlace(BlockPos pos) { return ready && !unready.contains(pos); }
         @Override protected boolean hasEnoughToPlaceItems(BlockPos pos) { return items > 0; }
-        @Override protected List<ItemStack> getToPlaceItems(BlockPos pos) {
+        protected List<ItemStack> getToPlaceItems(BlockPos pos) {
             reservations++;
             if (items == 0) return null;
             items--;
             return List.of(new ItemStack(Items.STONE));
         }
-        @Override protected boolean doPlaceTask(PlaceTask task) {
+        protected boolean doPlaceTask(PlaceTask task) {
             if (failPlacement) return false;
             var player = FakePlayerProvider.INSTANCE.getFakePlayer(context.getWorld(), owner, workOrigin());
             ItemStack previous = player.getMainHandStack();
@@ -281,7 +281,14 @@ public class BuilderGameTests implements FabricGameTest {
             try { return TemplateHandlerDefault.INSTANCE.handle(context.getWorld(), task.pos, player, task.required.get(0)); }
             finally { player.setStackInHand(Hand.MAIN_HAND, previous); }
         }
-        @Override protected void cancelPlaceTask(PlaceTask task) { items += task.required.stream().mapToInt(ItemStack::getCount).sum(); }
+        @Override protected boolean executePlacement(BlockPos pos) {
+            List<ItemStack> resources = getToPlaceItems(pos);
+            if (resources == null) return false;
+            PlaceTask task = new PlaceTask(pos, resources);
+            boolean placed = doPlaceTask(task);
+            if (!placed) items += task.required.stream().mapToInt(ItemStack::getCount).sum();
+            return placed;
+        }
         @Override protected void acceptDrops(List<ItemStack> drops) { this.drops.addAll(drops); }
         @Override protected void workChanged() { }
     }

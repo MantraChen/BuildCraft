@@ -1,74 +1,81 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.builders.gui;
 
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
 import buildcraft.lib.gui.GuiBC8;
 import buildcraft.lib.gui.GuiIcon;
 import buildcraft.lib.gui.pos.GuiRectangle;
-
 import buildcraft.builders.container.ContainerBuilder;
 
-// TODO: Convert this gui into JSON!
 public class GuiBuilder extends GuiBC8<ContainerBuilder> {
-    private static final Identifier TEXTURE_BASE =
-            new Identifier("buildcraftbuilders:textures/gui/builder.png");
-    private static final Identifier TEXTURE_BLUEPRINT =
-            new Identifier("buildcraftbuilders:textures/gui/builder_blueprint.png");
-    private static final int SIZE_X = 176, SIZE_BLUEPRINT_X = 256, SIZE_Y = 222, BLUEPRINT_WIDTH = 87;
-    private static final GuiIcon ICON_GUI = new GuiIcon(TEXTURE_BASE, 0, 0, SIZE_X, SIZE_Y);
-    private static final GuiIcon ICON_BLUEPRINT_GUI = new GuiIcon(
-            TEXTURE_BLUEPRINT,
-            SIZE_BLUEPRINT_X - BLUEPRINT_WIDTH,
-            0,
-            BLUEPRINT_WIDTH,
-            SIZE_Y
-    );
-    private static final GuiIcon ICON_TANK_OVERLAY = new GuiIcon(TEXTURE_BLUEPRINT, 0, 54, 16, 47);
-
+    private static final Identifier BASE = new Identifier("buildcraftbuilders:textures/gui/builder.png");
+    private static final Identifier BLUEPRINT = new Identifier("buildcraftbuilders:textures/gui/builder_blueprint.png");
+    private static final GuiIcon OVERLAY = new GuiIcon(BLUEPRINT, 0, 54, 16, 47);
+    private ButtonWidget excavate;
+    public GuiBuilder(ContainerBuilder container, PlayerInventory inventory, Text title) {
+        super(container, inventory, title);
+        xSize = 256; ySize = 232;
+        for (int i = 0; i < container.widgetTanks.size(); i++)
+            shownElements.add(container.widgetTanks.get(i).createGuiElement(this,
+                new GuiRectangle(179 + i * 18, 145, 16, 47).offset(rootElement), OVERLAY));
+    }
     public GuiBuilder(ContainerBuilder container) {
-        super(container);
-        xSize = SIZE_BLUEPRINT_X;
-        ySize = SIZE_Y;
+        this(container, container.player.getInventory(), Text.translatable("gui.buildcraftbuilders.builder"));
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void initGui() {
-        super.initGui();
-
-        for (int i = 0; i < container.widgetTanks.size(); i++) {
-            mainGui.shownElements.add(
-                    container.widgetTanks
-                    .get(i).createGuiElement(mainGui, new GuiRectangle(179 + i * 18, 145, 16, 47).offset(mainGui.rootElement), ICON_TANK_OVERLAY)
-            );
+    @Override protected void init() {
+        super.init();
+        excavate = addDrawableChild(ButtonWidget.builder(Text.empty(), button ->
+            container.tile.sendCanExcavate(!container.tile.canExcavate())
+        ).dimensions(x+8, y+48, 160, 18).build());
+        refreshLabels();
+    }
+    @Override protected void handledScreenTick() { super.handledScreenTick(); refreshLabels(); }
+    private void refreshLabels() {
+        if (excavate != null) excavate.setMessage(Text.translatable("gui.buildcraftbuilders.excavate",
+            Text.translatable(container.tile.canExcavate() ? "options.on" : "options.off")));
+    }
+    @Override public void drawElementBackgrounds(DrawContext context, float delta) {
+        context.drawTexture(BASE, x, y, 0, 0, 176, 222);
+        context.drawTexture(BLUEPRINT, x+169, y, 169, 0, 87, 222);
+        context.fill(x+4, y+221, x+252, y+232, 0xffc6c6c6);
+        super.drawElementBackgrounds(context, delta);
+    }
+    @Override public void drawElementForegrounds(DrawContext context, float delta) {
+        context.drawText(textRenderer, title, x+8, y+6, 0x404040, false);
+        context.drawText(textRenderer, playerInventoryTitle, x+8, y+128, 0x404040, false);
+        context.drawText(textRenderer, Text.translatable("gui.buildcraftbuilders.materials"), x+179, y+6, 0x404040, false);
+        context.drawText(textRenderer, "Remake by FelixMantra", x+8, y+223, 0x606060, false);
+        var materials = container.tile.getRemainingMaterials();
+        for (int i = 0; i < materials.size(); i++) {
+            var material = materials.get(i);
+            int sx = x+179+(i%4)*18, sy = y+18+(i/4)*18;
+            context.drawItem(material.stack(), sx, sy);
+            long count = material.count();
+            String label = count > 999 ? "999+" : Long.toString(count);
+            context.drawItemInSlot(textRenderer, material.stack(), sx, sy, label);
         }
-
-//        buttonList.add(
-//                new GuiButtonSmall(
-//                        this,
-//                        0,
-//                        rootElement.getX() + (ICON_GUI.width - 100) / 2,
-//                        rootElement.getY() + 50,
-//                        100,
-//                        "Can Excavate"
-//                )
-//                        .setToolTip(ToolTip.createLocalized("gui.builder.canExcavate"))
-//                        .setBehaviour(IButtonBehaviour.TOGGLE)
-//                        .setActive(container.tile.canExcavate())
-//                        .registerListener((button, buttonId, buttonKey) ->
-//                                container.tile.sendCanExcavate(button.isButtonActive())
-//                        )
-//        );
+        super.drawElementForegrounds(context, delta);
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    protected void drawBackgroundLayer(float partialTicks) {
-        ICON_GUI.drawAt(mainGui.rootElement);
-        ICON_BLUEPRINT_GUI.drawAt(mainGui.rootElement.offset(SIZE_BLUEPRINT_X - BLUEPRINT_WIDTH, 0));
+    @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+        var materials = container.tile.getRemainingMaterials();
+        for (int i = 0; i < materials.size(); i++) {
+            int sx = x+179+(i%4)*18, sy = y+18+(i/4)*18;
+            if (mouseX >= sx && mouseX < sx+16 && mouseY >= sy && mouseY < sy+16) {
+                var material = materials.get(i);
+                context.drawTooltip(textRenderer, Text.literal(material.count()+" × ").append(material.stack().getName()), mouseX, mouseY);
+            }
+        }
+        if (mouseX >= x+8 && mouseX < x+169 && mouseY >= y+6 && mouseY < y+18) {
+            Text status = container.tile.getPendingEntities() > 0
+                ? Text.translatable("gui.buildcraftbuilders.entities_pending", container.tile.getPendingEntities())
+                : container.tile.isFinished() ? Text.translatable("gui.buildcraftbuilders.finished")
+                : Text.translatable("gui.buildcraftbuilders.builder_remaining", container.tile.getCountToBreak(), container.tile.getCountToPlace());
+            context.drawTooltip(textRenderer, status, mouseX, mouseY);
+        }
     }
 }

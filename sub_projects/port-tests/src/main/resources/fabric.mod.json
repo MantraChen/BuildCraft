@@ -7,7 +7,7 @@
   "accessWidener": "buildcraft.accesswidener",
   "entrypoints": {
     "server": ["buildcraft.test.PortTestRunner"],
-    "fabric-gametest": ["buildcraft.test.lib.world.MiningGameTests", "buildcraft.test.lib.world.NetworkGameTests", "buildcraft.test.lib.world.BlockEntityRegistryGameTests", "buildcraft.test.lib.world.MachineApiGameTests", "buildcraft.test.lib.world.FluidGameTests", "buildcraft.test.lib.world.TankInteractionGameTests", "buildcraft.test.lib.world.ProjectileGameTests", "buildcraft.test.lib.world.BuilderGameTests", "buildcraft.test.lib.world.SchematicGameTests"]
+    "fabric-gametest": ["buildcraft.test.lib.world.MiningGameTests", "buildcraft.test.lib.world.NetworkGameTests", "buildcraft.test.lib.world.BlockEntityRegistryGameTests", "buildcraft.test.lib.world.MachineApiGameTests", "buildcraft.test.lib.world.FluidGameTests", "buildcraft.test.lib.world.TankInteractionGameTests", "buildcraft.test.lib.world.ProjectileGameTests", "buildcraft.test.lib.world.BuilderGameTests", "buildcraft.test.lib.world.SchematicGameTests", "buildcraft.test.lib.world.BlueprintBuilderGameTests"]
   },
   "depends": {
     "fabricloader": ">=0.15.11",

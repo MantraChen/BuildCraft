@@ -8,12 +8,16 @@ package buildcraft.builders.snapshot;
 
 import buildcraft.api.inventory.IItemTransactor;
 
-import buildcraft.lib.fluid.TankManager;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 
 public interface ITileForBlueprintBuilder extends ITileForSnapshotBuilder {
     Blueprint.BuildingInfo getBlueprintBuildingInfo();
 
     IItemTransactor getInvResources();
 
-    TankManager getTankManager();
+    Storage<ItemVariant> getResourceStorage();
+
+    Storage<FluidVariant> getTankManager();
 }

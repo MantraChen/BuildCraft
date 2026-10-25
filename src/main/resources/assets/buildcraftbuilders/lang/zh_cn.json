@@ -1,5 +1,10 @@
 {
   "gui.buildcraftbuilders.filler": "填充机",
+  "gui.buildcraftbuilders.builder": "建造机",
+  "gui.buildcraftbuilders.materials": "所需材料",
+  "gui.buildcraftbuilders.finished": "建造完成",
+  "gui.buildcraftbuilders.entities_pending": "还有 %s 个实体待重建",
+  "gui.buildcraftbuilders.builder_remaining": "剩余：挖掘 %s 个，放置 %s 个",
   "gui.buildcraftbuilders.invert": "反转：%s",
   "gui.buildcraftbuilders.excavate": "挖掘：%s",
   "gui.buildcraftbuilders.remaining": "剩余：挖掘 %s 个，放置 %s 个。按住 Shift 点击可反向切换。"

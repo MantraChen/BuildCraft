@@ -1,60 +1,102 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-// STUB(R.Chen): BlueprintBuilder logic deferred — depends on SnapshotBuilder
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.builders.snapshot;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.minecraft.item.ItemStack;
+import buildcraft.api.schematics.ISchematicBlock;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.item.ItemStack;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+/** Server-side blueprint execution using the same bounded work queue as the filler. */
 public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> {
+    public record Material(ItemStack stack, long count) {}
+    private final Map<ItemVariant, Long> remainingItems = new LinkedHashMap<>();
+    private boolean[] needed = new boolean[0];
+    public BlueprintBuilder(ITileForBlueprintBuilder tile) { super(tile); }
+    @Override protected Blueprint.BuildingInfo getBuildingInfo() { return tile.getBlueprintBuildingInfo(); }
 
-    public BlueprintBuilder(ITileForBlueprintBuilder tile) {
-        super(tile);
+    private int index(BlockPos pos) {
+        return getBuildingInfo().getSnapshot().posToIndex(getBuildingInfo().fromWorld(pos));
     }
-
-    @Override
-    protected Snapshot.BuildingInfo getBuildingInfo() {
-        return tile.getBlueprintBuildingInfo();
+    private ISchematicBlock schematic(BlockPos pos) {
+        var info = getBuildingInfo();
+        return info == null || !info.box.contains(pos) ? null
+            : info.rotatedPalette.get(info.getSnapshot().data[index(pos)]);
     }
-
-    @Override
-    protected boolean isAir(BlockPos blockPos) {
-        return false;
+    @Override protected boolean isAir(BlockPos pos) {
+        var schematic = schematic(pos);
+        return schematic == null || schematic.isAir();
     }
-
-    @Override
-    protected boolean canPlace(BlockPos blockPos) {
-        return false;
+    @Override protected boolean isBlockCorrect(BlockPos pos) {
+        var schematic = schematic(pos);
+        return schematic != null && schematic.isBuilt(workWorld(), pos);
     }
-
-    @Override
-    protected boolean isReadyToPlace(BlockPos blockPos) {
-        return false;
+    @Override protected boolean canPlace(BlockPos pos) {
+        var schematic = schematic(pos);
+        return schematic != null && !schematic.isAir() && schematic.canBuild(workWorld(), pos);
     }
-
-    @Override
-    protected boolean hasEnoughToPlaceItems(BlockPos blockPos) {
-        return false;
+    @Override protected boolean isReadyToPlace(BlockPos pos) {
+        var schematic = schematic(pos);
+        if (schematic == null) return false;
+        for (BlockPos offset : schematic.getRequiredBlockOffsets()) {
+            BlockPos required = pos.add(offset);
+            if (!workWorld().isInBuildLimit(required) || !workWorld().isChunkLoaded(required)) return false;
+            var dependency = schematic(required);
+            if (dependency != null && !dependency.isBuilt(workWorld(), required)) return false;
+        }
+        return schematic.isReadyToBuild(workWorld(), pos);
     }
-
-    @Override
-    protected List<ItemStack> getToPlaceItems(BlockPos blockPos) {
-        return new ArrayList<>();
+    @Override protected boolean hasEnoughToPlaceItems(BlockPos pos) {
+        var info = getBuildingInfo();
+        int index = index(pos);
+        return BlueprintMaterials.available(tile.getResourceStorage(), tile.getTankManager(),
+            info.toPlaceRequiredItems[index], info.toPlaceRequiredFluids[index]);
     }
-
-    @Override
-    protected boolean doPlaceTask(PlaceTask placeTask) {
-        return false;
+    @Override protected boolean executePlacement(BlockPos pos) {
+        var info = getBuildingInfo();
+        int index = index(pos);
+        return BlueprintMaterials.place(tile.getResourceStorage(), tile.getTankManager(),
+            info.toPlaceRequiredItems[index], info.toPlaceRequiredFluids[index],
+            () -> canPlace(pos) && isReadyToPlace(pos) && schematic(pos).build(workWorld(), pos));
     }
-
-    @Override
-    protected boolean isBlockCorrect(BlockPos blockPos) {
-        return false;
+    @Override protected boolean additionalWorkFinished() {
+        // Entity reconstruction is not ported yet: never silently report a partial blueprint as finished.
+        return getBuildingInfo() != null && getBuildingInfo().entities.isEmpty();
+    }
+    public int pendingEntities() { return getBuildingInfo() == null ? 0 : getBuildingInfo().entities.size(); }
+    @Override protected void workReset() {
+        remainingItems.clear();
+        needed = new boolean[workSize()];
+        Arrays.fill(needed, true);
+        for (int i = 0; i < needed.length; i++) changeMaterials(i, 1);
+    }
+    @Override protected void workStateChanged(int index, boolean correct) {
+        if (needed[index] == !correct) return;
+        needed[index] = !correct;
+        changeMaterials(index, correct ? -1 : 1);
+    }
+    private void changeMaterials(int index, int direction) {
+        var stacks = getBuildingInfo().toPlaceRequiredItems[index];
+        if (stacks == null) return;
+        for (ItemStack stack : stacks) {
+            if (stack.isEmpty()) continue;
+            var variant = ItemVariant.of(stack);
+            long count = remainingItems.getOrDefault(variant, 0L) + (long) direction * stack.getCount();
+            if (count <= 0) remainingItems.remove(variant);
+            else remainingItems.put(variant, count);
+        }
+    }
+    /** Bounded UI view; these are display entries, never inventory slots. */
+    public List<Material> getRemainingMaterials(int limit) {
+        List<Material> result = new ArrayList<>();
+        for (var entry : remainingItems.entrySet()) {
+            if (result.size() >= limit) break;
+            result.add(new Material(entry.getKey().toStack(), entry.getValue()));
+        }
+        return List.copyOf(result);
     }
 }

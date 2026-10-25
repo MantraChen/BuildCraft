@@ -20,6 +20,10 @@ public enum BCBuildersGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
+        if (this == BUILDER) {
+            BCBuildersScreens.openBuilder(player, pos);
+            return;
+        }
         if (this == FILLER) {
             BCBuildersScreens.openFiller(player, pos);
             return;

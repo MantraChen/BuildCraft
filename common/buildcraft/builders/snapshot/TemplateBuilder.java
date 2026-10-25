@@ -50,16 +50,14 @@ public class TemplateBuilder extends SnapshotBuilder<ITileForTemplateBuilder> {
 
     @Override
     protected boolean hasEnoughToPlaceItems(BlockPos blockPos) {
-        return !tile.getInvResources().extract(null, 1, 1, true).isEmpty();
+        return !tile.getInvResources().extract(stack -> stack.getItem() instanceof net.minecraft.item.BlockItem, 1, 1, true).isEmpty();
     }
 
-    @Override
     protected List<ItemStack> getToPlaceItems(BlockPos blockPos) {
-        ItemStack stack = tile.getInvResources().extract(null, 1, 1, false);
+        ItemStack stack = tile.getInvResources().extract(value -> value.getItem() instanceof net.minecraft.item.BlockItem, 1, 1, false);
         return stack.isEmpty() ? null : Collections.singletonList(stack);
     }
 
-    @Override
     protected boolean doPlaceTask(PlaceTask placeTask) {
         FakePlayer fakePlayer = FakePlayerProvider.INSTANCE.getFakePlayer(
             (ServerWorld) tile.getWorldBC(),
@@ -78,6 +76,16 @@ public class TemplateBuilder extends SnapshotBuilder<ITileForTemplateBuilder> {
         } finally {
             fakePlayer.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, previous);
         }
+    }
+
+    @Override
+    protected boolean executePlacement(BlockPos pos) {
+        List<ItemStack> items = getToPlaceItems(pos);
+        if (items == null) return false;
+        PlaceTask task = new PlaceTask(pos, items);
+        boolean placed = doPlaceTask(task);
+        if (!placed) acceptDrops(task.required);
+        return placed;
     }
 
     @Override

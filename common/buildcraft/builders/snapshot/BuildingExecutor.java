@@ -24,7 +24,7 @@ import buildcraft.lib.misc.FakePlayerProvider;
 
 /** Bounded, server-authoritative work shared by templates and blueprints.
  * Items remain in the inventory until placement, so queued work owns only MJ.
- * A failed placement must leave unconsumed stacks in PlaceTask.required for refund.
+ * Placements own their resource transaction and must refund on failure.
  */
 public abstract class BuildingExecutor {
     public static final int MAX_VOLUME = 1_048_576;
@@ -49,9 +49,10 @@ public abstract class BuildingExecutor {
     protected abstract boolean canPlace(BlockPos pos);
     protected abstract boolean isReadyToPlace(BlockPos pos);
     protected abstract boolean hasEnoughToPlaceItems(BlockPos pos);
-    protected abstract List<ItemStack> getToPlaceItems(BlockPos pos);
-    protected abstract boolean doPlaceTask(PlaceTask task);
-    protected abstract void cancelPlaceTask(PlaceTask task);
+    protected abstract boolean executePlacement(BlockPos pos);
+    protected boolean additionalWorkFinished() { return true; }
+    protected void workReset() {}
+    protected void workStateChanged(int index, boolean correct) {}
     protected abstract void acceptDrops(List<ItemStack> drops);
     protected abstract void workChanged();
 
@@ -63,6 +64,7 @@ public abstract class BuildingExecutor {
         cursor = 0;
         unknown = size;
         blocked = leftToBreak = leftToPlace = 0;
+        workReset();
     }
 
     public final void cancelAllTasks() {
@@ -75,7 +77,7 @@ public abstract class BuildingExecutor {
 
     public final boolean isBuildFinished() {
         return states.length > 0 && unknown == 0 && blocked == 0
-            && leftToBreak == 0 && leftToPlace == 0 && tasks.isEmpty();
+            && leftToBreak == 0 && leftToPlace == 0 && tasks.isEmpty() && additionalWorkFinished();
     }
 
     public final boolean tick() {
@@ -123,11 +125,7 @@ public abstract class BuildingExecutor {
                 completed = drops.isPresent();
                 drops.ifPresent(this::acceptDrops);
             } else {
-                List<ItemStack> items = getToPlaceItems(task.pos);
-                if (items == null) continue;
-                PlaceTask place = new PlaceTask(task.pos, items);
-                completed = doPlaceTask(place);
-                if (!completed) cancelPlaceTask(place);
+                completed = executePlacement(task.pos);
             }
             if (!completed) refundPower(task);
             iterator.remove();
@@ -192,6 +190,7 @@ public abstract class BuildingExecutor {
         if (next == BREAK) leftToBreak++;
         if (next == PLACE) leftToPlace++;
         if (next == BLOCKED) blocked++;
+        workStateChanged(index, next == CORRECT);
     }
 
     private long targetPower(Work task) {

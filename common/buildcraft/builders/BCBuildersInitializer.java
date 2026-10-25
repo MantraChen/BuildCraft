@@ -23,7 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric {@code ExtendedScreenHandlerType} (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric {@code Event} callbacks (deferred)
  *
- * Blocks, items, schematic factories, filler screens and reloadable rules register here.
+ * Blocks, items, schematic factories, builder/filler screens and reloadable rules register here.
  */
 public class BCBuildersInitializer implements ModInitializer {
 
@@ -51,7 +51,7 @@ public class BCBuildersInitializer implements ModInitializer {
         buildcraft.builders.snapshot.RulesLoader.loadAll();
         buildcraft.builders.snapshot.RulesLoader.registerReloadListener();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
-        //               ARCHITECT_TABLE, BUILDER, LIBRARY, REPLACER, QUARRY.
+        //               ARCHITECT_TABLE, LIBRARY, REPLACER, QUARRY.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCBuildersEventDist.INSTANCE) — port the quarry
         //               validate/invalidate world-event-listener bookkeeping to Fabric callbacks.
 

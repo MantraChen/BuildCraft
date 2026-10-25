@@ -46,7 +46,6 @@ public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> extends
     @Override protected void workChanged() {
         if (tile instanceof BlockEntity entity) entity.markDirty();
     }
-    @Override protected void cancelPlaceTask(PlaceTask task) { acceptDrops(task.required); }
     @Override protected void acceptDrops(List<ItemStack> drops) {
         IItemTransactor inventory = tile instanceof ITileForTemplateBuilder template ? template.getInvResources()
             : tile instanceof ITileForBlueprintBuilder blueprint ? blueprint.getInvResources() : null;

@@ -272,6 +272,7 @@ public abstract class Snapshot {
 
         @SuppressWarnings("WeakerAccess")
         public Header(NbtCompound nbt) {
+            if (!nbt.containsUuid("owner")) throw new IllegalArgumentException("Snapshot header has no valid owner UUID");
             key = new Key(nbt.getCompound("key"));
             owner = nbt.getUuid("owner");
             created = new Date(nbt.getLong("created"));
