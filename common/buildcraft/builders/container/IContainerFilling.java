@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 import net.minecraft.entity.player.PlayerEntity;
 
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
 import net.fabricmc.api.EnvType;
 
 import buildcraft.api.filler.IFillerPattern;
@@ -46,7 +46,9 @@ public interface IContainerFilling {
 
     default void init() {
         if (!getPlayer().getWorld().isClient) {
-            MessageUtil.doDelayedServer(this::sendData);
+            MessageUtil.doDelayedServer(getPlayer().getServer(), () -> {
+                if (getPlayer().currentScreenHandler == this) sendData();
+            });
         }
     }
 
@@ -68,8 +70,8 @@ public interface IContainerFilling {
         sendData();
     }
 
-    default void readMessage(int id, PacketBufferBC buffer, NetSide side, MessageContext ctx) throws IOException {
-        if (side == NetSide.SERVER) {
+    default void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
+        if (!isClient) {
             if (id == ContainerBC_Neptune.NET_DATA) {
                 if (isLocked()) {
                     new FullStatement<>(
@@ -85,7 +87,7 @@ public interface IContainerFilling {
                 valuesChanged();
                 sendData();
             }
-        } else if (side == NetSide.CLIENT) {
+        } else if (isClient) {
             if (id == ContainerBC_Neptune.NET_DATA) {
                 getPatternStatement().readFromBuffer(buffer);
                 setInverted(buffer.readBoolean());

@@ -10,7 +10,7 @@ import java.io.IOException;
 
 import net.minecraft.entity.player.PlayerEntity;
 
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
 import net.fabricmc.api.EnvType;
 
 import buildcraft.lib.gui.ContainerBCTile;
@@ -45,12 +45,13 @@ public class ContainerArchitectTable extends ContainerBCTile<TileArchitectTable>
         sendMessage(ID_NAME, buffer -> buffer.writeString(name));
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void readMessage(int id, PacketBufferBC buffer, NetSide side, MessageContext ctx) throws IOException {
-        super.readMessage(id, buffer, side, ctx);
-        if (side == NetSide.SERVER) {
+    @Override
+    public void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
+        super.readMessage(id, buffer, isClient, ctx);
+        if (!isClient) {
             if (id == ID_NAME) {
-                tile.name = buffer.readString();
+                tile.name = buffer.readString(256);
+                tile.markDirty();
                 tile.sendNetworkUpdate(TileBC_Neptune.NET_RENDER_DATA);
             }
         }

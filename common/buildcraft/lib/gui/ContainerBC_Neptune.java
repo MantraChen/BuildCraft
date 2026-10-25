@@ -35,7 +35,7 @@ import buildcraft.lib.misc.data.IdAllocator;
 import buildcraft.lib.net.IPayloadWriter;
 import buildcraft.lib.net.PacketBufferBC;
 
-public abstract class ContainerBC_Neptune extends ScreenHandler {
+public abstract class ContainerBC_Neptune extends ScreenHandler implements buildcraft.lib.net.IContainerPayloadReceiver {
     public static final boolean DEBUG = BCDebugging.shouldDebugLog("lib.container");
 
     @Override
@@ -178,8 +178,13 @@ public abstract class ContainerBC_Neptune extends ScreenHandler {
         sendMessage(id, (buffer) -> writeMessage(id, buffer, isClient));
     }
 
-    // STUB(R.Chen): container networking deferred — MessageContainer not yet migrated to FabricPacket.
     public final void sendMessage(int id, IPayloadWriter writer) {
+        buildcraft.lib.net.MessageContainer message = buildcraft.lib.net.MessageContainer.of(syncId, id, writer);
+        if (player.getWorld().isClient) {
+            buildcraft.lib.net.MessageManager.sendToServer(message);
+        } else if (player instanceof ServerPlayerEntity serverPlayer) {
+            buildcraft.lib.net.MessageManager.sendTo(message, serverPlayer);
+        }
     }
 
     public void writeMessage(int id, PacketBufferBC buffer, boolean isClient) {}
@@ -198,11 +203,8 @@ public abstract class ContainerBC_Neptune extends ScreenHandler {
                 }
             } else {
                 Widget_Neptune<?> widget = widgets.get(widgetId);
-                if (!isClient) {
-                    widget.handleWidgetDataServer(ctx, buffer);
-                } else {
-                    widget.handleWidgetDataClient(ctx, buffer);
-                }
+                buildcraft.lib.net.NetworkContext context = (buildcraft.lib.net.NetworkContext) ctx;
+                context.sendReply(widget.receivePayload(context, buffer));
             }
         } else if (!isClient) {
             if (id == NET_SET_PHANTOM) {
@@ -243,7 +245,9 @@ public abstract class ContainerBC_Neptune extends ScreenHandler {
     }
 
     public void sendSetPhantomSlots(Object handler, List<ItemStack> stacks) {
-        // STUB(R.Chen): phantom slot batch send — deferred with networking layer
+        int[] indexes = new int[stacks.size()];
+        for (int i = 0; i < indexes.length; i++) indexes[i] = findPhantomSlot(handler, i);
+        sendSetPhantomSlots(indexes, stacks);
     }
 
     private int findPhantomSlot(Object handler, int index) {
@@ -275,7 +279,8 @@ public abstract class ContainerBC_Neptune extends ScreenHandler {
         });
     }
 
-    private void sendSetPhantomSlots(int[] indexes, DefaultedList<ItemStack> stacks) {
+    private void sendSetPhantomSlots(int[] indexes, List<ItemStack> stacks) {
+        if (indexes.length > 255) throw new IllegalArgumentException("Too many phantom slots");
         if (indexes.length != stacks.size()) {
             throw new IllegalArgumentException("Sizes don't match! (" + indexes.length + " vs " + stacks.size() + ")");
         }

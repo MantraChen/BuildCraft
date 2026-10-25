@@ -107,8 +107,8 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements IDebu
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         currentDirection = NBTUtilBC.readEnum(nbt.get("currentDirection"), Direction.class);
         if (currentDirection == null) {
             currentDirection = Direction.UP;

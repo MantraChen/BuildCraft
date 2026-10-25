@@ -29,6 +29,25 @@ import buildcraft.lib.net.MessageUpdateTile;
 // send helpers + GameProfile (de)serialise + ensureEmpty used by TileBC_Neptune are migrated. The watcher
 // broadcast now routes through BCNetworkManager's Fabric PlayerLookup.tracking helper.
 public class MessageUtil {
+    private static final java.util.Map<net.minecraft.server.MinecraftServer, buildcraft.lib.net.TickTaskQueue>
+        SERVER_TASKS = new java.util.WeakHashMap<>();
+    private static final buildcraft.lib.net.TickTaskQueue CLIENT_TASKS = new buildcraft.lib.net.TickTaskQueue();
+
+    private static synchronized buildcraft.lib.net.TickTaskQueue serverTasks(net.minecraft.server.MinecraftServer server) {
+        return SERVER_TASKS.computeIfAbsent(java.util.Objects.requireNonNull(server), key -> new buildcraft.lib.net.TickTaskQueue());
+    }
+
+    public static void doDelayedServer(net.minecraft.server.MinecraftServer server, Runnable action) {
+        serverTasks(server).schedule(1, action);
+    }
+
+    public static void postServerTick(net.minecraft.server.MinecraftServer server) { serverTasks(server).tick(); }
+
+    public static synchronized void stopServer(net.minecraft.server.MinecraftServer server) { SERVER_TASKS.remove(server); }
+
+    public static void doDelayedClient(int delay, Runnable action) { CLIENT_TASKS.schedule(delay, action); }
+
+    public static void postClientTick() { CLIENT_TASKS.tick(); }
 
     public static void sendToAllWatching(World world, BlockPos pos, MessageUpdateTile message) {
         BCNetworkManager.sendToAllInWorld(message, world, pos);

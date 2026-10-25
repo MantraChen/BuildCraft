@@ -82,8 +82,8 @@ public abstract class TileLaserTableBase extends TileBC_Neptune implements ILase
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         power = nbt.getLong("power");
     }
 

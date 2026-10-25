@@ -58,13 +58,14 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 207 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 196 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **68 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **79 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **8 world tests passed** after the 68 regression tests.
+- Headless Fabric GameTest: **14 world tests passed** after 76 regression tests; the
+  subsequent standalone regression run also passed three new tick-queue tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -116,9 +117,20 @@ features explicitly as work proceeds.
   tests cover these paths. Object settings resolve intended namespaced IDs before registration;
   biome-name validation now uses the server's loaded dynamic registry. Disabled-object
   registration and complete startup still need integration validation.
+- Tile and container packets now use registered Fabric typed receivers on both sides,
+  route payloads on the game thread and return widget replies. Payloads own immutable
+  bytes, preserve readable offsets and enforce framing/size bounds; temporary buffers
+  are released on success and failure. Screen sync IDs, usability, spectators, tile
+  interaction permission, distance and loaded chunks are checked before routing.
+  Eight codec tests and six world-routing tests pass. These invoke production routing
+  with fixture block entities/screens; a real client connection and actual machine GUI
+  remain untested. Three more tests cover delayed tick tasks and queue isolation.
+- Vanilla tile NBT now separates render-only updates from persistent loading, and
+  neighbour/redstone callbacks use native 1.20.1 signatures. Full machine save/reload
+  and renderer validation remain outstanding.
 
 Remaining work includes full compilation, block/entity and screen registration, network
-payload routing, renderers, fluid/energy integration, full quarry operation, packaged
+cache/marker/debug messages, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.
 

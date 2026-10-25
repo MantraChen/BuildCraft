@@ -45,7 +45,7 @@ public abstract class Widget_Neptune<C extends ContainerBC_Neptune> implements I
     }
 
     @Override
-    public MessageUpdateTile receivePayload(Object ctx, PacketBufferBC buffer) throws IOException {
+    public MessageUpdateTile receivePayload(buildcraft.lib.net.NetworkContext ctx, PacketBufferBC buffer) throws IOException {
         if (container.player.getWorld().isClient) {
             return handleWidgetDataClient(ctx, buffer);
         } else {

@@ -112,10 +112,10 @@ public abstract class BlockBCTile_Neptune extends BlockBCBase_Neptune implements
         return super.onUse(state, world, pos, player, hand, hit);
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos,
+    @Override
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos,
             boolean notify) {
-        super.neighborChanged(state, world, pos, block, fromPos, notify);
+        super.neighborUpdate(state, world, pos, block, fromPos, notify);
         BlockEntity tile = world.getBlockEntity(pos);
         if (tile instanceof TileBC_Neptune) {
             ((TileBC_Neptune) tile).onNeighbourBlockChanged(block, fromPos);

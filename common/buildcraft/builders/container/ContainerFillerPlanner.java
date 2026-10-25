@@ -7,7 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.entity.player.PlayerEntity;
 
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
 import net.fabricmc.api.EnvType;
 
 import buildcraft.api.filler.IFillerPattern;
@@ -79,9 +79,9 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
     }
 
     @Override
-    public void readMessage(int id, PacketBufferBC buffer, NetSide side, MessageContext ctx) throws IOException {
-        super.readMessage(id, buffer, side, ctx);
-        IContainerFilling.super.readMessage(id, buffer, side, ctx);
+    public void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
+        super.readMessage(id, buffer, isClient, ctx);
+        IContainerFilling.super.readMessage(id, buffer, isClient, ctx);
     }
 
     @SuppressWarnings("NullableProblems")

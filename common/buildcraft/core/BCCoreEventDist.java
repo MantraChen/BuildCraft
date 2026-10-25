@@ -33,9 +33,9 @@ public enum BCCoreEventDist {
     public void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof ServerPlayerEntity) {
             // Delay sending join messages to player as it makes it work when in single-player
-            MessageUtil.doDelayedServer(() ->
+            MessageUtil.doDelayedServer(event.getEntity().getServer(), () ->
                 MessageManager.sendTo(
-                    new MessageVolumeBoxes(WorldSavedDataVolumeBoxes.get(event.getEntity().getWorld()).volumeBoxes),
+                    MessageVolumeBoxes.of(WorldSavedDataVolumeBoxes.get(event.getEntity().getWorld()).volumeBoxes),
                     (ServerPlayerEntity) event.getEntity()
                 )
             );

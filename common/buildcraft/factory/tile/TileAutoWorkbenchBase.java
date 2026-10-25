@@ -105,8 +105,8 @@ public abstract class TileAutoWorkbenchBase extends TileBC_Neptune {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         powerStored = nbt.getLong("powerStored");
     }
 

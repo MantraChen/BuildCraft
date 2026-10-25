@@ -43,9 +43,7 @@ import buildcraft.BuildCraftFabric;
  *   wrapper.sendToAll(msg)            → PlayerLookup.all(server).forEach(send)
  *   wrapper.sendToAllAround(msg, tp)  → PlayerLookup.tracking(world, pos).forEach(send)
  *
- * TODO(R.Chen): once the rest of the lib is migrated, route incoming UpdateTile
- * packets to {@code TileBC_Neptune.receivePayload} on the appropriate side.
- * Currently the receivers just log so the channel is wired but inert.
+ * Typed Fabric receivers run on the game thread and use NetworkRouting for access checks.
  */
 public final class BCNetworkManager {
 
@@ -55,17 +53,12 @@ public final class BCNetworkManager {
     public static void registerCommon() {
         BuildCraftFabric.LOGGER.info("[BCNetwork] Registering common packet receivers");
 
-        // Client → Server: tile update from the client (e.g. GUI interactions).
-        ServerPlayNetworking.registerGlobalReceiver(
-            UpdateTilePayload.TYPE,
-            (packet, player, responseSender) -> {
-                // STUB(R.Chen): route to TileBC_Neptune.receivePayload on the player's server world.
-                // Currently a no-op so the channel is wired but inert.
-                BuildCraftFabric.LOGGER.debug(
-                    "[BCNetwork] (server) UpdateTile @ {} from {}", packet.pos(), player.getName().getString()
-                );
-            }
-        );
+        ServerPlayNetworking.registerGlobalReceiver(MessageUpdateTile.TYPE, (packet, player, sender) ->
+            handle(() -> NetworkRouting.receiveTile(packet, new NetworkContext(player, sender::sendPacket)),
+                player.networkHandler::disconnect));
+        ServerPlayNetworking.registerGlobalReceiver(MessageContainer.TYPE, (packet, player, sender) ->
+            handle(() -> NetworkRouting.receiveContainer(packet, new NetworkContext(player, sender::sendPacket)),
+                player.networkHandler::disconnect));
     }
 
     /** Call from a {@code ClientModInitializer.onInitializeClient()}. */
@@ -73,15 +66,25 @@ public final class BCNetworkManager {
     public static void registerClient() {
         BuildCraftFabric.LOGGER.info("[BCNetwork] Registering client packet receivers");
 
-        // Server → Client: tile update broadcast to tracking players.
-        ClientPlayNetworking.registerGlobalReceiver(
-            UpdateTilePayload.TYPE,
-            (packet, player, responseSender) -> {
-                // STUB(R.Chen): route to TileBC_Neptune.receivePayload on the client world.
-                BuildCraftFabric.LOGGER.debug("[BCNetwork] (client) UpdateTile @ {}", packet.pos());
-            }
-        );
+        ClientPlayNetworking.registerGlobalReceiver(MessageUpdateTile.TYPE, (packet, player, sender) ->
+            handle(() -> NetworkRouting.receiveTile(packet, new NetworkContext(player, sender::sendPacket)),
+                player.networkHandler.getConnection()::disconnect));
+        ClientPlayNetworking.registerGlobalReceiver(MessageContainer.TYPE, (packet, player, sender) ->
+            handle(() -> NetworkRouting.receiveContainer(packet, new NetworkContext(player, sender::sendPacket)),
+                player.networkHandler.getConnection()::disconnect));
     }
+
+    private static void handle(PacketAction action, Consumer<net.minecraft.text.Text> disconnect) {
+        try {
+            action.run();
+        } catch (java.io.IOException | RuntimeException exception) {
+            BuildCraftFabric.LOGGER.warn("[BCNetwork] Invalid BuildCraft packet", exception);
+            disconnect.accept(net.minecraft.text.Text.literal("Invalid BuildCraft packet; see the log for details"));
+        }
+    }
+
+    @FunctionalInterface
+    private interface PacketAction { void run() throws java.io.IOException; }
 
     // -----------------------------------------------------------------------
     // Send helpers (kept close to legacy MessageManager signatures)
@@ -90,6 +93,7 @@ public final class BCNetworkManager {
     /** Legacy: {@code MessageManager.sendToServer(msg)} — client-only. */
     @Environment(EnvType.CLIENT)
     public static <T extends FabricPacket> void sendToServer(T packet) {
+        NetworkRouting.validateServerbound(packet);
         ClientPlayNetworking.send(packet);
     }
 

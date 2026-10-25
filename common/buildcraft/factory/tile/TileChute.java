@@ -115,8 +115,8 @@ public class TileChute extends TileBC_Neptune implements IDebuggable {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         progress = nbt.getInt("progress");
         battery.readFromNbt(nbt.getCompound("battery"));
     }

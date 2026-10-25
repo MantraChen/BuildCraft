@@ -79,8 +79,8 @@ public class TileEngineIron_BC8 extends TileEngineBase_BC8 {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         penaltyCooling = nbt.getInt("penaltyCooling");
         burnTime = nbt.getDouble("burnTime");
         residueAmount = Math.max(0, nbt.getDouble("residueAmount"));

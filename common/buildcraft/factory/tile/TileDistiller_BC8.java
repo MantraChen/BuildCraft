@@ -117,8 +117,8 @@ public class TileDistiller_BC8 extends TileBC_Neptune implements IDebuggable {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         // STUB(R.Chen): tankManager.deserializeNBT deferred.
         mjBattery.readFromNbt(nbt.getCompound("battery"));
         distillPower = nbt.getLong("distillPower");

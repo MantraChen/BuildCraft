@@ -285,15 +285,9 @@ public class PacketBufferBC extends PacketByteBuf {
         return count <= 1 ? 0 : 32 - Integer.numberOfLeadingZeros(count - 1);
     }
 
-    /**
-     * Reads string of any possible length
-     */
+    /** Uses the same bounded UTF-8 framing as the inherited writeString method. */
+    @Override
     public String readString() {
-        int length = readVarInt();
-        byte[] array = new byte[length];
-        for (int i =0; i < length; i++) {
-            array[i] = readByte();
-        }
-        return new String(array, Charsets.UTF_8);
+        return super.readString(32767);
     }
 }

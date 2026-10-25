@@ -92,8 +92,8 @@ public class TileFloodGate extends TileBC_Neptune implements IDebuggable {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         if (nbt.contains("openSides")) {
             byte sides = nbt.getByte("openSides");
             for (Direction face : Direction.values()) {

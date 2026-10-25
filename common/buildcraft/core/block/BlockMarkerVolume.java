@@ -33,13 +33,15 @@ public class BlockMarkerVolume extends BlockMarkerBase {
         return new TileMarkerVolume();
     }
 
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
+    @Override
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos, boolean notify) {
+        super.neighborUpdate(state, world, pos, blockIn, fromPos, notify);
         checkSignalState(world, pos);
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void updateTick(World world, BlockPos pos, BlockState state, Random rand) {
+    @Override
+    public void scheduledTick(BlockState state, net.minecraft.server.world.ServerWorld world, BlockPos pos,
+            net.minecraft.util.math.random.Random rand) {
         checkSignalState(world, pos);
     }
 

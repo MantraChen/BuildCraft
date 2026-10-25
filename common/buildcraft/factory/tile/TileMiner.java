@@ -201,8 +201,8 @@ public abstract class TileMiner extends TileBC_Neptune implements IDebuggable {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         if (nbt.contains("currentPos")) {
             currentPos = NbtHelper.toBlockPos(nbt.getCompound("currentPos"));
         }

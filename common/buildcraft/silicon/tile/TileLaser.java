@@ -221,8 +221,8 @@ public class TileLaser extends TileBC_Neptune implements IDebuggable, ILocalBloc
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         // TODO(R.Chen): remove legacy key in next version
         if (nbt.contains("mj_battery")) {
             nbt.put("battery", nbt.get("mj_battery"));

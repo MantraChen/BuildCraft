@@ -1,82 +1,64 @@
 /*
  * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.lib.net;
 
-import java.io.IOException;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 
-import io.netty.buffer.ByteBuf;
+/** Screen sync ID, message ID and the original unsigned-short-length widget payload. */
+public final class MessageContainer implements FabricPacket {
+    public static final int HEADER_SIZE = Integer.BYTES + 2 * Short.BYTES;
+    public static final int MAX_PAYLOAD = 0xffff;
+    public static final PacketType<MessageContainer> TYPE = PacketType.create(
+        new Identifier("buildcraft", "container"), MessageContainer::read);
 
-import net.minecraft.entity.player.PlayerEntity;
+    private final int windowId;
+    private final int msgId;
+    private final PacketPayload payload;
 
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.fabricmc.api.EnvType;
-
-import buildcraft.lib.BCLibProxy;
-import buildcraft.lib.gui.ContainerBC_Neptune;
-import buildcraft.lib.misc.MessageUtil;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
-
-public class MessageContainer implements IMessage {
-
-    private int windowId;
-    private int msgId;
-    private PacketBufferBC payload;
-
-    @SuppressWarnings("unused")
-    public MessageContainer() {}
-
+    /** Copies readable bytes; the caller retains ownership of the source buffer. */
     public MessageContainer(int windowId, int msgId, PacketBufferBC payload) {
+        this(windowId, msgId, PacketPayload.copyOf(payload, MAX_PAYLOAD));
+    }
+
+    private MessageContainer(int windowId, int msgId, PacketPayload payload) {
+        if (windowId < 0 || msgId < 0 || msgId > 0xffff) {
+            throw new IllegalArgumentException("Invalid screen/message ID: " + windowId + "/" + msgId);
+        }
         this.windowId = windowId;
         this.msgId = msgId;
         this.payload = payload;
     }
 
-    // Packet breakdown:
-    // INT - WindowId
-    // USHORT - PAYLOAD_SIZE->"size"
-    // BYTE[size] - PAYLOAD
+    public int getWindowId() { return windowId; }
+    public int getMessageId() { return msgId; }
+    public int getPayloadSize() { return payload.size(); }
+    /** The caller must release this independent read-only view. */
+    public PacketBufferBC getPayload() { return payload.open(); }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void fromBytes(ByteBuf buf) {
-        windowId = buf.readInt();
-        msgId = buf.readUnsignedShort();
-        int payloadSize = buf.readUnsignedShort();
-        ByteBuf read = buf.readBytes(payloadSize);
-        payload = new PacketBufferBC(read);
+    public static MessageContainer read(PacketByteBuf buffer) {
+        int windowId = buffer.readInt();
+        int msgId = buffer.readUnsignedShort();
+        return new MessageContainer(windowId, msgId,
+            PacketPayload.read(buffer, buffer.readUnsignedShort(), MAX_PAYLOAD));
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void toBytes(ByteBuf buf) {
-        buf.writeInt(windowId);
-        buf.writeShort(msgId);
-        int length = payload.readableBytes();
-        buf.writeShort(length);
-        buf.writeBytes(payload, 0, length);
+    @Override
+    public void write(PacketByteBuf buffer) {
+        buffer.writeInt(windowId);
+        buffer.writeShort(msgId);
+        buffer.writeShort(payload.size());
+        payload.write(buffer);
     }
 
-    public static final IMessageHandler<MessageContainer, IMessage> HANDLER = (message, ctx) -> {
-        try {
-            int id = message.windowId;
-            PlayerEntity player = BCLibProxy.getProxy().getPlayerForContext(ctx);
-            if (player != null && player.currentScreenHandler instanceof ContainerBC_Neptune
-                && player.currentScreenHandler.syncId == id) {
-                ContainerBC_Neptune container = (ContainerBC_Neptune) player.currentScreenHandler;
-                container.readMessage(message.msgId, message.payload, ctx.side, ctx);
+    @Override
+    public PacketType<?> getType() { return TYPE; }
 
-                // error checking
-                String extra = container.getClass() + ", id = " + container.getIdAllocator().getNameFor(message.msgId);
-                MessageUtil.ensureEmpty(message.payload, ctx.side == NetSide.CLIENT, extra);
-            }
-            return null;
-        } catch (IOException e) {
-            throw new Error(e);
-        } finally {
-            message.payload.release();
-        }
-    };
+    public static MessageContainer of(int windowId, int msgId, IPayloadWriter writer) {
+        return new MessageContainer(windowId, msgId, PacketPayload.create(writer, MAX_PAYLOAD));
+    }
 }

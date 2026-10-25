@@ -77,8 +77,8 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
     // BlockEntity overrides
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         burnTime = nbt.getInt("burnTime");
         totalBurnTime = nbt.getInt("totalBurnTime");
         esum = nbt.getLong("esum");

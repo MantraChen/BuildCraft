@@ -77,8 +77,8 @@ public class TileAssemblyTable extends TileLaserTableBase {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         // STUB(R.Chen): recipesStates deserialisation deferred.
     }
 

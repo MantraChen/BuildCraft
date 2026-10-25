@@ -86,11 +86,6 @@ import buildcraft.lib.net.MessageUpdateTile;
 import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.item.ItemHandlerManager;
 
-// STUB(R.Chen): the Forge SimpleImpl network layer (IMessage / MessageContext / Side) is being
-// replaced by FabricPacket + PacketType (see BCNetworkManager + UpdateTilePayload). Until the whole
-// payload routing is ported, the legacy types below are still referenced by the send/receive helpers.
-// The "Side" discriminator used by write/readPayload needs a Fabric-native replacement enum.
-// TODO(R.Chen): introduce a NetSide enum (CLIENT/SERVER) to replace net.minecraftforge.fml.relauncher.Side.
 
 public abstract class TileBC_Neptune extends BlockEntity implements IPayloadReceiver, IAdvDebugTarget, IPlayerOwned {
     public static final boolean DEBUG = BCDebugging.shouldDebugLog("lib.tile");
@@ -563,39 +558,35 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     }
 
     public final MessageUpdateTile createMessage(int id, IPayloadWriter writer) {
-        PacketBufferBC buffer = new PacketBufferBC(Unpooled.buffer());
-        buffer.writeShort(id);
-        writer.write(buffer);
-        return new MessageUpdateTile(pos, buffer);
+        if (id < 0 || id > 0xffff) throw new IllegalArgumentException("Invalid tile message ID: " + id);
+        return MessageUpdateTile.of(pos, buffer -> {
+            buffer.writeShort(id);
+            writer.write(buffer);
+        });
     }
-
-    // STUB(R.Chen): Forge onDataPacket(NetworkManager, SPacketUpdateTileEntity) — the incoming
-    // BlockEntityUpdateS2CPacket is applied by vanilla, which calls readNbt(NbtCompound). Custom render-data
-    // routing happens in handleUpdateTag below; the client packet handler in BCNetworkManager should call it.
 
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {
         return BlockEntityUpdateS2CPacket.create(this);
     }
 
-    // TODO(R.Chen): the plan referenced toInitialChunkDataNbt(RegistryWrapper.WrapperLookup), which is the
-    // 1.20.5+ signature. On 1.20.1 (Yarn) the method is no-arg. Adjust if the mappings differ.
     @Override
     public NbtCompound toInitialChunkDataNbt() {
         ByteBuf buf = Unpooled.buffer();
-        buf.writeShort(NET_RENDER_DATA);
-        writePayload(NET_RENDER_DATA, new PacketBufferBC(buf), world.isClient ? NetSide.CLIENT : NetSide.SERVER);
-        byte[] bytes = new byte[buf.readableBytes()];
-        buf.readBytes(bytes);
-
-        NbtCompound nbt = super.toInitialChunkDataNbt();
-        nbt.putByteArray("d", bytes);
-        return nbt;
+        try {
+            buf.writeShort(NET_RENDER_DATA);
+            writePayload(NET_RENDER_DATA, new PacketBufferBC(buf), NetSide.SERVER);
+            byte[] bytes = new byte[buf.readableBytes()];
+            buf.readBytes(bytes);
+            NbtCompound nbt = super.toInitialChunkDataNbt();
+            nbt.putByteArray("d", bytes);
+            return nbt;
+        } finally {
+            buf.release();
+        }
     }
 
-    // TODO(R.Chen): Forge handleUpdateTag(NbtCompound) was invoked separately from readNbt for the
-    // render-data path. Vanilla 1.20.1 instead routes the chunk-data NBT through readNbt. Until the client
-    // packet handler in BCNetworkManager is wired to call this explicitly, render-data sync may not arrive.
+    /** Applies the render-only NBT sent by vanilla chunk and block-entity update packets. */
     public void handleUpdateTag(NbtCompound tag) {
         // Explicitly don't read the (server) data from NBT
         super.readNbt(tag);
@@ -620,6 +611,8 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
             spawnReceiveParticles(id);
         } catch (IOException e) {
             throw new RuntimeException("Received an update tag that failed to read correctly!", e);
+        } finally {
+            buf.release();
         }
     }
 
@@ -638,15 +631,11 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
         }
     }
 
-    // TODO(R.Chen): receivePayload still uses the Forge MessageContext type via IPayloadReceiver. Once the
-    // network layer fully moves to FabricPacket/PacketType, replace MessageContext with the Fabric context
-    // (player + side) supplied by BCNetworkManager's receiver.
     @Override
-    public final MessageUpdateTile receivePayload(/* STUB(R.Chen): MessageContext */ Object ctx, PacketBufferBC buffer)
+    public final MessageUpdateTile receivePayload(buildcraft.lib.net.NetworkContext ctx, PacketBufferBC buffer)
         throws IOException {
         int id = buffer.readUnsignedShort();
-        // STUB(R.Chen): side must come from the Fabric receiver context; defaulting to the world side for now.
-        NetSide side = world.isClient ? NetSide.CLIENT : NetSide.SERVER;
+        NetSide side = ctx.isClient() ? NetSide.CLIENT : NetSide.SERVER;
         readPayload(id, buffer, side, ctx);
 
         // Make sure that we actually read the entire message rather than just discarding it
@@ -656,6 +645,11 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
             spawnReceiveParticles(id);
         }
         return null;
+    }
+
+    @Override
+    public boolean canReceivePayload(PlayerEntity player) {
+        return usingPlayers.contains(player) && canInteractWith(player);
     }
 
     // ######################
@@ -722,8 +716,8 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     // ######################
 
     /**
-     * Forge-compat hook called from {@link #readNbt(NbtCompound)}. Unmigrated subclasses override
-     * this instead of {@code readNbt}. Migrated subclasses should override {@code readNbt} directly.
+     * Persistent data hook called from {@link #readNbt(NbtCompound)}. Subclasses override this
+     * so vanilla render-only update NBT cannot accidentally reset persistent fields.
      */
     public void readFromNBT(NbtCompound nbt) {}
 
@@ -734,7 +728,11 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     public NbtCompound writeToNBT(NbtCompound nbt) { return nbt; }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
+    public final void readNbt(NbtCompound nbt) {
+        if (world != null && world.isClient && nbt.contains("d", NbtElement.BYTE_ARRAY_TYPE)) {
+            handleUpdateTag(nbt);
+            return;
+        }
         super.readNbt(nbt);
         migrateOldNBT(nbt.getInt("data-version"), nbt);
         readFromNBT(nbt);

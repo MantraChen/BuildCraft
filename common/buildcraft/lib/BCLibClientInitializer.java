@@ -36,6 +36,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
+        buildcraft.lib.net.BCNetworkManager.registerClient();
 
         buildcraft.api.registry.BuildCraftRegistryManager.managerResourcePacks = buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS;
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
@@ -48,7 +49,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
 
         // Forge: ClientTickEvent (Phase.END)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // STUB(R.Chen): BuildCraftObjectCaches.onClientTick(); MessageUtil.postClientTick();
+            buildcraft.lib.misc.MessageUtil.postClientTick();
             // STUB(R.Chen): ItemDebugger hover-debug request → use MinecraftClient#crosshairTarget.
         });
 

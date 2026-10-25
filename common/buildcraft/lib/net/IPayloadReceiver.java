@@ -8,8 +8,8 @@ package buildcraft.lib.net;
 import java.io.IOException;
 
 public interface IPayloadReceiver {
-    // STUB(R.Chen): Forge IMessage return + MessageContext arg replaced — returns the Fabric
-    // MessageUpdateTile (a FabricPacket) and takes a generic context until BCNetworkManager
-    // supplies a Fabric-native receiver context (player + side).
-    MessageUpdateTile receivePayload(Object ctx, PacketBufferBC buffer) throws IOException;
+    MessageUpdateTile receivePayload(NetworkContext ctx, PacketBufferBC buffer) throws IOException;
+
+    /** Client-to-server tile actions require an explicit permission check. */
+    default boolean canReceivePayload(net.minecraft.entity.player.PlayerEntity player) { return false; }
 }

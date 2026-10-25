@@ -121,8 +121,8 @@ public class TileEngineRF extends TileEngineBase_BC8 {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         currentRF = nbt.getInt("currentRF");
     }
 

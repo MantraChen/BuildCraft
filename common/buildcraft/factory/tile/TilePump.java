@@ -73,8 +73,8 @@ public class TilePump extends TileMiner {
     // NBT
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         if (nbt.contains("oilSpringPos")) {
             // STUB(R.Chen): NBTUtilBC.readBlockPos not yet in libLeaf — inline decode.
             NbtCompound posTag = nbt.getCompound("oilSpringPos");

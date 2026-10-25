@@ -94,8 +94,8 @@ public class TileHeatExchange extends TileBC_Neptune implements IDebuggable {
     // NBT
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
         NbtCompound nbtSection = nbt.getCompound("section");
         if (!nbtSection.isEmpty()) {
             if (nbtSection.getBoolean("start")) {
