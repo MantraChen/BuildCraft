@@ -5,7 +5,11 @@
 package buildcraft.builders;
 
 public class BCBuildersRecipes {
+    public static final net.minecraft.recipe.RecipeSerializer<buildcraft.builders.recipe.SnapshotRecipe> SNAPSHOT =
+        new buildcraft.builders.recipe.SnapshotRecipe.Serializer();
     public static void init() {
+        net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,
+            new net.minecraft.util.Identifier("buildcraftbuilders:snapshot"), SNAPSHOT);
 
 //        if (BCBuildersItems.schematicSingle != null) {
 //            ItemStack out = new ItemStack(BCBuildersItems.schematicSingle, 4);

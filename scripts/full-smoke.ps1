@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -297,5 +297,17 @@ if ($Filler) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $fillerOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFillerClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Architect) {
+    $architectRun = Join-Path $verification 'architect-client-run'
+    $architectConfig = Join-Path $architectRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $architectConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $architectConfig 'main.cfg') -Force
+    $architectOptions = Join-Path $architectRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $architectOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $architectOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runArchitectClientSmoke --console=plain
 }
 exit $LASTEXITCODE

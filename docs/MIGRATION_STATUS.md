@@ -1401,3 +1401,52 @@ Remake by FelixMantra.
 - Shared construction regressions also pass in `verification/filler-shared-regressions.log`:
   148 initialization/unit tests and 69 real-world GameTests, including template and
   blueprint executors, material/MJ conservation, ownership and unloaded chunks.
+
+### Native architect capture and snapshot crafting
+
+- Restored shaped survival recipes for blank blueprints (paper/lapis), templates
+  (paper/black dye), the architect table and builder. A native recipe serializer
+  preserves blueprint/template NBT through recipe synchronization. The architect
+  recipe accepts a blank blueprint and rejects templates or snapshots with extra NBT.
+  Four recipe advancements unlock these recipes; successful capture grants the
+  architect advancement. English/Chinese help and “Remake by FelixMantra” appear
+  on the architect item and native screen.
+- The architect opens a real native screen with input/output slots, a bounded name
+  field and scan status/progress. Inventory hotkeys do not close a focused name
+  field. Name messages check their boundary and current screen access. Rendering
+  packets decode into temporary values, including the embedded GUI/owner envelope.
+- Marker adoption now checks connected selection, volume/build-height/world-border
+  limits and all native marker break permissions before consuming the connection.
+  The protection check is shared with the filler. Connected volume boxes are locked
+  for reading. Removed block entities and open transfer transactions cannot scan.
+- Blueprint capture observes at most 300 blocks per tick; templates observe at most
+  900. Unloaded targets pause without force-loading. Each capture owns its palette,
+  block data and input fingerprint; changing input discards partial observations.
+  Palette lookup uses a map. At most sixteen scan highlights and one status update
+  are sent per tick, replacing the old per-block render-state broadcasts.
+- Snapshot files are written through a temporary file, flushed to disk and moved
+  into place before an input item is consumed. A failed write keeps the input and
+  retries, with visible failure status. Compression closes its output, so a wrapper
+  preserves the file descriptor until fsync. Unreadable existing snapshots cannot
+  produce a dangling output header. Reload deliberately restarts partial observation
+  rather than restoring an iterator without its corresponding scanned data.
+- Thirteen packaged-mod GameTests cover marker adoption/protection, owner/name saves,
+  repeated palette isolation, changing snapshot type, restart/stale objects,
+  unloaded/oversized areas, transaction rollback and sided automation, failed-file
+  recovery (including a blocked snapshot directory), native quick-move, malformed messages, recipe consumption/NBT sync,
+  and exact blueprint/template reconstruction by the existing native builder.
+  All 444 required GameTests pass in `verification/architect-full-client-8.log`.
+  The new tests use a separate elevation to avoid connecting their marker fixtures
+  to older filler tests; the complete filler suite also passes.
+- Entity schematics, complete builder path/work rendering, library/replacer screens
+  and the broader migration backlog remain unfinished. This milestone validates
+  the block capture/reconstruction workflow; it does not mark the entire port complete.
+- The final connected client also passes with `failures=0` and a clean 44-second
+  exit in `verification/architect-full-client-8.log`, using the same packaged jar
+  as the 444-test server run. It connects/consumes native markers through real
+  interaction packets, names and scans a blueprint, quick-moves its output,
+  exits/reopens the complete world and feeds the saved plan through the native
+  builder screen. Eight stone blocks and one horizontal oak log are reproduced
+  with exact item consumption and distance-based MJ cost. Four reviewed screenshots
+  cover the architect UI, scan area, builder UI and reconstructed block states.
+  Existing guide recipe and texture-animation/mipmap warnings remain.

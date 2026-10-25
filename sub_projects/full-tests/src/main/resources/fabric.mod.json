@@ -6,6 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "buildcraft.test.full.ArchitectGameTests",
       "buildcraft.test.full.FillerGameTests",
       "buildcraft.test.full.StripesGameTests",
       "buildcraft.test.full.ObsidianGameTests",
@@ -43,6 +44,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.ArchitectClientSmoke",
       "buildcraft.test.full.FillerClientSmoke",
       "buildcraft.test.full.StripesClientSmoke",
       "buildcraft.test.full.ObsidianClientSmoke",

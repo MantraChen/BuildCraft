@@ -1,403 +1,219 @@
-/*
- * Copyright (c) 2016 SpaceToad and the BuildCraft team
- * 
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
+/* Copyright (c) 2016 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Remake by FelixMantra */
 package buildcraft.builders.tile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-
-import javax.annotation.Nonnull;
-
+import java.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.Direction;
-
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
-import buildcraft.api.core.EnumPipePart;
-import buildcraft.api.core.IAreaProvider;
+import net.minecraft.util.math.*;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import buildcraft.api.core.*;
 import buildcraft.api.enums.EnumSnapshotType;
-import buildcraft.api.schematics.ISchematicBlock;
-import buildcraft.api.schematics.ISchematicEntity;
-import buildcraft.api.schematics.SchematicBlockContext;
-import buildcraft.api.schematics.SchematicEntityContext;
+import buildcraft.api.schematics.*;
 import buildcraft.api.tiles.IDebuggable;
-
-import buildcraft.lib.delta.DeltaInt;
-import buildcraft.lib.delta.DeltaManager;
+import buildcraft.builders.*;
+import buildcraft.builders.block.BlockArchitectTable;
+import buildcraft.builders.client.ClientArchitectTables;
+import buildcraft.builders.item.ItemSnapshot;
+import buildcraft.builders.snapshot.*;
+import buildcraft.core.marker.volume.*;
 import buildcraft.lib.misc.AdvancementUtil;
-import buildcraft.lib.misc.BoundingBoxUtil;
-import buildcraft.lib.misc.MessageUtil;
-import buildcraft.lib.misc.NBTUtilBC;
+import buildcraft.lib.misc.data.*;
 import buildcraft.lib.misc.data.Box;
-import buildcraft.lib.misc.data.BoxIterator;
-import buildcraft.lib.misc.data.EnumAxisOrder;
-import buildcraft.lib.misc.data.IdAllocator;
 import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.item.ItemHandlerManager.EnumAccess;
 import buildcraft.lib.tile.item.ItemHandlerSimple;
 
-import buildcraft.builders.BCBuildersBlocks;
-import buildcraft.builders.BCBuildersItems;
-import buildcraft.builders.block.BlockArchitectTable;
-import buildcraft.builders.client.ClientArchitectTables;
-import buildcraft.builders.item.ItemSnapshot;
-import buildcraft.builders.snapshot.Blueprint;
-import buildcraft.builders.snapshot.GlobalSavedDataSnapshots;
-import buildcraft.builders.snapshot.SchematicBlockManager;
-import buildcraft.builders.snapshot.SchematicEntityManager;
-import buildcraft.builders.snapshot.Snapshot;
-import buildcraft.builders.snapshot.Snapshot.Header;
-import buildcraft.builders.snapshot.Template;
-import buildcraft.core.marker.volume.Lock;
-import buildcraft.core.marker.volume.VolumeBox;
-import buildcraft.core.marker.volume.WorldSavedDataVolumeBoxes;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
-
 public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
-    public TileArchitectTable(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
-        super(type, pos, state);
-    }
-
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("architect");
-    @SuppressWarnings("WeakerAccess")
-    public static final int NET_BOX = IDS.allocId("BOX");
-    @SuppressWarnings("WeakerAccess")
-    public static final int NET_SCAN = IDS.allocId("SCAN");
+    public static final int NET_BOX = IDS.allocId("BOX"), NET_SCAN = IDS.allocId("SCAN");
+    public static final int MAX_NAME_LENGTH = 64;
     private static final Identifier ADVANCEMENT = new Identifier("buildcraftbuilders:architect");
-
-    public final ItemHandlerSimple invSnapshotIn = itemManager.addInvHandler(
-        "in",
-        1,
-        (slot, stack) -> stack.getItem() instanceof ItemSnapshot,
-        EnumAccess.INSERT,
-        EnumPipePart.VALUES
-    );
-    public final ItemHandlerSimple invSnapshotOut = itemManager.addInvHandler(
-        "out",
-        1,
-        EnumAccess.EXTRACT,
-        EnumPipePart.VALUES
-    );
-
-    private EnumSnapshotType snapshotType = EnumSnapshotType.BLUEPRINT;
+    public final ItemHandlerSimple invSnapshotIn = itemManager.addInvHandler("in", 1,
+        (slot, stack) -> stack.getItem() instanceof ItemSnapshot, EnumAccess.INSERT, EnumPipePart.VALUES);
+    public final ItemHandlerSimple invSnapshotOut = itemManager.addInvHandler("out", 1, EnumAccess.EXTRACT, EnumPipePart.VALUES);
     public final Box box = new Box();
-    public boolean markerBox = false;
-    private BitSet templateScannedBlocks;
-    private final List<ISchematicBlock> blueprintScannedPalette = new ArrayList<>();
-    private int[] blueprintScannedData;
-    private final List<ISchematicEntity> blueprintScannedEntities = new ArrayList<>();
-    private BoxIterator boxIterator;
-    private boolean isValid = false;
-    private boolean scanning = false;
-    public String name = "<unnamed>";
-    public final DeltaInt deltaProgress = deltaManager.addDelta(
-        "progress",
-        DeltaManager.EnumNetworkVisibility.GUI_ONLY
-    );
+    public boolean markerBox;
+    public String name = "";
+    private boolean valid;
+    private Snapshot scanning;
+    private final Map<ISchematicBlock,Integer> paletteIndices = new HashMap<>();
+    private ItemStack scanInput = ItemStack.EMPTY;
+    private int scanned, total, retryTicks;
+    // 0: no area, 1: waiting for input, 2: scanning, 3: unloaded chunk, 4: save failed, 5: output ready.
+    private int status;
+    private boolean readingGuiData;
 
-    @Override
-    public IdAllocator getIdAllocator() {
-        return IDS;
+    public TileArchitectTable(net.minecraft.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type,pos,state); invSnapshotIn.setLimitedInsertor(1); invSnapshotOut.setLimitedInsertor(1);
     }
-
-    @Override
-    public void onPlacedBy(LivingEntity placer, ItemStack stack) {
-        super.onPlacedBy(placer, stack);
-        if (placer.getWorld().isClient) {
-            return;
-        }
-        WorldSavedDataVolumeBoxes volumeBoxes = WorldSavedDataVolumeBoxes.get(world);
-        BlockState blockState = world.getBlockState(pos);
-        BlockPos offsetPos = pos.offset(blockState.get(BlockArchitectTable.PROP_FACING).getOpposite());
-        VolumeBox volumeBox = volumeBoxes.getVolumeBoxAt(offsetPos);
-        BlockEntity tile = world.getBlockEntity(offsetPos);
-        if (volumeBox != null) {
-            box.reset();
-            box.setMin(volumeBox.box.min());
-            box.setMax(volumeBox.box.max());
-            isValid = true;
-            volumeBox.locks.add(
-                new Lock(
-                    new Lock.Cause.CauseBlock(pos, blockState.getBlock()),
-                    new Lock.Target.TargetRemove(),
-                    new Lock.Target.TargetResize(),
-                    new Lock.Target.TargetUsedByMachine(
-                        Lock.Target.TargetUsedByMachine.EnumType.STRIPES_READ
-                    )
-                )
-            );
-            volumeBoxes.markDirty();
-            sendNetworkUpdate(NET_BOX);
-        } else if (tile instanceof IAreaProvider) {
-            IAreaProvider provider = (IAreaProvider) tile;
-            box.reset();
-            box.setMin(provider.min());
-            box.setMax(provider.max());
-            markerBox = true;
-            isValid = true;
-            provider.removeFromWorld();
-        } else {
-            isValid = false;
-            BlockState state = world.getBlockState(pos);
-            state = state.with(BlockArchitectTable.PROP_VALID, Boolean.FALSE);
-            world.setBlockState(pos, state);
-        }
+    @Override public IdAllocator getIdAllocator() { return IDS; }
+    public int getScanned() { return scanned; }
+    public int getScanTotal() { return total; }
+    public int getScanStatus() { return status; }
+    public boolean hasArea() { return valid && validBox(box); }
+    private boolean validBox(Box candidate) {
+        if (!candidate.isInitialized()) return false;
+        try { Snapshot.getDataSize(candidate.size()); }
+        catch (IllegalArgumentException invalid) { return false; }
+        return world == null || (!world.isOutOfHeightLimit(candidate.min()) && !world.isOutOfHeightLimit(candidate.max())
+            && world.getWorldBorder().contains(candidate.min()) && world.getWorldBorder().contains(candidate.max()));
     }
-
-    @Override
-    public void tick() {
-        deltaManager.tick();
-
+    @Override public void onPlacedBy(LivingEntity placer, ItemStack stack) {
+        super.onPlacedBy(placer,stack);
+        if (!isStorageAvailable() || world.isClient) return;
+        var state = getCachedState();
+        var target = pos.offset(state.get(BlockArchitectTable.PROP_FACING).getOpposite());
+        if (!world.isChunkLoaded(target)) return;
+        var boxes = WorldSavedDataVolumeBoxes.get(world);
+        var volume = boxes.getVolumeBoxAt(target);
+        if (volume != null && validBox(volume.box) && !volume.box.contains(pos)) {
+            box.setMin(volume.box.min()); box.setMax(volume.box.max()); valid = true;
+            volume.locks.add(new Lock(new Lock.Cause.CauseBlock(pos,state.getBlock()), new Lock.Target.TargetRemove(),
+                new Lock.Target.TargetResize(),new Lock.Target.TargetUsedByMachine(Lock.Target.TargetUsedByMachine.EnumType.STRIPES_READ)));
+            boxes.markDirty();
+        } else if (world.getBlockEntity(target) instanceof IAreaProvider provider) {
+            var candidate = new Box(); candidate.setMin(provider.min()); candidate.setMax(provider.max());
+            if (validBox(candidate) && !candidate.contains(pos)
+                && (!(provider instanceof buildcraft.api.tiles.ITileAreaProvider area) || area.isValidFromLocation(pos))
+                && BuildersAreaHelper.canConsumeMarkers(this,provider)) {
+                box.setMin(candidate.min()); box.setMax(candidate.max()); markerBox = true; valid = true;
+                provider.removeFromWorld();
+            }
+        }
+        world.setBlockState(pos, state.with(BlockArchitectTable.PROP_VALID, valid), 3);
+        status = valid ? 1 : 0;
+        markDirty(); sendNetworkUpdate(NET_RENDER_DATA);
+    }
+    private void resetScan() { scanning = null; paletteIndices.clear(); scanInput = ItemStack.EMPTY; scanned = 0; total = 0; retryTicks = 0; }
+    @Override protected void onSlotChange(Object handler, int slot, ItemStack before, ItemStack after) {
+        super.onSlotChange(handler,slot,before,after);
+        if (handler == invSnapshotIn && scanning != null && !ItemStack.areEqual(before,after)) resetScan();
+    }
+    @Override public void tick() {
+        if (!isStorageAvailable()) return;
         if (world.isClient) {
-            if (box.isInitialized()) {
-                ClientArchitectTables.BOXES.put(box.getBoundingBox(), ClientArchitectTables.START_BOX_VALUE);
-            }
+            if (box.isInitialized()) ClientArchitectTables.BOXES.put(box.getBoundingBox(), ClientArchitectTables.START_BOX_VALUE);
             return;
         }
-
-        if (!invSnapshotIn.getStackInSlot(0).isEmpty() && invSnapshotOut.getStackInSlot(0).isEmpty() && isValid) {
-            if (!scanning) {
-                snapshotType = ItemSnapshot.EnumItemSnapshotType.getFromStack(
-                    invSnapshotIn.getStackInSlot(0)
-                ).snapshotType;
-                int size = box.size().getX() * box.size().getY() * box.size().getZ();
-                size /= snapshotType.maxPerTick;
-                deltaProgress.addDelta(0, size, 1);
-                deltaProgress.addDelta(size, size + 10, -1);
-                scanning = true;
+        if (Transaction.getCurrentUnsafe() != null) return;
+        int oldStatus = status, oldProgress = scanned;
+        if (!hasArea()) { resetScan(); status = 0; }
+        else if (!invSnapshotOut.getStackInSlot(0).isEmpty()) { status = 5; }
+        else if (!(invSnapshotIn.getStackInSlot(0).getItem() instanceof ItemSnapshot)) { resetScan(); status = 1; }
+        else {
+            var input = invSnapshotIn.getStackInSlot(0);
+            if (scanning != null && !ItemStack.areEqual(input,scanInput)) resetScan();
+            if (scanning == null) {
+                scanning = Snapshot.create(ItemSnapshot.EnumItemSnapshotType.getFromStack(input).snapshotType);
+                scanning.size = box.size(); scanning.facing = getCachedState().get(BlockArchitectTable.PROP_FACING);
+                scanning.offset = box.min().subtract(pos.offset(scanning.facing.getOpposite()));
+                total = scanning.getDataSize(); scanInput = input.copy();
+                if (scanning instanceof Template template) template.data = new BitSet(total);
+                if (scanning instanceof Blueprint blueprint) blueprint.data = new int[total];
             }
-        } else {
-            scanning = false;
-        }
-
-        if (scanning) {
-            scanMultipleBlocks();
-            if (!scanning) {
-                if (snapshotType == EnumSnapshotType.BLUEPRINT) {
-                    scanEntities();
+            if (retryTicks > 0) retryTicks--;
+            else {
+                status = 2;
+                List<BlockPos> highlights = new ArrayList<>();
+                for (int i=0; i<scanning.getType().maxPerTick && scanned<total; i++) {
+                    var target = box.min().add(scanning.indexToPos(scanned));
+                    if (!world.isChunkLoaded(target)) { status = 3; break; }
+                    if (scanning instanceof Template template) template.data.set(scanned, !world.isAir(target));
+                    else if (scanning instanceof Blueprint blueprint) {
+                        var state = world.getBlockState(target);
+                        var schematic = SchematicBlockManager.getSchematicBlock(new SchematicBlockContext(world,box.min(),target,state,state.getBlock()));
+                        int index = paletteIndices.computeIfAbsent(schematic, key -> {
+                            int next=blueprint.palette.size(); blueprint.palette.add(key); return next;
+                        });
+                        blueprint.data[scanned] = index;
+                    }
+                    if (highlights.size()<16) highlights.add(target);
+                    scanned++;
                 }
-                finishScanning();
+                if (!highlights.isEmpty()) createAndSendMessage(NET_SCAN,buffer -> {
+                    buffer.writeVarInt(highlights.size()); for (var target:highlights) buffer.writeBlockPos(target);
+                });
+                if (scanned==total) finishScanning();
             }
         }
+        if (status!=oldStatus || scanned!=oldProgress) { markDirty(); sendNetworkUpdate(NET_RENDER_DATA); }
     }
-
-    private void scanMultipleBlocks() {
-        for (int i = snapshotType.maxPerTick; i > 0; i--) {
-            scanSingleBlock();
-            if (!scanning) {
-                break;
-            }
-        }
-    }
-
-    private void scanSingleBlock() {
-        BlockPos size = box.size();
-        if (templateScannedBlocks == null || blueprintScannedData == null) {
-            boxIterator = new BoxIterator(box, EnumAxisOrder.XZY.getMinToMaxOrder(), true);
-            templateScannedBlocks = new BitSet(Snapshot.getDataSize(size));
-            blueprintScannedData = new int[Snapshot.getDataSize(size)];
-        }
-
-        // Read from world
-        BlockPos worldScanPos = boxIterator.getCurrent();
-        BlockPos schematicPos = worldScanPos.subtract(box.min());
-        if (snapshotType == EnumSnapshotType.TEMPLATE) {
-            templateScannedBlocks.set(Snapshot.posToIndex(box.size(), schematicPos), !world.isAir(worldScanPos));
-        }
-        if (snapshotType == EnumSnapshotType.BLUEPRINT) {
-            ISchematicBlock schematicBlock = readSchematicBlock(worldScanPos);
-            int index = blueprintScannedPalette.indexOf(schematicBlock);
-            if (index == -1) {
-                index = blueprintScannedPalette.size();
-                blueprintScannedPalette.add(schematicBlock);
-            }
-            blueprintScannedData[Snapshot.posToIndex(box.size(), schematicPos)] = index;
-        }
-
-        createAndSendMessage(NET_SCAN, buffer -> MessageUtil.writeBlockPos(buffer, worldScanPos));
-
-        sendNetworkUpdate(NET_RENDER_DATA);
-
-        // Move scanPos along
-        boxIterator.advance();
-
-        if (boxIterator.hasFinished()) {
-            scanning = false;
-            boxIterator = null;
-        }
-    }
-
-    private ISchematicBlock readSchematicBlock(BlockPos worldScanPos) {
-        return SchematicBlockManager.getSchematicBlock(new SchematicBlockContext(
-            world,
-            box.min(),
-            worldScanPos,
-            world.getBlockState(worldScanPos),
-            world.getBlockState(worldScanPos).getBlock()
-        ));
-    }
-
-    private void scanEntities() {
-        world.getEntitiesByClass(Entity.class, box.getBoundingBox(), entity -> true).stream()
-            .map(entity ->
-                SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(
-                    world,
-                    box.min(),
-                    entity
-                ))
-            )
-            .filter(Objects::nonNull)
-            .forEach(blueprintScannedEntities::add);
-    }
-
     private void finishScanning() {
-        BlockState thisState = getCurrentStateForBlock(BCBuildersBlocks.architect);
-        if (thisState == null) {
+        // A completed scan never consumes the item until its content-addressed file is durable.
+        if (scanning instanceof Blueprint blueprint) {
+            blueprint.entities.clear();
+            world.getEntitiesByClass(Entity.class,box.getBoundingBox(),entity -> true).stream()
+                .map(entity -> SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(world,box.min(),entity)))
+                .filter(Objects::nonNull).forEach(blueprint.entities::add);
+        }
+        scanning.computeKey();
+        if (!GlobalSavedDataSnapshots.get(world).addSnapshot(scanning)) { status=4; retryTicks=20; return; }
+        if (!isStorageAvailable() || !ItemStack.areEqual(invSnapshotIn.getStackInSlot(0),scanInput)
+            || !invSnapshotOut.getStackInSlot(0).isEmpty()) return;
+        var output = BCBuildersItems.snapshot.getUsed(scanning.getType(),
+            new Snapshot.Header(scanning.key,getOwner().getId(),new Date(),name));
+        var remaining=invSnapshotIn.getStackInSlot(0).copy(); remaining.decrement(1);
+        resetScan();
+        invSnapshotIn.setStackInSlot(0,remaining);
+        invSnapshotOut.setStackInSlot(0,output);
+        status=5; markDirty();
+        AdvancementUtil.unlockAdvancement(getOwner().getId(),ADVANCEMENT);
+    }
+    @Override public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
+        super.writePayload(id,buffer,side);
+        if (side==NetSide.SERVER && (id==NET_RENDER_DATA || id==NET_BOX)) {
+            box.writeData(buffer); buffer.writeBoolean(markerBox);
+            if (id==NET_RENDER_DATA) { buffer.writeString(name); buffer.writeByte(status); buffer.writeVarInt(scanned); buffer.writeVarInt(total); }
+        }
+    }
+    @Override public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
+        if (side==NetSide.CLIENT && id==NET_GUI_DATA) {
+            readingGuiData=true;
+            try { super.readPayload(id,buffer,side,ctx); if (buffer.isReadable()) throw new IOException("Trailing architect GUI data"); }
+            finally { readingGuiData=false; }
             return;
         }
-
-        Direction facing = thisState.get(BlockArchitectTable.PROP_FACING);
-        Snapshot snapshot = Snapshot.create(snapshotType);
-        snapshot.size = box.size();
-        snapshot.facing = facing;
-        snapshot.offset = box.min().subtract(pos.offset(facing.getOpposite()));
-        if (snapshot instanceof Template) {
-            ((Template) snapshot).data = templateScannedBlocks;
-        }
-        if (snapshot instanceof Blueprint) {
-            ((Blueprint) snapshot).palette.addAll(blueprintScannedPalette);
-            ((Blueprint) snapshot).data = blueprintScannedData;
-            ((Blueprint) snapshot).entities.addAll(blueprintScannedEntities);
-        }
-        snapshot.computeKey();
-        GlobalSavedDataSnapshots.get(world).addSnapshot(snapshot);
-        ItemStack stackIn = invSnapshotIn.getStackInSlot(0);
-        stackIn.setCount(stackIn.getCount() - 1);
-        if (stackIn.getCount() == 0) {
-            stackIn = ItemStack.EMPTY;
-        }
-        invSnapshotIn.setStackInSlot(0, stackIn);
-        invSnapshotOut.setStackInSlot(
-            0,
-            BCBuildersItems.snapshot.getUsed(
-                snapshotType,
-                new Header(
-                    snapshot.key,
-                    getOwner().getId(),
-                    new Date(),
-                    name
-                )
-            )
-        );
-        templateScannedBlocks = null;
-        blueprintScannedData = null;
-        blueprintScannedEntities.clear();
-        boxIterator = null;
-        sendNetworkUpdate(NET_RENDER_DATA);
-        AdvancementUtil.unlockAdvancement(getOwner().getId(), ADVANCEMENT);
-    }
-
-    @Override
-    public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
-        super.writePayload(id, buffer, side);
-        if (side == NetSide.SERVER) {
-            if (id == NET_RENDER_DATA) {
-                writePayload(NET_BOX, buffer, side);
-                buffer.writeString(name);
-            } else if (id == NET_BOX) {
-                box.writeData(buffer);
-                buffer.writeBoolean(markerBox);
+        super.readPayload(id,buffer,side,ctx);
+        if (side!=NetSide.CLIENT) return;
+        if (id==NET_RENDER_DATA || id==NET_BOX) {
+            var area=new Box(); area.readData(buffer); boolean markers=buffer.readBoolean();
+            if (area.isInitialized() && !validBox(area)) throw new IOException("Invalid architect area");
+            String newName=name; int newStatus=status,newScanned=scanned,newTotal=total;
+            if (id==NET_RENDER_DATA) {
+                newName=buffer.readString(MAX_NAME_LENGTH); newStatus=buffer.readUnsignedByte(); newScanned=buffer.readVarInt(); newTotal=buffer.readVarInt();
+                if (newStatus>5 || newScanned<0 || newTotal<newScanned || newTotal>BuildingExecutor.MAX_VOLUME)
+                    throw new IOException("Invalid architect progress");
             }
+            if (!readingGuiData && buffer.isReadable()) throw new IOException("Trailing architect data");
+            box.reset(); if (area.isInitialized()) { box.setMin(area.min()); box.setMax(area.max()); }
+            markerBox=markers; name=newName; status=newStatus; scanned=newScanned; total=newTotal; valid=area.isInitialized();
+        } else if (id==NET_SCAN) {
+            int count=buffer.readVarInt(); if (count<0 || count>16) throw new IOException("Invalid scan count");
+            List<BlockPos> positions=new ArrayList<>();
+            for (int i=0;i<count;i++) { var target=buffer.readBlockPos(); if (!box.isInitialized() || !box.contains(target)) throw new IOException("Scan outside architect area"); positions.add(target); }
+            if (buffer.isReadable()) throw new IOException("Trailing scan data");
+            for (var target:positions) ClientArchitectTables.SCANNED_BLOCKS.put(target,ClientArchitectTables.START_SCANNED_BLOCK_VALUE);
         }
     }
-
-    @Override
-    public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
-        super.readPayload(id, buffer, side, ctx);
-        if (side == NetSide.CLIENT) {
-            if (id == NET_RENDER_DATA) {
-                readPayload(NET_BOX, buffer, side, ctx);
-                name = buffer.readString();
-            } else if (id == NET_BOX) {
-                box.readData(buffer);
-                markerBox = buffer.readBoolean();
-            } else if (id == NET_SCAN) {
-                ClientArchitectTables.SCANNED_BLOCKS.put(
-                    MessageUtil.readBlockPos(buffer),
-                    ClientArchitectTables.START_SCANNED_BLOCK_VALUE
-                );
-            }
-        }
+    @Override public NbtCompound writeToNBT(NbtCompound nbt) {
+        super.writeToNBT(nbt); nbt.put("box",box.writeToNBT()); nbt.putBoolean("markerBox",markerBox);
+        nbt.putBoolean("isValid",valid); nbt.putString("name",name); return nbt;
     }
-
-    @Override
-    public NbtCompound writeToNBT(NbtCompound nbt) {
-        super.writeToNBT(nbt);
-        nbt.put("box", box.writeToNBT());
-        nbt.putBoolean("markerBox", markerBox);
-        if (boxIterator != null) {
-            nbt.put("iter", boxIterator.writeToNbt());
-        }
-        nbt.putBoolean("scanning", scanning);
-        nbt.put("snapshotType", NBTUtilBC.writeEnum(snapshotType));
-        nbt.putBoolean("isValid", isValid);
-        nbt.putString("name", name);
-        return nbt;
+    @Override public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt); box.initialize(nbt.getCompound("box")); markerBox=nbt.getBoolean("markerBox");
+        valid=nbt.getBoolean("isValid") && validBox(box);
+        name=nbt.getString("name"); if (name.length()>MAX_NAME_LENGTH) name=name.substring(0,MAX_NAME_LENGTH);
+        // Partial scans contain observations, not paid work: reload starts a fresh coherent capture.
+        resetScan(); status=valid?1:0;
     }
-
-    @Override
-    public void readFromNBT(NbtCompound nbt) {
-        super.readFromNBT(nbt);
-        box.initialize(nbt.getCompound("box"));
-        markerBox = nbt.getBoolean("markerBox");
-        if (nbt.contains("iter")) {
-            boxIterator = BoxIterator.readFromNbt(nbt.getCompound("iter"));
-        }
-        scanning = nbt.getBoolean("scanning");
-        snapshotType = NBTUtilBC.readEnum(nbt.get("snapshotType"), EnumSnapshotType.class);
-        isValid = nbt.getBoolean("isValid");
-        name = nbt.getString("name");
-    }
-
-    @Override
-    public void getDebugInfo(List<String> left, List<String> right, Direction side) {
-        left.add("box:");
-        left.add(" - min = " + box.min());
-        left.add(" - max = " + box.max());
-        left.add("scanning = " + scanning);
-        left.add("current = " + (boxIterator == null ? null : boxIterator.getCurrent()));
-    }
-
-    // Rendering
-
-    @Nonnull
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    @Environment(EnvType.CLIENT)
-    public Box getRenderBoundingBox() {
-        return BoundingBoxUtil.makeFrom(pos, box);
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    @Environment(EnvType.CLIENT)
-    public double getMaxRenderDistanceSquared() {
-        return Double.MAX_VALUE;
+    @Override public void getDebugInfo(List<String> left,List<String> right,Direction side) {
+        left.add("box: "+box.min()+" - "+box.max()); left.add("scan: "+scanned+"/"+total+", status="+status);
     }
 }

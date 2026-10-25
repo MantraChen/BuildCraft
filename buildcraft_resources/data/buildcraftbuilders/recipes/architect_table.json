@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["bmb", "ycy", "dsd"],
+  "key": {
+    "b": {"item": "minecraft:black_dye"},
+    "m": {"item": "buildcraftcore:marker_volume"},
+    "y": {"item": "minecraft:yellow_dye"},
+    "c": {"item": "minecraft:crafting_table"},
+    "d": {"item": "buildcraftcore:gear_diamond"},
+    "s": {"fabric:type": "fabric:nbt", "base": {"item": "buildcraftbuilders:snapshot"}, "nbt": {"snapshotType": "BLUEPRINT"}, "strict": true}
+  },
+  "result": {"item": "buildcraftbuilders:architect"}
+}

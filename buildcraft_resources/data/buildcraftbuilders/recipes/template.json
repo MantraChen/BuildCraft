@@ -1,0 +1,8 @@
+{
+  "type": "buildcraftbuilders:snapshot",
+  "snapshot_type": "TEMPLATE",
+  "category": "misc",
+  "pattern": ["ppp", "pbp", "ppp"],
+  "key": {"p": {"item": "minecraft:paper"}, "b": {"item": "minecraft:black_dye"}},
+  "result": {"item": "buildcraftbuilders:snapshot"}
+}

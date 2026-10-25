@@ -62,6 +62,13 @@ The original dye/marker/workbench/gold-gear/chest recipe is available in surviva
 Paid construction survives saves, and continuous gate actions preserve progress.
 Use `./scripts/full-smoke.ps1 -Filler` to verify its screen, work visuals, full world
 restart, engine-powered filling and native mined-item inventory.
+Architect tables now have a native naming screen and survival recipes for blank
+blueprints/templates. Place the table beside connected area markers, name the plan,
+then insert a blueprint to capture block states or a template to capture occupancy.
+Take the result to a builder and supply its materials and MJ. Input survives failed
+saves; unloading the area pauses scanning, while a world restart begins a fresh scan.
+Use `./scripts/full-smoke.ps1 -Architect` for capture, naming, output transfer,
+saved-world restart and reconstruction through the actual builder screen.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

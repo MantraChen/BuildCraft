@@ -54,13 +54,8 @@ public class GlobalSavedDataSnapshots {
             FabricLoader.getInstance().getGameDir().toFile(),
             "snapshots-" + side.name().toLowerCase(Locale.ROOT)
         );
-        if (!snapshotsFile.exists()) {
-            if (!snapshotsFile.mkdirs()) {
-                throw new RuntimeException("Failed to make the directories required for snapshots: " + snapshotsFile);
-            }
-        } else if (!snapshotsFile.isDirectory()) {
-            throw new IllegalStateException("The snapshots directory was not a directory: " + snapshotsFile);
-        }
+        // Create the directory inside the fallible write operation. A missing or blocked
+        // path must leave the machine's input intact instead of crashing its world tick.
     }
 
     public static void reInit(NetSide side) {
@@ -89,7 +84,7 @@ public class GlobalSavedDataSnapshots {
                         if (Objects.equals(snapshot.key, key)) {
                             return Pair.of(snapshot, snapshotFile);
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | RuntimeException e) {
                         new IOException("Failed to read the snapshot " + snapshotFile, e).printStackTrace();
                     }
                 }
@@ -109,7 +104,7 @@ public class GlobalSavedDataSnapshots {
                         if (snapshotFile.getName().startsWith(snapshot.key.toString())) {
                             listBuilder.add(snapshot.key);
                         }
-                    } catch (IOException io) {
+                    } catch (IOException | RuntimeException io) {
                         new IOException("Failed to read the snapshot " + snapshotFile, io).printStackTrace();
                     }
                 }
@@ -118,20 +113,38 @@ public class GlobalSavedDataSnapshots {
         return listBuilder.build();
     }
 
-    public void addSnapshot(Snapshot snapshot) {
+    public boolean addSnapshot(Snapshot snapshot) {
         File snapshotFile = new File(
             snapshotsFile,
             snapshot.key.toString() + SNAPSHOT_FILE_EXTENSION
         );
-        if (!snapshotFile.exists()) {
-            try (FileOutputStream fileOutputStream = new FileOutputStream(snapshotFile)) {
-                NbtSquisher.squishVanilla(Snapshot.writeToNBT(snapshot), fileOutputStream);
-            } catch (IOException e) {
-                new IOException("Failed to write the snapshot file: " + snapshotFile, e).printStackTrace();
+        java.nio.file.Path temporary = null;
+        try {
+            java.nio.file.Files.createDirectories(snapshotsFile.toPath());
+            // Existing entries must be readable; a truncated file must not consume another blank blueprint.
+            if (snapshotFile.exists()) {
+                if (readSnapshot(snapshot.key) == null) return false;
+            } else {
+                temporary = java.nio.file.Files.createTempFile(snapshotsFile.toPath(), "snapshot-", ".tmp");
+                try (FileOutputStream stream = new FileOutputStream(temporary.toFile())) {
+                    // The compressor closes its output; retain the descriptor until the final fsync.
+                    NbtSquisher.squishVanilla(Snapshot.writeToNBT(snapshot), new java.io.FilterOutputStream(stream) {
+                        @Override public void close() throws IOException { flush(); }
+                    });
+                    stream.getFD().sync();
+                }
+                try { java.nio.file.Files.move(temporary, snapshotFile.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE); }
+                catch (java.nio.file.AtomicMoveNotSupportedException unsupported) { java.nio.file.Files.move(temporary, snapshotFile.toPath()); }
             }
+        } catch (IOException | RuntimeException error) {
+            new IOException("Failed to write the snapshot file: " + snapshotFile, error).printStackTrace();
+            return false;
+        } finally {
+            if (temporary != null) try { java.nio.file.Files.deleteIfExists(temporary); } catch (IOException ignored) { }
         }
         snapshotsCache.invalidate(snapshot.key);
         listCache.clear();
+        return true;
     }
 
     public void removeSnapshot(Snapshot.Key key) {

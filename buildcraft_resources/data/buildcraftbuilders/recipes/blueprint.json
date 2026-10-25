@@ -1,0 +1,8 @@
+{
+  "type": "buildcraftbuilders:snapshot",
+  "snapshot_type": "BLUEPRINT",
+  "category": "misc",
+  "pattern": ["ppp", "pbp", "ppp"],
+  "key": {"p": {"item": "minecraft:paper"}, "b": {"item": "minecraft:lapis_lazuli"}},
+  "result": {"item": "buildcraftbuilders:snapshot"}
+}

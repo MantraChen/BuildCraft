@@ -52,13 +52,14 @@ public class BCBuildersInitializer implements ModInitializer {
             (tile,face)->net.fabricmc.fabric.api.transfer.v1.storage.Storage.empty(),
             buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.builders.tile.TileQuarry.class));
         BCBuildersScreens.register();
+        BCBuildersRecipes.init();
         buildcraft.builders.snapshot.RulesLoader.loadAll();
         buildcraft.builders.snapshot.RulesLoader.registerReloadListener();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ARCHITECT_TABLE, LIBRARY, REPLACER, QUARRY.
 
         // --- Forge init (BCBuilders.init) ----------------------------------------
-        // STUB(R.Chen): BCBuildersRecipes.init() — architect/library/snapshot recipes deferred.
+        // Remaining library/replacer integrations are handled separately.
 
         // --- Forge postInit (BCBuilders.postInit) --------------------------------
         buildcraft.core.BCCoreConfig.postInit();

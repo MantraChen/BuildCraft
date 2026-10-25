@@ -29,7 +29,10 @@ public class ContainerArchitectTable extends ContainerBCTile<TileArchitectTable>
     private static final int ID_NAME = IDS.allocId("NAME");
 
     public ContainerArchitectTable(PlayerEntity player, TileArchitectTable tile) {
-        super(player, tile);
+        this(player, 0, tile);
+    }
+    public ContainerArchitectTable(PlayerEntity player, int syncId, TileArchitectTable tile) {
+        super(buildcraft.builders.BCBuildersScreens.ARCHITECT, player, syncId, tile);
         addFullPlayerInventory(88, 84);
 
         addSlot(new SlotBase(tile.invSnapshotIn, 0, 135, 35));
@@ -50,7 +53,10 @@ public class ContainerArchitectTable extends ContainerBCTile<TileArchitectTable>
         super.readMessage(id, buffer, isClient, ctx);
         if (!isClient) {
             if (id == ID_NAME) {
-                tile.name = buffer.readString(256);
+                String name = buffer.readString(TileArchitectTable.MAX_NAME_LENGTH);
+                if (buffer.isReadable()) throw new IOException("Trailing architect name data");
+                if (!canUse(player)) return;
+                tile.name = net.minecraft.util.StringHelper.stripTextFormat(name).strip();
                 tile.markDirty();
                 tile.sendNetworkUpdate(TileBC_Neptune.NET_RENDER_DATA);
             }

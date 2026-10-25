@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcraftbuilders:architect"
+    },
+    "title": {
+      "translate": "advancements.buildcraftbuilders.architect.title"
+    },
+    "description": {
+      "translate": "advancements.buildcraftbuilders.architect.description"
+    },
+    "background": "minecraft:textures/block/stone.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "architect": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

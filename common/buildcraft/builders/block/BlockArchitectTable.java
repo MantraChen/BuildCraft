@@ -32,7 +32,7 @@ public class BlockArchitectTable extends BlockBCTile_Neptune implements IBlockWi
 
     public BlockArchitectTable(AbstractBlock.Settings material, String id) {
         super(material, id);
-        setDefaultState(getDefaultState().with(PROP_VALID, Boolean.TRUE));
+        setDefaultState(getDefaultState().with(PROP_VALID, Boolean.FALSE));
     }
 
     @Override
@@ -69,5 +69,12 @@ public class BlockArchitectTable extends BlockBCTile_Neptune implements IBlockWi
     @Override
     public boolean canBeRotated(World world, BlockPos pos, BlockState state) {
         return false;
+    }
+
+    @Override public void appendTooltip(net.minecraft.item.ItemStack stack, net.minecraft.world.BlockView world,
+            List<net.minecraft.text.Text> tooltip, net.minecraft.client.item.TooltipContext context) {
+        super.appendTooltip(stack, world, tooltip, context);
+        tooltip.add(net.minecraft.text.Text.translatable("block.buildcraftbuilders.architect.tip"));
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
     }
 }

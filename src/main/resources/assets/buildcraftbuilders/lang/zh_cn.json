@@ -12,5 +12,17 @@
   "advancements.buildcraftbuilders.shaping_remake.title": "塑造世界",
   "advancements.buildcraftbuilders.shaping_remake.description": "放置一台 BuildCraft 采石机。Remake by FelixMantra",
   "advancements.buildcraftbuilders.diggy_remake.title": "无底洞",
-  "advancements.buildcraftbuilders.diggy_remake.description": "完成内部开采面积为 63 × 63 的采石场"
+  "advancements.buildcraftbuilders.diggy_remake.description": "完成内部开采面积为 63 × 63 的采石场",
+  "gui.buildcraftbuilders.architect": "建筑师工作台",
+  "gui.buildcraftbuilders.snapshot_name": "蓝图名称",
+  "gui.buildcraftbuilders.snapshot_input": "蓝图 / 模板",
+  "gui.buildcraftbuilders.scan_status.0": "请放在已连接的区域标记旁",
+  "gui.buildcraftbuilders.scan_status.1": "放入蓝图或模板以开始扫描",
+  "gui.buildcraftbuilders.scan_status.2": "扫描中：%s / %s",
+  "gui.buildcraftbuilders.scan_status.3": "等待扫描区域加载",
+  "gui.buildcraftbuilders.scan_status.4": "蓝图保存失败，正在重试",
+  "gui.buildcraftbuilders.scan_status.5": "扫描完成，请取出成品",
+  "block.buildcraftbuilders.architect.tip": "放在已连接的区域标记旁，放入蓝图或模板扫描建筑。",
+  "advancements.buildcraftbuilders.architect.title": "设计之眼",
+  "advancements.buildcraftbuilders.architect.description": "使用建筑师工作台记录建筑。Remake by FelixMantra"
 }

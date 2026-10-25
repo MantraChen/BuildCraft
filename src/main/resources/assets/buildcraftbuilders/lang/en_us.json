@@ -12,5 +12,17 @@
   "advancements.buildcraftbuilders.shaping_remake.title": "Shaping the World",
   "advancements.buildcraftbuilders.shaping_remake.description": "Place a BuildCraft Quarry. Remake by FelixMantra",
   "advancements.buildcraftbuilders.diggy_remake.title": "Diggy Diggy Hole",
-  "advancements.buildcraftbuilders.diggy_remake.description": "Complete a quarry with a 63 × 63 mining area"
+  "advancements.buildcraftbuilders.diggy_remake.description": "Complete a quarry with a 63 × 63 mining area",
+  "gui.buildcraftbuilders.architect": "Architect Table",
+  "gui.buildcraftbuilders.snapshot_name": "Blueprint name",
+  "gui.buildcraftbuilders.snapshot_input": "Blueprint / Template",
+  "gui.buildcraftbuilders.scan_status.0": "Place beside connected area markers",
+  "gui.buildcraftbuilders.scan_status.1": "Insert a blueprint or template",
+  "gui.buildcraftbuilders.scan_status.2": "Scanning: %s / %s",
+  "gui.buildcraftbuilders.scan_status.3": "Waiting for the area to load",
+  "gui.buildcraftbuilders.scan_status.4": "Cannot save blueprint; retrying",
+  "gui.buildcraftbuilders.scan_status.5": "Scan complete — collect the result",
+  "block.buildcraftbuilders.architect.tip": "Place beside connected markers; insert a blueprint or template to scan.",
+  "advancements.buildcraftbuilders.architect.title": "An Eye for Design",
+  "advancements.buildcraftbuilders.architect.description": "Capture a building with an Architect Table. Remake by FelixMantra"
 }

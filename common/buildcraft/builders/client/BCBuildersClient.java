@@ -25,6 +25,9 @@ public final class BCBuildersClient {
     private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        HandledScreens.<ContainerBC_Neptune, buildcraft.builders.gui.GuiArchitectTable>register(BCBuildersScreens.ARCHITECT,
+            (handler, inventory, title) -> new buildcraft.builders.gui.GuiArchitectTable(
+                (buildcraft.builders.container.ContainerArchitectTable)handler, inventory, title));
         buildcraft.builders.BCBuildersSprites.fmlPreInit();
         if (buildcraft.builders.BCBuildersBlocks.frame != null)
             net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
