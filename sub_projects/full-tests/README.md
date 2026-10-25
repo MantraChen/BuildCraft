@@ -531,3 +531,15 @@ The real client checks native placement and wrench packets, all six direction-ro
 models and atlas reload, a full restart retaining paid mining work, engine-powered
 mining, actual item-flow block and hoe use, extension/retraction, exact tool/pipe
 refunds and the native barrel screen. Screenshots are saved in `screenshots/`.
+
+The electronic-library fixture adds local collection identity/metadata, bounded multipart
+transport, content validation, native inventory/automation, per-viewer selections,
+interrupted transfers, durable-save failure recovery and survival crafting. Its local
+file tests use their own paths so they can run alongside the architect's blocked-path
+fixture, and machine setup replaces saved test machines before each run.
+`./scripts/full-smoke.ps1 -Library` starts a real client in `verification/library-client-run`.
+It exports a blueprint containing a chest with more than 100 KiB of exact item data,
+first with a deliberately blocked local file. It then checks retry, collection search
+and paging, changes to a different world after removing the server-side fixture file,
+imports the local collection, deletes only the local copy, restarts the second world
+and reconstructs the chest using the native builder and exact paid materials.

@@ -43,5 +43,21 @@
   "item.buildcraftbuilders.schematic.clear": "潜行使用以清空样本",
   "item.buildcraftbuilders.schematic.invalid": "样本数据无效",
   "item.buildcraftbuilders.schematic.fluids": "此样本需要流体，请使用建筑机",
-  "item.buildcraftbuilders.schematic.missing": "缺少相同材料，或当前位置无法放置"
+  "item.buildcraftbuilders.schematic.missing": "缺少相同材料，或当前位置无法放置",
+  "gui.buildcraftbuilders.library": "蓝图库",
+  "gui.buildcraftbuilders.library.search": "搜索本地收藏",
+  "gui.buildcraftbuilders.library.export": "存入收藏",
+  "gui.buildcraftbuilders.library.import": "写入世界",
+  "gui.buildcraftbuilders.library.delete": "删除收藏",
+  "gui.buildcraftbuilders.library.status.0": "放入已记录蓝图以保存到本地",
+  "gui.buildcraftbuilders.library.status.1": "正在准备本地副本…",
+  "gui.buildcraftbuilders.library.status.2": "正在准备世界副本…",
+  "gui.buildcraftbuilders.library.status.3": "正在保存到本地收藏…",
+  "gui.buildcraftbuilders.library.status.4": "正在导入本地蓝图…",
+  "gui.buildcraftbuilders.library.status.5": "传输完成",
+  "gui.buildcraftbuilders.library.status.6": "蓝图无效或缺失，等待重试",
+  "gui.buildcraftbuilders.library.status.7": "保存失败，已保留输入物品",
+  "gui.buildcraftbuilders.library.status.8": "其他玩家正在使用蓝图库",
+  "gui.buildcraftbuilders.library.status.9": "传输超时，已保留输入物品",
+  "gui.buildcraftbuilders.library.status.10": "无法删除本地文件"
 }

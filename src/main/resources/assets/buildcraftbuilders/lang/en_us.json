@@ -43,5 +43,21 @@
   "item.buildcraftbuilders.schematic.clear": "Sneak-use to clear this sample",
   "item.buildcraftbuilders.schematic.invalid": "Invalid schematic data",
   "item.buildcraftbuilders.schematic.fluids": "This sample requires fluids; use a builder",
-  "item.buildcraftbuilders.schematic.missing": "Missing exact materials or placement blocked"
+  "item.buildcraftbuilders.schematic.missing": "Missing exact materials or placement blocked",
+  "gui.buildcraftbuilders.library": "Blueprint Library",
+  "gui.buildcraftbuilders.library.search": "Search collection",
+  "gui.buildcraftbuilders.library.export": "To collection",
+  "gui.buildcraftbuilders.library.import": "To world",
+  "gui.buildcraftbuilders.library.delete": "Delete local",
+  "gui.buildcraftbuilders.library.status.0": "Insert a recorded blueprint to save locally",
+  "gui.buildcraftbuilders.library.status.1": "Preparing local copy…",
+  "gui.buildcraftbuilders.library.status.2": "Preparing world copy…",
+  "gui.buildcraftbuilders.library.status.3": "Saving to local collection…",
+  "gui.buildcraftbuilders.library.status.4": "Importing local blueprint…",
+  "gui.buildcraftbuilders.library.status.5": "Transfer complete",
+  "gui.buildcraftbuilders.library.status.6": "Invalid or missing blueprint; retrying",
+  "gui.buildcraftbuilders.library.status.7": "Save failed; input retained",
+  "gui.buildcraftbuilders.library.status.8": "Library is in use by another player",
+  "gui.buildcraftbuilders.library.status.9": "Transfer timed out; input retained",
+  "gui.buildcraftbuilders.library.status.10": "Could not delete local file"
 }

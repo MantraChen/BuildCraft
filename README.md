@@ -94,6 +94,14 @@ two samples only on success. The original file stays available. Its native scree
 shows a block-model preview and replacement status. Use
 `./scripts/full-smoke.ps1 -Replacer` for capture, exact material payment, replacement,
 saved-world restarts and construction of the changed blueprint.
+The blueprint library stores a collection on your computer, shared across worlds and
+servers. Put a recorded blueprint/template in its upper input to save a local copy;
+select a collection entry and insert snapshot media in the lower input to write it
+into the current world. Both transfers keep input media until the destination file
+is saved. Search and page through local entries; “Delete local” leaves world copies
+intact. Full block data, entities, name, owner and creation date travel with the plan.
+Use `./scripts/full-smoke.ps1 -Library` to verify multipart transfers, failed-save
+recovery, different worlds, local deletion, restart and paid chest reconstruction.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

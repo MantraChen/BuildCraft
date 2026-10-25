@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **488 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **501 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1583,8 +1583,8 @@ Remake by FelixMantra.
   blocks into a fake or real world. The single-schematic recipe uses two paper and
   one lapis for four blanks. A new native replacer recipe uses four iron ingots, two
   redstone, two gold gears and a crafting table; both recipes have recipe-book unlocks.
-- Library transfer/browsing, the filler planner, riding relationships and the remaining
-  migration backlog are still separate work. A block-model preview does not claim full
+- At that milestone, library transfer/browsing, the filler planner, riding relationships
+  and the remaining migration backlog were still separate work. A block-model preview does not claim full
   block-entity/entity rendering or unrestricted compatibility with every modded schematic.
 - Fifteen additional packaged-mod tests cover native use-first chest capture, split
   blanks, legacy/native clearing and stack limits, exact chest-content payment,
@@ -1607,3 +1607,56 @@ Remake by FelixMantra.
   milestone. The incomplete-port status remains in effect.
 - Shared construction regression also passes: 148 unit tests and 69 world tests in
   `verification/replacer-shared-tests.log`.
+
+
+### Native electronic library and cross-world local collections
+
+- The electronic library now has four native one-item slots, a registered screen,
+  sided insertion/extraction, saved inventories, native quick-move and owner/distance/
+  stale-tile checks. Recorded media enters the upper input and returns from the upper
+  output after saving to the player's local collection. The lower input accepts any
+  blueprint/template media, as in the original library, and produces the selected
+  collection entry only after saving its complete content in the current server.
+- Collections live in the client's existing `snapshots-client` directory and travel
+  across worlds and servers. Local entries retain their original name, owner UUID
+  and creation date. Cache and file lookup use the content hash independently of
+  metadata; metadata updates are durable. Local deletion clears the local cache/file
+  without removing a server copy. The screen includes search, five-entry pages,
+  progress/status, native slot transfer and “Remake by FelixMantra”. Its full layout
+  fits the default 854×480 window at automatic GUI scale.
+- Full snapshots use a separate bounded transfer from the small preview protocol.
+  Thirty-KiB chunks leave room for the native screen envelope under Minecraft's
+  32,767-byte upload limit. Compressed content is limited to 16 MiB and expanded NBT
+  to 64 MiB, with an additional NBT allocation budget. Ordered chunks, content hashes,
+  canonical metadata, exact packet lengths, direction, per-screen transfer tokens,
+  current inventory versions and screen access are checked. Each machine leases its
+  input to one viewer while keeping that viewer's selection separate from others.
+- The original fifty-tick preparation remains. Idle and overall timeouts, closing the
+  screen, replacing input, stale tiles, blocked output and foreign inventory
+  transactions cannot consume media. Files are written atomically and synchronized
+  before success is acknowledged; save failures retain input and retry. Runtime
+  transfer buffers are discarded on cancellation; saved media remains in the machine.
+- A new native survival recipe uses four iron ingots, redstone, two gold gears, a book
+  and a chest, with a recipe-book unlock. Existing original authorship is preserved.
+- Thirteen additional packaged-mod tests cover a maximum-volume multipart template,
+  chest block data and native entities, malformed chunks/hash/header/lengths, local
+  metadata updates/deletion, complete native upload, failed-save retry, exact export
+  acknowledgement, changed/closed inputs, multiple viewers, timeouts, sided storage,
+  inventory reload, stale/distant screens, crafting and trailing packet rejection.
+  Serverbound test messages also pass the real complete-packet size validator.
+  Reused test worlds reset the library fixture; the architect blocked-directory
+  fixture now uses a separate path instead of assuming no other local store exists.
+- All **501** required GameTests and the real client pass against the packaged jar in
+  `verification/library-full-client-6.log`. The client exits cleanly in 77 seconds with
+  `failures=0`. A chest with 110,000 bytes of exact additional item data is exported
+  through actual screen packets, first with a deliberately blocked local file. After
+  successful retry, paging/search and metadata are checked. The server fixture file
+  is removed and a different world is created; the local collection restores the
+  complete blueprint there. Local deletion preserves that world copy. After another
+  complete restart, native builder interaction consumes exact materials and recreates
+  the chest with identical contents. All seven final screenshots were reviewed in
+  `verification/library-client-run/screenshots`.
+- The filler planner, riding relationships, broader modded-schematic compatibility
+  and remaining migration work are still unfinished. Existing guide-recipe and
+  texture-animation/mipmap warnings remain. This milestone verifies the library
+  workflow and does not declare the entire port complete.

@@ -117,16 +117,18 @@ public final class ArchitectGameTests implements FabricGameTest {
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void blockedSnapshotDirectoryIsRecoverableWithoutCrashing(TestContext c)throws Exception{
-        // This dedicated-server fixture never uses the client-side snapshot store otherwise.
-        var path=net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("snapshots-client");
-        c.assertTrue(!java.nio.file.Files.exists(path),"Client snapshot fixture path unexpectedly occupied");
+        // Keep the blocked-directory fixture independent of other tests' real local collections.
+        var fixture=java.nio.file.Files.createTempDirectory(net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir(),"blocked-snapshot-");
+        var path=fixture.resolve("snapshots");
+        var constructor=GlobalSavedDataSnapshots.class.getDeclaredConstructor(TileBC_Neptune.NetSide.class);constructor.setAccessible(true);
+        var store=constructor.newInstance(TileBC_Neptune.NetSide.CLIENT);
+        var directory=GlobalSavedDataSnapshots.class.getDeclaredField("snapshotsFile");directory.setAccessible(true);directory.set(store,path.toFile());
         var snapshot=new Template();snapshot.size=new BlockPos(1,1,1);snapshot.offset=BlockPos.ORIGIN;snapshot.facing=Direction.NORTH;snapshot.data=new BitSet();snapshot.computeKey();
         java.nio.file.Files.writeString(path,"blocked snapshot directory");
-        try{GlobalSavedDataSnapshots.reInit(TileBC_Neptune.NetSide.CLIENT);c.assertTrue(!GlobalSavedDataSnapshots.get(TileBC_Neptune.NetSide.CLIENT).addSnapshot(snapshot),"Blocked directory was accepted");}
+        try{c.assertTrue(!store.addSnapshot(snapshot),"Blocked directory was accepted");}
         finally{java.nio.file.Files.delete(path);}
-        var store=GlobalSavedDataSnapshots.get(TileBC_Neptune.NetSide.CLIENT);
         try{c.assertTrue(store.addSnapshot(snapshot) && store.getSnapshot(snapshot.key)!=null,"Snapshot directory did not recover");}
-        finally{store.removeSnapshot(snapshot.key);java.nio.file.Files.delete(path);}
+        finally{store.removeSnapshot(snapshot.key);java.nio.file.Files.delete(path);java.nio.file.Files.delete(fixture);}
         c.complete();
     }
     private static ItemStack craft(TestContext c,ItemStack[] input){var player=c.createMockCreativeServerPlayerInWorld();var h=new net.minecraft.screen.CraftingScreenHandler(1,player.getInventory(),net.minecraft.screen.ScreenHandlerContext.create(c.getWorld(),c.getAbsolutePos(POS)));for(int i=0;i<9;i++)h.getSlot(i+1).setStack(input[i]);h.onContentChanged(h.getSlot(1).inventory);var result=h.getSlot(0).getStack().copy();if(!result.isEmpty()){h.onSlotClick(0,0,net.minecraft.screen.slot.SlotActionType.PICKUP,player);for(int i=1;i<=9;i++)c.assertTrue(h.getSlot(i).getStack().isEmpty(),"Recipe retained ingredients");}return result;}

@@ -20,6 +20,7 @@ public enum BCBuildersGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
+        if(this==LIBRARY){BCBuildersScreens.openLibrary(player,pos);return;}
         if(this==REPLACER){BCBuildersScreens.openReplacer(player,pos);return;}
         if (this == ARCHITECT) { BCBuildersScreens.openArchitect(player, pos); return; }
         if (this == BUILDER) {

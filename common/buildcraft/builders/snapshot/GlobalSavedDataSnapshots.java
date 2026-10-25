@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -48,8 +47,10 @@ public class GlobalSavedDataSnapshots {
         TimeUnit.SECONDS
     );
     private final File snapshotsFile;
+    private final NetSide side;
 
     private GlobalSavedDataSnapshots(NetSide side) {
+        this.side = side;
         snapshotsFile = new File(
             FabricLoader.getInstance().getGameDir().toFile(),
             "snapshots-" + side.name().toLowerCase(Locale.ROOT)
@@ -74,6 +75,7 @@ public class GlobalSavedDataSnapshots {
     }
 
     private Pair<Snapshot, File> readSnapshot(Snapshot.Key key) {
+        if (key == null || key.hash.length != 32) return null;
         File[] files = snapshotsFile.listFiles();
         if (files != null) {
             for (File snapshotFile : files) {
@@ -81,7 +83,9 @@ public class GlobalSavedDataSnapshots {
                     snapshotFile.getName().endsWith(SNAPSHOT_FILE_EXTENSION)) {
                     try (FileInputStream fileInputStream = new FileInputStream(snapshotFile)) {
                         Snapshot snapshot = Snapshot.readFromNBT(NbtSquisher.expand(fileInputStream));
-                        if (Objects.equals(snapshot.key, key)) {
+                        byte[] stored = snapshot.key.hash.clone();
+                        snapshot.computeKey();
+                        if (java.util.Arrays.equals(stored, snapshot.key.hash) && java.util.Arrays.equals(snapshot.key.hash, key.hash)) {
                             return Pair.of(snapshot, snapshotFile);
                         }
                     } catch (IOException | RuntimeException e) {
@@ -94,15 +98,17 @@ public class GlobalSavedDataSnapshots {
     }
 
     private List<Snapshot.Key> readList() {
-        ImmutableList.Builder<Snapshot.Key> listBuilder = ImmutableList.builder();
+        Map<String,Snapshot.Key> found = new java.util.TreeMap<>();
         File[] files = snapshotsFile.listFiles();
         if (files != null) {
             for (File snapshotFile : files) {
                 if (snapshotFile.getName().endsWith(SNAPSHOT_FILE_EXTENSION)) {
                     try (FileInputStream fileInputStream = new FileInputStream(snapshotFile)) {
                         Snapshot snapshot = Snapshot.readFromNBT(NbtSquisher.expand(fileInputStream));
-                        if (snapshotFile.getName().startsWith(snapshot.key.toString())) {
-                            listBuilder.add(snapshot.key);
+                        byte[] stored = snapshot.key.hash.clone();
+                        snapshot.computeKey();
+                        if (java.util.Arrays.equals(stored,snapshot.key.hash) && snapshotFile.getName().startsWith(snapshot.key.toString())) {
+                            found.put(snapshot.key.toString(),snapshot.key);
                         }
                     } catch (IOException | RuntimeException io) {
                         new IOException("Failed to read the snapshot " + snapshotFile, io).printStackTrace();
@@ -110,10 +116,11 @@ public class GlobalSavedDataSnapshots {
                 }
             }
         }
-        return listBuilder.build();
+        return List.copyOf(found.values());
     }
 
     public boolean addSnapshot(Snapshot snapshot) {
+        if (snapshot == null || snapshot.key.hash.length != 32) return false;
         File snapshotFile = new File(
             snapshotsFile,
             snapshot.key.toString() + SNAPSHOT_FILE_EXTENSION
@@ -122,9 +129,10 @@ public class GlobalSavedDataSnapshots {
         try {
             java.nio.file.Files.createDirectories(snapshotsFile.toPath());
             // Existing entries must be readable; a truncated file must not consume another blank blueprint.
-            if (snapshotFile.exists()) {
-                if (readSnapshot(snapshot.key) == null) return false;
-            } else {
+            var existing = snapshotFile.exists() ? readSnapshot(snapshot.key) : null;
+            if (snapshotFile.exists() && existing == null) return false;
+            // Local collection metadata may change without changing the content hash.
+            if (existing == null || side == NetSide.CLIENT && !Objects.equals(existing.getLeft().key.header,snapshot.key.header)) {
                 temporary = java.nio.file.Files.createTempFile(snapshotsFile.toPath(), "snapshot-", ".tmp");
                 try (FileOutputStream stream = new FileOutputStream(temporary.toFile())) {
                     // The compressor closes its output; retain the descriptor until the final fsync.
@@ -133,8 +141,8 @@ public class GlobalSavedDataSnapshots {
                     });
                     stream.getFD().sync();
                 }
-                try { java.nio.file.Files.move(temporary, snapshotFile.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE); }
-                catch (java.nio.file.AtomicMoveNotSupportedException unsupported) { java.nio.file.Files.move(temporary, snapshotFile.toPath()); }
+                try { java.nio.file.Files.move(temporary, snapshotFile.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE,java.nio.file.StandardCopyOption.REPLACE_EXISTING); }
+                catch (java.nio.file.AtomicMoveNotSupportedException unsupported) { java.nio.file.Files.move(temporary, snapshotFile.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING); }
             }
         } catch (IOException | RuntimeException error) {
             new IOException("Failed to write the snapshot file: " + snapshotFile, error).printStackTrace();
@@ -142,26 +150,31 @@ public class GlobalSavedDataSnapshots {
         } finally {
             if (temporary != null) try { java.nio.file.Files.deleteIfExists(temporary); } catch (IOException ignored) { }
         }
-        snapshotsCache.invalidate(snapshot.key);
+        snapshotsCache.invalidate(bare(snapshot.key));
         listCache.clear();
         return true;
     }
 
-    public void removeSnapshot(Snapshot.Key key) {
-        Optional.ofNullable(readSnapshot(key)).map(Pair::getRight).ifPresent(snapshotFile -> {
-            if (!snapshotFile.delete()) {
-                new IOException("Failed to read the snapshot file: " + snapshotFile).printStackTrace();
-            }
-            snapshotsCache.invalidate(key);
-        });
+    public boolean removeSnapshot(Snapshot.Key key) {
+        if(key==null || key.hash.length!=32)return false;
+        boolean success=true;
+        File[] files=snapshotsFile.listFiles();
+        if(files==null)return !snapshotsFile.exists();
+        for(File file:files)if(file.isFile() && file.getName().startsWith(key.toString()) && file.getName().endsWith(SNAPSHOT_FILE_EXTENSION)){
+            if(!file.delete()){new IOException("Failed to delete snapshot file: "+file).printStackTrace();success=false;}
+        }
+        snapshotsCache.invalidate(bare(key));
         listCache.clear();
+        return success;
     }
 
     @Nullable
     public Snapshot getSnapshot(@Nullable Snapshot.Key key) {
-        if (key == null) return null;
-        return snapshotsCache.getUnchecked(key).orElse(null);
+        if (key == null || key.hash.length != 32) return null;
+        return snapshotsCache.getUnchecked(bare(key)).orElse(null);
     }
+
+    private static Snapshot.Key bare(Snapshot.Key key){return new Snapshot.Key(new Snapshot.Key(),key.hash.clone());}
 
     public List<Snapshot.Key> getList() {
         return listCache.get();

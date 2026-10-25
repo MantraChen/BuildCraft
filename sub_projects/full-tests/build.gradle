@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        libraryClientSmoke {
+            client()
+            runDir '../../verification/library-client-run'
+            vmArg '-Dbuildcraft.libraryClientSmoke=true'
+        }
         replacerClientSmoke {
             client()
             runDir '../../verification/replacer-client-run'
