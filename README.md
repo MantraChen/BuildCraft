@@ -11,8 +11,8 @@ authors and dates. `archive/pr-4754` preserves the exact imported revision
 
 **Status: incomplete experimental port.** The complete production source compiles and
 the packaged mod starts native Fabric test servers and real Minecraft clients.
-Transport, machines, construction and their screens have verified workflows;
-zone planning, paintbrushes, riding groups and broader mod compatibility remain unfinished.
+Transport, machines, construction, zone planning and paintbrushes have verified
+workflows. Riding groups and broader mod compatibility remain unfinished.
 See [the migration assessment](docs/MIGRATION_STATUS.md)
 and [the history/contributions record](docs/HISTORY.md).
 
@@ -30,6 +30,22 @@ record, and a full inventory drops that record safely. Sneak-use clears it.
 Paper and redstone craft four blanks. Records preserve their dimension and label
 across world restarts. Use `./scripts/full-smoke.ps1 -Client -MapLocations` for the
 native capture, tooltip, save/reload and clearing checks.
+
+The zone planner edits sixteen colored terrain layers. Pick up a colored brush
+from a slot to paint with the left mouse button or erase with the right; drag an
+empty cursor to pan and use the wheel to zoom. Each rectangle covers up to
+256 × 256 columns in loaded nearby terrain. The right-hand slots export a layer
+to a location map, and the lower-left slots import a recorded zone. Each transfer
+takes ten seconds and keeps the brush. Imported zones retain their world
+coordinates, even at another planner. The interface includes English/Chinese
+instructions and **Remake by FelixMantra**.
+
+Craft a clean brush with wool, two string, a wooden gear and a stick, then dye it
+in the crafting grid. Each dyed brush paints 64 blocks before becoming clean.
+Brushes recolor pipes and supported vanilla blocks; a clean brush removes pipe
+color. Planning does not consume paint. Run
+`./scripts/full-smoke.ps1 -Client -ZonePlanner` for the packaged-mod tests,
+all brush models and the connected editor/import/export/restart workflow.
 
 ## Development
 

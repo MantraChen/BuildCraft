@@ -1,3 +1,101 @@
 {
-  "parent": "buildcraftcore:item/paintbrush/clean"
+  "parent": "buildcraftcore:item/paintbrush/clean",
+  "overrides": [
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.05
+      },
+      "model": "buildcraftcore:item/paintbrush/white"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.1
+      },
+      "model": "buildcraftcore:item/paintbrush/orange"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.15
+      },
+      "model": "buildcraftcore:item/paintbrush/magenta"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.2
+      },
+      "model": "buildcraftcore:item/paintbrush/light_blue"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.25
+      },
+      "model": "buildcraftcore:item/paintbrush/yellow"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.3
+      },
+      "model": "buildcraftcore:item/paintbrush/lime"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.35
+      },
+      "model": "buildcraftcore:item/paintbrush/pink"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.4
+      },
+      "model": "buildcraftcore:item/paintbrush/gray"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.45
+      },
+      "model": "buildcraftcore:item/paintbrush/silver"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.5
+      },
+      "model": "buildcraftcore:item/paintbrush/cyan"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.55
+      },
+      "model": "buildcraftcore:item/paintbrush/purple"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.6
+      },
+      "model": "buildcraftcore:item/paintbrush/blue"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.65
+      },
+      "model": "buildcraftcore:item/paintbrush/brown"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.7
+      },
+      "model": "buildcraftcore:item/paintbrush/green"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.75
+      },
+      "model": "buildcraftcore:item/paintbrush/red"
+    },
+    {
+      "predicate": {
+        "buildcraftcore:variant": 0.8
+      },
+      "model": "buildcraftcore:item/paintbrush/black"
+    }
+  ]
 }

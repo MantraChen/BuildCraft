@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "wdw",
+    "wcw",
+    "wpw"
+  ],
+  "key": {
+    "w": {
+      "tag": "minecraft:planks"
+    },
+    "d": {
+      "item": "buildcrafttransport:pipe_diamond_item"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    },
+    "p": {
+      "item": "minecraft:piston"
+    }
+  },
+  "result": {
+    "item": "buildcraftrobotics:zone_planner"
+  }
+}

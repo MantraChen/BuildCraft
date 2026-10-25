@@ -20,7 +20,8 @@ public class BCRoboticsBlocks {
     public static BlockZonePlanner zonePlanner;
 
     public static void preInit() {
-        zonePlanner = HELPER.addBlockAndItem("block.zone_planner", () -> new BlockZonePlanner(MaterialBC.IRON, "block.zone_planner"));
+        zonePlanner = HELPER.addBlockAndItem("block.zone_planner", () -> new BlockZonePlanner(AbstractBlock.Settings.create().mapColor(net.minecraft.block.MapColor.IRON_GRAY)
+            .strength(5f,10f).sounds(net.minecraft.sound.BlockSoundGroup.METAL).requiresTool(), "block.zone_planner"));
 
         HELPER.registerTile(TileZonePlanner.class, "tile.zone_planner", TileZonePlanner::new, zonePlanner);
     }

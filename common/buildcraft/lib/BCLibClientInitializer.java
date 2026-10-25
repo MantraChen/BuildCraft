@@ -128,6 +128,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
         buildcraft.energy.client.gui.BCEnergyClientScreens.register();
         buildcraft.factory.client.BCFactoryClient.register();
         buildcraft.builders.client.BCBuildersClient.register();
+        buildcraft.robotics.BCRoboticsClient.register();
         buildcraft.lib.client.model.ModelHolderRegistry.registerReloadListener();
         // STUB(R.Chen): EventBuildCraftReload.FinishLoad → wire via custom ResourceReloader.
 

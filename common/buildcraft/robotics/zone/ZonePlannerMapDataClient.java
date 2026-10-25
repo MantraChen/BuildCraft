@@ -17,13 +17,18 @@ public class ZonePlannerMapDataClient extends ZonePlannerMapData {
     public static final ZonePlannerMapDataClient INSTANCE = new ZonePlannerMapDataClient();
 
     private final Map<ZonePlannerMapChunkKey, Long> pending = new HashMap<>();
+    public long generation;
+    private long requestTick=Long.MIN_VALUE; private int requests;
 
     @Override
     public ZonePlannerMapChunk loadChunk(World world, ZonePlannerMapChunkKey key) {
-        if (world == null || !world.getRegistryKey().getValue().equals(key.dimension)) return null;
+        if (world == null || !world.getRegistryKey().getValue().equals(key.dimension)
+            || !world.isChunkLoaded(key.chunkPos.x,key.chunkPos.z)) return null;
         long now = System.nanoTime();
-        pending.entrySet().removeIf(entry -> now - entry.getValue() > 10_000_000_000L);
-        if (pending.size() < 64 && !pending.containsKey(key)) {
+        if(requestTick!=world.getTime()){requestTick=world.getTime();requests=0;}
+        pending.entrySet().removeIf(entry -> now - entry.getValue() > 1_000_000_000L);
+        if (requests<2 && pending.size() < 16 && !pending.containsKey(key)) {
+            requests++;
             pending.put(key, now);
             MessageManager.sendToServer(new MessageZoneMapRequest(key));
         }
@@ -32,8 +37,8 @@ public class ZonePlannerMapDataClient extends ZonePlannerMapData {
 
 
     public void onChunkReceived(ZonePlannerMapChunkKey key, ZonePlannerMapChunk zonePlannerMapChunk) {
-        if (pending.remove(key) != null) data.put(key, zonePlannerMapChunk);
+        if (pending.remove(key) != null) {data.put(key, zonePlannerMapChunk);generation++;}
     }
 
-    @Override public void clear() { super.clear(); pending.clear(); }
+    @Override public void clear() { super.clear(); pending.clear();generation++;requestTick=Long.MIN_VALUE;requests=0; }
 }

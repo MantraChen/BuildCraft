@@ -48,6 +48,8 @@ public final class BCCoreModels {
         var variant = new net.minecraft.util.Identifier("buildcraftcore", "variant");
         if (BCCoreItems.mapLocation != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
             BCCoreItems.mapLocation, variant, (stack, world, entity, seed) -> buildcraft.api.items.IMapLocation.MapLocationType.getFromStack(stack).ordinal() / 10.0f);
+        if (BCCoreItems.paintbrush != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(BCCoreItems.paintbrush,variant,
+            (stack,world,entity,seed)->{var c=buildcraft.core.item.ItemPaintbrush_BC8.getColour(stack);return c==null?0:(c.getId()+1)/20f;});
         if (BCCoreItems.list != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(
             BCCoreItems.list, variant, (stack, world, entity, seed) -> buildcraft.lib.list.ListHandler.hasItems(stack) ? 1 : 0);
         if (BCCoreBlocks.decorated != null) net.minecraft.client.item.ModelPredicateProviderRegistry.register(

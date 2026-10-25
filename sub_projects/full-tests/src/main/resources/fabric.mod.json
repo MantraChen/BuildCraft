@@ -47,9 +47,11 @@
       "buildcraft.test.full.QuarryGameTests",
       "buildcraft.test.full.MiningWellGameTests",
       "buildcraft.test.full.PumpGameTests",
-      "buildcraft.test.full.AutoCraftGameTests"
+      "buildcraft.test.full.AutoCraftGameTests",
+      "buildcraft.test.full.ZonePlannerGameTests"
     ],
     "client": [
+      "buildcraft.test.full.ZonePlannerClientSmoke",
       "buildcraft.test.full.MapLocationClientSmoke",
       "buildcraft.test.full.GuideResourceClientSmoke",
       "buildcraft.test.full.PlannerClientSmoke",

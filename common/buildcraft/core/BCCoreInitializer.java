@@ -46,6 +46,8 @@ public class BCCoreInitializer implements ModInitializer {
         BCCoreTags.register();
         BCCoreBlocks.preInit();
         BCCoreItems.preInit();
+        buildcraft.core.item.ItemPaintbrush_BC8.registerPainting();
+        net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,new net.minecraft.util.Identifier("buildcraftcore","paintbrush_dye"),buildcraft.core.recipe.PaintbrushDyeRecipe.SERIALIZER);
         buildcraft.lib.BCLibItems.enableGuide();
         buildcraft.lib.BCLibItems.enableDebugger();
         buildcraft.lib.BCLibItems.fmlPreInit();

@@ -19,5 +19,9 @@
   "item.buildcraftcore.map_location.points": "%s path points",
   "item.buildcraftcore.map_location.capture": "Use on a block or connected marker to record one map.",
   "item.buildcraftcore.map_location.clear": "Sneak-use to clear the recorded location.",
-  "item.buildcraftcore.map_location": "Location Map"
+  "item.buildcraftcore.map_location": "Location Map",
+  "item.buildcraftcore.paintbrush": "Clean Paintbrush",
+  "item.buildcraftcore.paintbrush.coloured": "%s Paintbrush",
+  "item.buildcraftcore.paintbrush.uses": "%s / %s paint uses",
+  "item.buildcraftcore.paintbrush.help": "Paint blocks or pipes; hold on the cursor to edit a zone layer."
 }

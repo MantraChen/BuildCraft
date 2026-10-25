@@ -11,10 +11,10 @@ public enum RoboticsGuis {
     ZONE_PLANTER;
 
     public void openGUI(PlayerEntity player) {
-        // STUB(R.Chen): Forge player.openGui → Fabric ScreenHandler, deferred — Phase 10
+        openGUI(player,player.getBlockPos());
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
-        // STUB(R.Chen): Forge player.openGui → Fabric ScreenHandler, deferred — Phase 10
+        BCRoboticsScreens.open(player,pos);
     }
 }

@@ -1,0 +1,10 @@
+{
+  "block.buildcraftrobotics.zone_planner": "Zone Planner",
+  "tile.zonePlannerBlock.tip": "Edit colored regions and transfer them with location maps. Each drag selects up to 256 by 256 loaded columns.",
+  "gui.buildcraftrobotics.zone.loading": "Waiting for map data",
+  "gui.buildcraftrobotics.zone.pan": "Drag to pan; scroll to zoom",
+  "gui.buildcraftrobotics.zone.paint": "%s: left paint; right erase",
+  "gui.buildcraftrobotics.zone.status.0": "Zone maps",
+  "gui.buildcraftrobotics.zone.status.1": "Invalid input map",
+  "gui.buildcraftrobotics.zone.status.2": "Invalid output layer"
+}

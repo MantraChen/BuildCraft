@@ -1,0 +1,10 @@
+{
+  "block.buildcraftrobotics.zone_planner": "区域规划台",
+  "tile.zonePlannerBlock.tip": "编辑彩色选区，并通过位置地图导入或导出。每次拖选最多覆盖已加载的256×256列。",
+  "gui.buildcraftrobotics.zone.loading": "正在读取地形",
+  "gui.buildcraftrobotics.zone.pan": "拖动平移；滚轮缩放",
+  "gui.buildcraftrobotics.zone.paint": "%s：左键绘制，右键擦除",
+  "gui.buildcraftrobotics.zone.status.0": "选区地图",
+  "gui.buildcraftrobotics.zone.status.1": "输入地图无效",
+  "gui.buildcraftrobotics.zone.status.2": "输出图层无效"
+}

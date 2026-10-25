@@ -1818,3 +1818,71 @@ Remake by FelixMantra.
   input. It reports `failures=0` and exits cleanly in a 44-second Gradle invocation.
   All four final screenshots in `verification/map-location-client-run/screenshots`
   were reviewed, including the translated item name and restored named record.
+
+### Native zone planner and paintbrush workflows
+
+- Robotics now registers its zone planner block, block entity, native screen and
+  client renderer. The screen retains the original 256 × 228 artwork, sixteen
+  brush-storage slots and six import/export slots. A native height-field terrain
+  renderer replaces the abandoned GL11 display-list implementation. The block
+  front displays the original 10 × 8 map. Sampling starts at the native heightmap
+  instead of repeatedly scanning empty sky, and never loads missing chunks.
+- Each brush color selects one of sixteen independent XZ layers. Native cursor
+  pickup, left-button rectangle painting, right-button erasing, empty-cursor
+  panning and wheel zoom use the same terrain projection. Picking uses the mouse
+  event coordinates rather than a stale render frame. Terrain requests are paced
+  below the server limit and retried after one second so client/server tick jitter
+  does not leave long-lived holes. Wall vertices interpolate their depth below the
+  terrain surface, avoiding the old coplanar stripes. Instructions and status
+  messages are translated in English and Chinese; the screen and brush tooltip
+  display `Remake by FelixMantra`.
+- The server receives bounded rectangles, not a client replacement of the whole
+  layer. It checks the active screen, owner/access, distance, loaded chunks,
+  dimension, world border, cursor color, transaction state and request rate. Edits
+  are at most 256 × 256 columns. Independent viewers apply to the current server
+  layer without overwriting each other's unrelated edits. Initial synchronization
+  sends one bounded layer per tick in round-robin order, so a continuously edited
+  early color cannot starve later layers. It supports the existing 4,096-chunk limit
+  without putting all sixteen layers into one native custom payload.
+- Import/export each takes 200 server ticks. Export converts the selected relative
+  layer to absolute world coordinates on one location map; import replaces the
+  selected layer with that absolute zone relative to the receiving planner and
+  returns a blank map. Brushes are retained without paint cost. Blocked outputs,
+  wrong dimensions and invalid zones retain their inputs. Slot changes reset the
+  affected progress; partial progress, all layers and inventory persist in native
+  block-entity NBT. Unreadable saved layers are preserved verbatim and cannot be
+  silently exported as empty regions.
+- Paintbrushes retain the original sixteen metadata variants and 64-use paint
+  reservoir, including original sprites. Native interactions run after Fabric
+  protection callbacks, recolor pipes without replacing their contents, and
+  support wool, carpet, terracotta, glass/panes, concrete and concrete powder.
+  Matching colors cost no paint. Clean brushes remove pipe color; depleted brushes
+  become clean while keeping custom names and unrelated NBT. Native dye crafting
+  preserves brush data and supplies 64 uses from one dye and one clean brush.
+- Survival resources include the original clean-brush recipe, dye recipe, planner
+  loot and pickaxe tag. Planner hardness/resistance and metal sounds match the old
+  common block defaults. The planner recipe completes the old commented plan:
+  six planks, one diamond item pipe, one chest and one piston. It is newly enabled
+  survival content, not claimed as an unchanged working 1.12.2 recipe.
+- Seventeen additional GameTests cover paint charge exhaustion, all dye recipes,
+  protection/transaction rejection, pipe cargo preservation, exact transfer timing,
+  progress/layer reload, invalid-data preservation, native slot limits, rectangle
+  bounds, stale access, independent viewers, map request limits, maximum-size
+  layer serialization, survival recipes and inventory-safe block breaking.
+  GameTest runs now use separate generated worlds under
+  `verification/full-gametest-run/test-worlds`: the empty template does not clear
+  every distant fixture block left by an earlier suite, so reusing one world made
+  unrelated placement tests depend on previous runs.
+- Final validation in `verification/zone-final-client-10.log` passes **540 required
+  GameTests**, checks **853 block-entity states**, and bakes **932 block states,
+  140 items and 249 item variants** with no failures. The connected native client
+  confirms all sixteen initial layers arrive while the first layer changes every
+  server tick, then performs brush pickup, painting, erasing, panning and zooming,
+  exact import/export map payments at two planners, resource/Chinese-language
+  reload and a complete saved-world restart. It reports `failures=0` and exits
+  cleanly in an 86-second Gradle invocation. Native front-map, terrain/editor,
+  transfer and restarted Chinese-screen screenshots were reviewed in
+  `verification/zone-planner-client-run/screenshots`.
+- This restores the existing planner/brush workflow rather than introducing robot
+  entities absent from the original 1.12.2 module. Riding groups and broader
+  compatibility remain open; this is still an experimental port.

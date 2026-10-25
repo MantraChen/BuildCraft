@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        zonePlannerClientSmoke {
+            client()
+            runDir '../../verification/zone-planner-client-run'
+            vmArg '-Dbuildcraft.zonePlannerClientSmoke=true'
+        }
         mapLocationClientSmoke {
             client()
             runDir '../../verification/map-location-client-run'
@@ -165,6 +170,8 @@ loom {
         gameTest {
             server()
             runDir '../../verification/full-gametest-run'
+            // Each suite needs untouched terrain: tests may place blocks beyond the empty template.
+            programArgs '--universe', 'test-worlds', '--world', "run-${System.currentTimeMillis()}"
             vmArg '-Dfabric-api.gametest'
             vmArg '-Dfabric-api.gametest.report-file=../full-gametest-results.xml'
         }

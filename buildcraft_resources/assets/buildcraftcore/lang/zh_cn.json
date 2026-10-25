@@ -20,5 +20,9 @@
   "item.buildcraftcore.map_location.points": "%s 个路径点",
   "item.buildcraftcore.map_location.capture": "对方块或已连接的标记使用，记录一张地图。",
   "item.buildcraftcore.map_location.clear": "潜行使用可清除记录。",
-  "item.buildcraftcore.map_location": "位置地图"
+  "item.buildcraftcore.map_location": "位置地图",
+  "item.buildcraftcore.paintbrush": "空白画笔",
+  "item.buildcraftcore.paintbrush.coloured": "%s画笔",
+  "item.buildcraftcore.paintbrush.uses": "剩余颜料：%s / %s",
+  "item.buildcraftcore.paintbrush.help": "为方块或管道上色；将画笔拿在光标上可编辑选区图层。"
 }

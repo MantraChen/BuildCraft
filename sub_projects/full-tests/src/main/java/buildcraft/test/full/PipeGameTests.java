@@ -45,7 +45,7 @@ public final class PipeGameTests implements FabricGameTest {
             var stack = ItemPipeHolder.withColour(new ItemStack(item, 2), DyeColor.BLUE);
             player.setStackInHand(Hand.MAIN_HAND, stack);
             var hit = new BlockHitResult(Vec3d.ofCenter(pos.down()).add(0,0.5,0), Direction.UP, pos.down(), false);
-            context.assertTrue(item.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit)).isAccepted(), "Native placement failed for " + def.identifier);
+            context.assertTrue(item.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit)).isAccepted(), "Native placement failed for " + def.identifier + " state=" + context.getWorld().getBlockState(pos) + " entities=" + context.getWorld().getOtherEntities(player,new net.minecraft.util.math.Box(pos)));
             var tile = (TilePipeHolder) context.getWorld().getBlockEntity(pos);
             context.assertTrue(tile != null && tile.getPipe() != null && tile.getPipe().definition == def, "Placement lost pipe definition");
             context.assertTrue(stack.getCount() == 1, "Survival placement consumed the wrong item count");

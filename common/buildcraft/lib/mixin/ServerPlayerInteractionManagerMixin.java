@@ -20,6 +20,7 @@ public abstract class ServerPlayerInteractionManagerMixin {
             CallbackInfoReturnable<net.minecraft.util.ActionResult> result) {
         var action=buildcraft.builders.item.ItemSchematicSingle.useFirst(user,level,hand,hit);
         if(action==net.minecraft.util.ActionResult.PASS)action=buildcraft.core.item.ItemMapLocation.useFirst(user,level,hand,hit);
+        if(action==net.minecraft.util.ActionResult.PASS)action=buildcraft.core.item.ItemPaintbrush_BC8.useFirst(user,level,hand,hit);
         if(action!=net.minecraft.util.ActionResult.PASS)result.setReturnValue(action);
     }
 

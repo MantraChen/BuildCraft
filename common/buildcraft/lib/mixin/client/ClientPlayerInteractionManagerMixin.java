@@ -19,6 +19,7 @@ public abstract class ClientPlayerInteractionManagerMixin {
             CallbackInfoReturnable<net.minecraft.util.ActionResult> result) {
         var action=buildcraft.builders.item.ItemSchematicSingle.useFirst(user,client.world,hand,hit);
         if(action==net.minecraft.util.ActionResult.PASS)action=buildcraft.core.item.ItemMapLocation.useFirst(user,client.world,hand,hit);
+        if(action==net.minecraft.util.ActionResult.PASS)action=buildcraft.core.item.ItemPaintbrush_BC8.useFirst(user,client.world,hand,hit);
         if(action!=net.minecraft.util.ActionResult.PASS)result.setReturnValue(action);
     }
 

@@ -35,6 +35,7 @@ public class ItemMapLocation extends ItemBC_Neptune implements IMapLocation {
         stack.removeSubNbt("Damage");
         if (name) stack.removeSubNbt("name");
     }
+    public static ItemStack clearedCopy(ItemStack stack) { var result=stack.copyWithCount(1); clearData(result,true); return result; }
     @Override public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         var stack = player.getStackInHand(hand);
         if (!player.isSneaking() || player.isSpectator() || Transaction.getCurrentUnsafe() != null) return TypedActionResult.pass(stack);

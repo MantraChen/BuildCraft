@@ -191,8 +191,13 @@ public final class FullClientSmoke implements ClientModInitializer {
     }
 
     private static int checkItemVariants(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
-        int count = 0;
+        int count = 1;
+        checkItemTexture(client,new ItemStack(buildcraft.core.BCCoreItems.paintbrush),"buildcraftcore:items/paintbrush/clean",failures);
         for (var colour : net.minecraft.util.DyeColor.values()) {
+            var brush=buildcraft.core.item.ItemPaintbrush_BC8.coloured(new ItemStack(buildcraft.core.BCCoreItems.paintbrush),colour);
+            checkItemTexture(client,brush,"buildcraftcore:items/paintbrush/"+(colour==net.minecraft.util.DyeColor.LIGHT_GRAY?"silver":colour==net.minecraft.util.DyeColor.LIGHT_BLUE?"lightblue":colour.getName()),failures);
+            if(brush.getName().getString().contains("item.")||brush.getName().getString().contains("color."))failures.add("Untranslated brush: "+colour);
+            count++;
             var stack = buildcraft.transport.BCTransportItems.wire.stack(colour);
             String name = colour == net.minecraft.util.DyeColor.LIGHT_GRAY ? "silver" : colour.getName();
             checkItemTexture(client, stack, "buildcrafttransport:items/wire/" + name, failures);

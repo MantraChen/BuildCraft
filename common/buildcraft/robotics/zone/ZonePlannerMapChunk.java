@@ -23,8 +23,9 @@ public class ZonePlannerMapChunk {
         WorldChunk chunk = world.getChunk(key.chunkPos.x, key.chunkPos.z);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                // Scan down from the max height value of a chunk until we find a block
-                for (int y = Math.min(world.getTopY() - 1, key.level * ZonePlannerMapChunkKey.LEVEL_HEIGHT);
+                // The native heightmap skips empty sky; still scan through map-transparent blocks.
+                int surface = chunk.sampleHeightmap(net.minecraft.world.Heightmap.Type.WORLD_SURFACE, x, z);
+                for (int y = Math.min(surface, Math.min(world.getTopY() - 1, key.level * ZonePlannerMapChunkKey.LEVEL_HEIGHT));
                     y >= world.getBottomY(); y--) {
                     BlockPos pos = new BlockPos(key.chunkPos.getStartX() + x, y, key.chunkPos.getStartZ() + z);
                     var mapColor = chunk.getBlockState(pos).getMapColor(world, pos);
