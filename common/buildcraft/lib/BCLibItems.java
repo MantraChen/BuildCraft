@@ -37,7 +37,7 @@ public class BCLibItems {
 
     public static void fmlPreInit() {
         if (isGuideEnabled()) {
-            guide = HELPER.addForcedItem(new ItemGuide("item.guide"));
+        guide = HELPER.addForcedItem(new ItemGuide(new net.minecraft.item.Item.Settings().maxCount(1), "item.guide"));
             guideNote = HELPER.addForcedItem(new ItemGuideNote("item.guide.note"));
         }
         if (isDebuggerEnabled()) {

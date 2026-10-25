@@ -17,6 +17,7 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.client.util.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Hand;
@@ -41,15 +42,14 @@ import buildcraft.core.BCCoreGuis;
 public class ItemList_BC8 extends ItemBC_Neptune implements IList {
     private static final Identifier ADVANCEMENT = new Identifier("buildcraftcore:list");
     public ItemList_BC8(String id) {
-        super(id);
-        setMaxStackSize(1);
+        super(new Settings().maxCount(1), id);
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public TypedActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+    @Override
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         AdvancementUtil.unlockAdvancement(player, ADVANCEMENT);
         BCCoreGuis.LIST.openGUI(player);
-        return new ActionResult<>(ActionResult.SUCCESS, player.getStackInHand(hand));
+        return TypedActionResult.success(player.getStackInHand(hand), world.isClient);
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1
@@ -64,18 +64,18 @@ public class ItemList_BC8 extends ItemBC_Neptune implements IList {
         return ListHandler.hasItems(StackUtil.asNonNull(stack)) ? 1 : 0;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
+    @Override
     @Environment(EnvType.CLIENT)
-    public void addInformation(ItemStack stack, World world, List<String> tooltip, TooltipContext flag) {
-        String name = getName(StackUtil.asNonNull(stack));
+    public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext flag) {
+        String name = getLabel(StackUtil.asNonNull(stack));
         if (StringUtils.isNullOrEmpty(name)) return;
-        tooltip.add(Formatting.ITALIC + name);
+        tooltip.add(Text.literal(name).formatted(Formatting.ITALIC));
     }
 
     // IList
 
     @Override
-    public String getName(@Nonnull ItemStack stack) {
+    public String getLabel(@Nonnull ItemStack stack) {
         return NBTUtilBC.getItemData(stack).getString("label");
     }
 

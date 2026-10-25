@@ -44,12 +44,12 @@ public class BCCoreItems {
         gearIron = HELPER.addItem(new ItemBC_Neptune("item.gear.iron"));
         gearGold = HELPER.addItem(new ItemBC_Neptune("item.gear.gold"));
         gearDiamond = HELPER.addItem(new ItemBC_Neptune("item.gear.diamond"));
-        paintbrush = HELPER.addItem(new ItemPaintbrush_BC8("item.paintbrush"));
+        paintbrush = HELPER.addItem(new ItemPaintbrush_BC8(new net.minecraft.item.Item.Settings().maxCount(1), "item.paintbrush"));
         list = HELPER.addItem(new ItemList_BC8("item.list"));
         mapLocation = HELPER.addItem(new ItemMapLocation("item.map_location"));
         markerConnector = HELPER.addItem(new ItemMarkerConnector("item.marker_connector"));
         volumeBox = HELPER.addItem(new ItemVolumeBox("item.volume_box"));
-        fragileFluidShard = HELPER.addItem(new ItemFragileFluidContainer("item.fragile_fluid_shard"));
+        fragileFluidShard = HELPER.addItem(new ItemFragileFluidContainer(new net.minecraft.item.Item.Settings(), "item.fragile_fluid_shard"));
         if (BCLib.DEV) {
             goggles = HELPER.addItem(new ItemGoggles("item.goggles"));
         }

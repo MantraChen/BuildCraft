@@ -215,7 +215,7 @@ public class ItemMapLocation extends ItemBC_Neptune implements IMapLocation {
         } else {
             MapLocationType.SPOT.setToStack(modified);
 
-            cpt.putByte("side", (byte) side.getIndex());
+        cpt.putByte("side", (byte) side.getId());
             cpt.putInt("x", pos.getX());
             cpt.putInt("y", pos.getY());
             cpt.putInt("z", pos.getZ());
@@ -363,7 +363,7 @@ public class ItemMapLocation extends ItemBC_Neptune implements IMapLocation {
     }
 
     @Override
-    public String getName(@Nonnull ItemStack item) {
+    public String getLabel(@Nonnull ItemStack item) {
         return NBTUtilBC.getItemData(item).getString("name");
     }
 

@@ -136,6 +136,9 @@ public class ItemSnapshot extends ItemBC_Neptune {
             return name().toLowerCase(Locale.ROOT);
         }
 
+        @Override
+        public String asString() { return getName(); }
+
         public static EnumItemSnapshotType get(EnumSnapshotType snapshotType, boolean used) {
             if (snapshotType == EnumSnapshotType.TEMPLATE) {
                 return !used ? TEMPLATE_CLEAN : TEMPLATE_USED;
@@ -151,6 +154,4 @@ public class ItemSnapshot extends ItemBC_Neptune {
         }
     }
 
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public String asString() { return getName(); }
 }

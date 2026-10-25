@@ -20,7 +20,7 @@ public class BCBuildersItems {
 
     public static void fmlPreInit() {
         snapshot = HELPER.addItem(new ItemSnapshot("item.snapshot"));
-        schematicSingle = HELPER.addItem(new ItemSchematicSingle("item.schematic.single"));
+        schematicSingle = HELPER.addItem(new ItemSchematicSingle(new net.minecraft.item.Item.Settings(), "item.schematic.single"));
         addonFillerPlanner = HELPER.addItem(new ItemFillerPlanner("item.filler_planner"));
     }
 }

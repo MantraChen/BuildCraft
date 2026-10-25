@@ -58,9 +58,9 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 252 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 228 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **34 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **45 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
@@ -76,6 +76,15 @@ features explicitly as work proceeds.
   Cancelled transfers restore inventory contents and do not emit change callbacks.
 - Exact-NBT ingredients use Fabric's serializable ingredient API, with tests for
   strict matching, input mutation isolation and JSON round trips.
+- List filters now match items and registered type/material handlers, preserve their
+  options across NBT round trips, and retain user labels when cleared. Precise matching
+  includes damage and NBT; independent damage/NBT flags are covered by regression tests.
+- Item interactions use native 1.20.1 entrypoints and settings. The API's user label
+  getter is now `INamedItem.getLabel`, avoiding a collision with Minecraft's Text-valued
+  `Item.getName`. `IngredientStack.of` accepts native items, stacks, ingredients and
+  item IDs or `#namespace:tag` IDs, and rejects unknown items instead of silently using
+  an empty ingredient. API changes are kept on the `remake/1.20.1` branch of BuildCraftAPI;
+  the original PR's API commit remains intact.
 - Registry reloads have Fabric resource listeners and lifecycle callbacks. Scripts can
   read mod roots, native resource/data packs and config files. Temporary pack projections
   are cleaned up without closing Loader-owned file systems. Pack projection tests pass;

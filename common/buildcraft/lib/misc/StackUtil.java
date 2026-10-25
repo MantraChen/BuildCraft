@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import buildcraft.lib.compat.forge_stubs.OreDictionaryStub;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -100,7 +99,9 @@ public class StackUtil {
         if (filterOrList.isEmpty() || test.isEmpty()) {
             return false;
         }
-        // STUB(R.Chen): the IList (buildcraft.api.items.IList) branch is dropped until api.items is migrated.
+        if (filterOrList.getItem() instanceof buildcraft.api.items.IList list) {
+            return list.matches(filterOrList, test);
+        }
         return canMerge(filterOrList, test);
     }
 
@@ -217,14 +218,25 @@ public class StackUtil {
         return ItemStack.areEqual(a, b) || ItemStack.areItemsEqual(a, b);
     }
 
-    // STUB(R.Chen): Forge ore-dictionary / IList matching — simplified to exact item match until ported.
     public static boolean isMatchingItem(ItemStack filter, ItemStack test, boolean matchDamage, boolean matchNbt) {
         if (filter.isEmpty() || test.isEmpty()) return false;
         if (filter.getItem() != test.getItem()) return false;
-        if (matchNbt && !java.util.Objects.equals(filter.getNbt(), test.getNbt())) return false;
+        if (matchDamage && filter.getDamage() != test.getDamage()) return false;
+        if (matchNbt && !Objects.equals(matchingNbt(filter, matchDamage), matchingNbt(test, matchDamage))) return false;
         return true;
     }
+
+    private static net.minecraft.nbt.NbtCompound matchingNbt(ItemStack stack, boolean matchDamage) {
+        net.minecraft.nbt.NbtCompound tag = stack.getNbt();
+        if (tag == null || matchDamage) return tag;
+        tag = tag.copy();
+        tag.remove("Damage");
+        return tag.isEmpty() ? null : tag;
+    }
     public static boolean isMatchingItemOrList(ItemStack filter, ItemStack test) {
+        if (!filter.isEmpty() && filter.getItem() instanceof buildcraft.api.items.IList list) {
+            return !test.isEmpty() && list.matches(filter, test);
+        }
         return isMatchingItem(filter, test, false, false);
     }
     public static boolean canStacksOrListsMerge(ItemStack a, ItemStack b) { return canMerge(a, b); }
@@ -232,7 +244,9 @@ public class StackUtil {
     /** Replacement for the old {@code Item.getByNameOrId(String)}. */
     public static net.minecraft.item.Item getItemByNameOrId(String name) {
         if (name == null) return null;
-        return net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.tryParse(name.trim()));
+        net.minecraft.util.Identifier id = net.minecraft.util.Identifier.tryParse(name.trim());
+        return id != null && net.minecraft.registry.Registries.ITEM.containsId(id)
+            ? net.minecraft.registry.Registries.ITEM.get(id) : null;
     }
 
     /** STUB(R.Chen): Forge ore-dictionary crafting equivalence — simplified to exact item match. */

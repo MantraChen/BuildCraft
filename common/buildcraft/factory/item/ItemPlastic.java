@@ -28,10 +28,9 @@ public class ItemPlastic extends ItemBlockBCMulti {
     }
 
     private static String[] createNameArray() {
-        String[] arr = ColourUtil.getNameArray();
-        String[] switched = new String[16];
-        for (int i = 0; i < arr.length; i++) {
-            switched[15 - i] = arr[i].toLowerCase(Locale.ROOT);
+        String[] switched = new String[DyeColor.values().length];
+        for (DyeColor colour : DyeColor.values()) {
+            switched[colour.getId()] = colour.getName();
         }
         return switched;
     }

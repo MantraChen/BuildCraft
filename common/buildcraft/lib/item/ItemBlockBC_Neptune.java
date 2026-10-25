@@ -6,10 +6,10 @@ package buildcraft.lib.item;
 
 import java.util.List;
 
-import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.client.util.TooltipContext;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
 
@@ -20,7 +20,7 @@ public class ItemBlockBC_Neptune extends BlockItem implements IItemBuildCraft {
     public final String id;
 
     public ItemBlockBC_Neptune(BlockBCBase_Neptune block) {
-        super(block);
+        super(block, new Settings());
         this.id = "item." + block.id;
         init();
     }
@@ -30,14 +30,14 @@ public class ItemBlockBC_Neptune extends BlockItem implements IItemBuildCraft {
         return id;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void addInformation(ItemStack stack, World world, List<String> tooltip, TooltipContext flags) {
-        super.addInformation(stack, world, tooltip, flags);
-        String tipId = getUnlocalizedName(stack) + ".tip";
+    @Override
+    public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext flags) {
+        super.appendTooltip(stack, world, tooltip, flags);
+        String tipId = getTranslationKey(stack) + ".tip";
         if (LocaleUtil.canLocalize(tipId)) {
-            tooltip.add(Formatting.GRAY + LocaleUtil.localize(tipId));
+            tooltip.add(Text.translatable(tipId).formatted(Formatting.GRAY));
         } else if (flags.isAdvanced()) {
-            tooltip.add(Formatting.GRAY + tipId);
+            tooltip.add(Text.literal(tipId).formatted(Formatting.GRAY));
         }
     }
 

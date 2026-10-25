@@ -36,8 +36,8 @@ public class ItemBlockBCMulti extends ItemBlockBC_Neptune {
         return damage;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public String getUnlocalizedName(ItemStack stack) {
+    @Override
+    public String getTranslationKey(ItemStack stack) {
         return super.getTranslationKey() + "." + this.nameFunction.apply(stack);
     }
 }

@@ -55,8 +55,8 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
     }
 
     @SuppressWarnings("NullableProblems")
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public TypedActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+    @Override
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         if (!world.isClient) {
             for (MarkerCache<?> cache : MarkerCache.CACHES) {
                 if (interactCache(cache.getSubCache(world), player)) {
@@ -65,7 +65,7 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
                 }
             }
         }
-        return new ActionResult<>(onItemRightClickVolumeBoxes(world, player), player.getStackInHand(hand));
+        return new TypedActionResult<>(onItemRightClickVolumeBoxes(world, player), player.getStackInHand(hand));
     }
 
     private static <S extends MarkerSubCache<?>> boolean interactCache(S cache, PlayerEntity player) {

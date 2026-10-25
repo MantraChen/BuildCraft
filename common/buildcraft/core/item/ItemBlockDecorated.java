@@ -26,7 +26,7 @@ public class ItemBlockDecorated extends ItemBlockBCMulti {
     private static String[] createNameArray() {
         String[] names = new String[EnumDecoratedBlock.VALUES.length];
         for (int i = 0; i < names.length; i++) {
-            names[i] = EnumDecoratedBlock.VALUES[i].getName();
+            names[i] = EnumDecoratedBlock.VALUES[i].asString();
         }
         return names;
     }
@@ -35,7 +35,7 @@ public class ItemBlockDecorated extends ItemBlockBCMulti {
     @Environment(EnvType.CLIENT)
     public void addModelVariants(HashMap<Integer, ModelIdentifier> variants) {
         for (EnumDecoratedBlock type : EnumDecoratedBlock.VALUES) {
-            addVariant(variants, type.ordinal(), type.getName());
+            addVariant(variants, type.ordinal(), type.asString());
         }
     }
 }

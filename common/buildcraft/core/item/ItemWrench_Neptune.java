@@ -8,6 +8,8 @@ package buildcraft.core.item;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.Hand;
@@ -29,8 +31,7 @@ public class ItemWrench_Neptune extends ItemBC_Neptune implements IToolWrench {
     private static final Identifier ADVANCEMENT = new Identifier("buildcraftcore:wrenched");
 
     public ItemWrench_Neptune(String id) {
-        super(id);
-        setMaxStackSize(1);
+        super(new Settings().maxCount(1), id);
     }
 
     @Override
@@ -49,17 +50,19 @@ public class ItemWrench_Neptune extends ItemBC_Neptune implements IToolWrench {
         return false;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public ActionResult onItemUse(PlayerEntity player, World world, BlockPos pos, Hand hand, Direction side, float hitX, float hitY, float hitZ) {
-        // FIXME: Disabled world check as it doesn't allow us to swing the player's arm!
-        // if (world.isClient) {
-        // return ActionResult.PASS;
-        // }
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        PlayerEntity player = context.getPlayer();
+        if (player == null) return ActionResult.PASS;
+        World world = context.getWorld();
+        BlockPos pos = context.getBlockPos();
+        Hand hand = context.getHand();
+        Direction side = context.getSide();
+        if (!world.canPlayerModifyAt(player, pos)) return ActionResult.FAIL;
         BlockState state = world.getBlockState(pos);
-        state = state.getActualState_TODO(world, pos);
         ActionResult result = CustomRotationHelper.INSTANCE.attemptRotateBlock(world, pos, state, side);
-        if (result == ActionResult.SUCCESS) {
-            wrenchUsed(player, hand, player.getStackInHand(hand), new HitResult(new Vec3d(hitX, hitY, hitZ), side, pos));
+        if (result.isAccepted()) {
+            wrenchUsed(player, hand, context.getStack(), new BlockHitResult(context.getHitPos(), side, pos, false));
         }
         SoundUtil.playSlideSound(world, pos, state, result);
         return result;
