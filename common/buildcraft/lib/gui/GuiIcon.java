@@ -16,7 +16,6 @@ import buildcraft.api.core.render.ISprite;
 
 import buildcraft.lib.gui.pos.IGuiArea;
 
-// TODO(R.Chen): GuiIcon draw — blocked by SpriteRaw migration (raw-texture sprite draws).
 @Environment(EnvType.CLIENT)
 public class GuiIcon implements ISimpleDrawable {
     public final ISprite sprite;
@@ -28,15 +27,17 @@ public class GuiIcon implements ISimpleDrawable {
     public final Identifier texture;
 
     public GuiIcon(ISprite sprite, int textureSize) {
-        this.sprite = sprite;
+        this.sprite = java.util.Objects.requireNonNull(sprite, "sprite");
         this.textureSize = textureSize;
         this.texture = null;
-        this.u = this.v = this.width = this.height = 0;
+        this.u = this.v = 0;
+        this.width = (int) Math.round(Math.abs(sprite.getInterpU(1) - sprite.getInterpU(0)) * textureSize);
+        this.height = (int) Math.round(Math.abs(sprite.getInterpV(1) - sprite.getInterpV(0)) * textureSize);
     }
 
     /** Forge-compat constructor: (texture, u, v, width, height). Used before SpriteRaw migration. */
     public GuiIcon(Identifier texture, int u, int v, int width, int height) {
-        this.sprite = null;
+        this.sprite = new buildcraft.lib.client.sprite.SpriteRaw(texture, u, v, width, height, 256);
         this.textureSize = 256;
         this.texture = texture;
         this.u = u;
@@ -46,12 +47,14 @@ public class GuiIcon implements ISimpleDrawable {
     }
 
     public static void draw(ISprite sprite, double x1, double y1, double x2, double y2) {
-        // TODO(R.Chen): GL draw with Tessellator/BufferBuilder once SpriteRaw migrated.
+        if (x1 == x2 || y1 == y2) return;
+        var matrix = GuiDrawContext.current().getMatrices().peek().getPositionMatrix();
+        GuiSpriteRenderer.draw(sprite, out -> GuiSpriteRenderer.quad(out, matrix, sprite, x1, y1, x2, y2, 0, 0, 1, 1));
     }
 
     @Override
     public void drawAt(double x, double y) {
-        // TODO(R.Chen): Tessellator/BufferBuilder render pending SpriteRaw migration.
+        draw(sprite, x, y, x + width, y + height);
     }
 
     public void drawAt(IGuiArea area) {
@@ -59,7 +62,8 @@ public class GuiIcon implements ISimpleDrawable {
     }
 
     public void drawScaledInside(IGuiArea element) {
-        drawAt(element.getX(), element.getY());
+        draw(sprite, element.getX(), element.getY(), element.getX() + element.getWidth(),
+            element.getY() + element.getHeight());
     }
 
     /** Returns a new GuiIcon with (u,v) offset by (du,dv) on the same texture. */
@@ -67,7 +71,13 @@ public class GuiIcon implements ISimpleDrawable {
         if (texture != null) {
             return new GuiIcon(texture, u + du, v + dv, width, height);
         }
-        return this; // sprite-based icons: no simple offset
+        ISprite parent = sprite;
+        double duNormalized = du / (double) textureSize, dvNormalized = dv / (double) textureSize;
+        return new GuiIcon(new ISprite() {
+            public void bindTexture() { parent.bindTexture(); }
+            public double getInterpU(double u) { return parent.getInterpU(u) + duNormalized; }
+            public double getInterpV(double v) { return parent.getInterpV(v) + dvNormalized; }
+        }, textureSize);
     }
 
     /** Returns true if the mouse position is within this icon drawn at (x, y). */

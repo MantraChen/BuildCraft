@@ -6,7 +6,6 @@
 
 package buildcraft.lib.client.guide.parts;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -14,13 +13,11 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableList;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.profiler.Profiler;
 
 import buildcraft.lib.client.guide.GuiGuide;
 import buildcraft.lib.client.guide.entry.ItemStackValueFilter;
 import buildcraft.lib.client.guide.entry.PageEntryItemStack;
 import buildcraft.lib.client.guide.entry.PageValue;
-import buildcraft.lib.client.guide.loader.XmlPageLoader;
 
 @Deprecated
 public class GuidePageStandInRecipes extends GuidePage {
@@ -30,19 +27,9 @@ public class GuidePageStandInRecipes extends GuidePage {
 
     @Nonnull
     public static GuidePageFactory createFactory(@Nonnull ItemStack stack) {
-        List<GuidePartFactory> factories = XmlPageLoader.loadAllCrafting(stack, net.minecraft.util.profiler.DummyProfiler.INSTANCE, 0);
-        if (factories.isEmpty()) {
-            return (gui) -> {
-                return new GuidePageStandInRecipes(gui, ImmutableList.of(new GuideText(gui, "No recipes!")), stack);
-            };
-        }
-        return (gui) -> {
-            List<GuidePart> parts = new ArrayList<>();
-            for (GuidePartFactory factory : factories) {
-                parts.add(factory.createNew(gui));
-            }
-            return new GuidePageStandInRecipes(gui, parts, stack);
-        };
+        // Resolve at page-open time, so a server recipe reload cannot leave cached factories stale.
+        ItemStack copy = stack.copy();
+        return gui -> new GuidePageStandInRecipes(gui, ImmutableList.of(), copy);
     }
 
     @Override
@@ -52,7 +39,7 @@ public class GuidePageStandInRecipes extends GuidePage {
 
     @Override
     public GuidePageBase createReloaded() {
-        // Recipes won't have reloaded, so there's no need to change what is displayed.
-        return this;
+        // Rebuild recipe parts and sprites after the resource/recipe source changes.
+        return createFactory(entry.value instanceof buildcraft.lib.client.guide.entry.ItemStackValueFilter filter ? filter.stack.baseStack : ItemStack.EMPTY).createNew(gui);
     }
 }

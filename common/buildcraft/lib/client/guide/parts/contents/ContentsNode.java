@@ -16,7 +16,6 @@ import buildcraft.lib.client.guide.PageLine;
 import buildcraft.lib.client.guide.parts.GuideChapterWithin;
 import buildcraft.lib.client.guide.parts.GuidePart;
 import buildcraft.lib.client.guide.parts.GuideText;
-import buildcraft.lib.misc.StringUtilBC;
 
 public class ContentsNode implements IContentsNode {
 
@@ -74,7 +73,7 @@ public class ContentsNode implements IContentsNode {
         }
         needsSorting = false;
         sortedNodes = nodes.values().toArray(new IContentsNode[0]);
-        Arrays.sort(sortedNodes, StringUtilBC.compareBasicReadable(IContentsNode::getSearchName));
+        Arrays.sort(sortedNodes, java.util.Comparator.comparing(IContentsNode::getSearchName, String.CASE_INSENSITIVE_ORDER));
         for (IContentsNode node : sortedNodes) {
             node.sort();
         }

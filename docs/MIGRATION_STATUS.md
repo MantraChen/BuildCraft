@@ -58,9 +58,9 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 150 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 93 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **93 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **96 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
-- Client model fixture: **14 tests passed**, plus the expression library's 13 tests.
+- Client model/GUI fixture: **24 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
   All five engine variants bake across every power stage and facing; referenced textures
   exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
@@ -201,7 +201,26 @@ features explicitly as work proceeds.
   Full gate integration remains unfinished: inventory/fluid statements still use old
   capability paths, and other machines still need their work predicates restored.
 
-Remaining work includes full compilation, transport/item and screen registration, network
+- The guide now has native `Screen` rendering, two-page navigation, history, search,
+  item links/tooltips, chapters, images and crafting/smelting/assembly recipe layouts.
+  Font/icon/item rendering uses the current `DrawContext`; small nine-slice panels
+  retain ordered borders and the actual sprite texture. GUI elements tick at game
+  tick rate instead of frame rate, and foreground coordinates avoid a double window offset.
+  Optional smooth-font textures have bounded caching and explicit release. Ten client
+  tests cover frame-scope restoration, transformed geometry, UVs, small panels, native
+  pixel color/alpha, smooth-font rasterization, formatting and Unicode wrapping.
+- Client resource reloads now rebuild guide contents/search after scripts, language
+  and models, with English fallback. Right-clicking the guide opens the reader; the
+  reader includes **Remake by FelixMantra**. The resource task no longer excludes guide
+  Markdown: all **111 page bodies** are copied. Recipe lookup reads the connected
+  world's native recipe manager and generated pages resolve recipes when opened.
+  Three Fabric tests cover stack literals, embedded SNBT commas, invalid IDs/counts
+  and damageable-item NBT. The original guide assets still need an in-game content audit
+  (including legacy engine metadata and untranslated strings). Full guide resource
+  reload, GPU rendering, live input and actual machine screens remain unverified until
+  the complete mod builds and launches; compiling the restored guide is not startup validation.
+
+Remaining work includes full compilation, transport/item and machine-screen registration, network
 debug/robotics messages, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.

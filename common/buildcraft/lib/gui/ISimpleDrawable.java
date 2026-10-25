@@ -12,6 +12,12 @@ import buildcraft.lib.gui.pos.IGuiPosition;
 public interface ISimpleDrawable {
     void drawAt(double x, double y);
 
+    default void drawAt(net.minecraft.client.gui.DrawContext context, double x, double y) {
+        try (GuiDrawContext frame = GuiDrawContext.use(context)) {
+            drawAt(x, y);
+        }
+    }
+
     default void drawAt(IGuiPosition element) {
         drawAt(element.getX(), element.getY());
     }

@@ -21,7 +21,7 @@ public class GuidePartLink extends GuidePart {
     public PagePosition handleMouseClick(int x, int y, int width, int height, PagePosition current, int index,
         int mouseX, int mouseY) {
         PagePosition pos = renderLine(current, link.text, x, y, width, height, -1);
-        if (pos.page == index && wasHovered()) {
+        if (wasHoveredOn(index)) {
             GuidePageFactory factory = link.getFactoryLink();
             GuidePageBase page = factory.createNew(gui);
             if (page != null) {

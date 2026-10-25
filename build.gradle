@@ -959,8 +959,8 @@ sourceSets {
             // will load them.  They are still included here so the build does not
             // break; convert in a dedicated pass.
             srcDir "BuildCraft-Localization"
-            exclude "**/*.md"
-            // Guide resources (keep for now; may be ported separately)
+            // Guide page bodies are Markdown resources and must be included in the jar.
+            exclude "README.md"
             srcDir "BuildCraftGuide/guide_resources"
             exclude "pack.png"
             exclude "pack.mcmeta"

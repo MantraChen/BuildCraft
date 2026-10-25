@@ -8,7 +8,6 @@ package buildcraft.lib.misc;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.function.DoubleSupplier;
@@ -25,7 +24,6 @@ import net.minecraft.client.render.RenderHelper;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -48,7 +46,6 @@ import buildcraft.lib.gui.elem.ToolTip;
 import buildcraft.lib.gui.pos.GuiRectangle;
 import buildcraft.lib.gui.pos.IGuiArea;
 import buildcraft.lib.gui.pos.IGuiPosition;
-import com.mojang.blaze3d.platform.GlStateManager;
 import buildcraft.lib.misc.GlStateManagerCompat;
 
 public class GuiUtil {
@@ -445,10 +442,10 @@ public class GuiUtil {
 
     public static List<String> getUnFormattedTooltip(ItemStack stack) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        // STUB(R.Chen): getTooltip signature changed in 1.20.1
         List<String> list = new java.util.ArrayList<>();
+        stack.getTooltip(mc.player, getTooltipFlags()).forEach(text -> list.add(text.getString()));
         if (list.isEmpty()) {
-            return Collections.singletonList(getStackDisplayName(stack));
+            list.add(getStackDisplayName(stack));
         }
         return list;
     }
@@ -467,8 +464,8 @@ public class GuiUtil {
     }
 
     private static TooltipContext getTooltipFlags() {
-        // STUB(R.Chen): advancedItemTooltips field renamed in 1.20.1
-        return TooltipContext.Default.BASIC;
+        return MinecraftClient.getInstance().options.advancedItemTooltips ? TooltipContext.Default.ADVANCED
+            : TooltipContext.Default.BASIC;
     }
 
     public static WrappedTextData getWrappedTextData(String text, IFontRenderer fontRenderer, int maxWidth,

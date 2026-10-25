@@ -24,7 +24,7 @@ public class PageValue<T> {
     }
 
     public static String getTitle(JsonObject json) {
-        return JsonUtil.getTextComponent(json, "title", "buildcraft.guide.page.").getFormattedText();
+        return JsonUtil.getTextComponent(json, "title", "buildcraft.guide.page.").getString();
     }
 
     /** @param test An unknown object.

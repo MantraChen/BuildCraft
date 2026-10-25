@@ -95,9 +95,10 @@ public class ContentsNodeGui {
     public void onClicked(int x, int y, int width, int height, PagePosition current, int index) {
         iterate(current, height, (pos, part, link) -> {
             pos = part.renderIntoArea(x, y, width, height, pos, -1);
-            if (pos.page == index && part.wasHovered()) {
+            if (part.wasHoveredOn(index)) {
                 if (link != null) {
                     GuidePageFactory factory = link.getFactoryLink();
+                    if (factory == null) return pos;
                     GuidePageBase page = factory.createNew(gui);
                     if (page != null) {
                         gui.openPage(page);

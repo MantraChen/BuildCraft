@@ -10,6 +10,14 @@ package buildcraft.lib.gui.statement;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
-// STUB(R.Chen): GUI render — Phase 5.
 @Environment(EnvType.CLIENT)
-public class GuiElementStatementSource {}
+public class GuiElementStatementSource {
+    private static final buildcraft.lib.gui.GuiIcon BACKGROUND = new buildcraft.lib.gui.GuiIcon(
+        new net.minecraft.util.Identifier("buildcraftlib", "textures/gui/misc_slots.png"), 0, 0, 18, 18);
+
+    public static void drawGuiSlot(buildcraft.api.statements.IGuiSlot slot, double x, double y) {
+        BACKGROUND.drawAt(x, y);
+        if (slot != null && slot.getSprite() != null)
+            buildcraft.lib.gui.GuiIcon.draw(slot.getSprite(), x + 1, y + 1, x + 17, y + 17);
+    }
+}

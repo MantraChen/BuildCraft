@@ -7,13 +7,11 @@
 package buildcraft.lib.client.guide.parts.recipe;
 
 import java.util.Arrays;
-import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.NbtCompound;
 
 import buildcraft.lib.client.guide.GuiGuide;
@@ -32,9 +30,11 @@ public class GuideSmeltingFactory implements GuidePartFactory {
     }
 
     public static GuideSmeltingFactory create(ItemStack stack) {
-        for (Entry<ItemStack, ItemStack> entry : FurnaceRecipes.instance().getSmeltingList().entrySet()) {
-            if (ItemStack.areItemsEqual(stack, entry.getValue())) {
-                return new GuideSmeltingFactory(entry.getKey(), stack);
+        for (var recipe : GuideRecipes.all(net.minecraft.recipe.RecipeType.SMELTING)) {
+            ItemStack output = recipe.getOutput(GuideRecipes.registries());
+            if (ItemStack.areItemsEqual(stack, output)) {
+                ItemStack[] inputs = recipe.getIngredients().get(0).getMatchingStacks();
+                if (inputs.length > 0) return new GuideSmeltingFactory(inputs[0], output);
             }
         }
         return null;

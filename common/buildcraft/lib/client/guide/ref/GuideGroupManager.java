@@ -15,8 +15,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 
-import buildcraft.api.BCBlocks;
-import buildcraft.api.BCItems;
 import buildcraft.api.statements.IStatement;
 
 import buildcraft.lib.client.guide.entry.ItemStackValueFilter;
@@ -42,22 +40,26 @@ public class GuideGroupManager {
         temp();
     }
 
+    private static ItemStack item(String id) {
+        return net.minecraft.registry.Registries.ITEM.get(new Identifier(id)).getDefaultStack();
+    }
+    private static ItemStack engine(String type) {
+        ItemStack stack = item("buildcraftcore:engine");
+        if (!stack.isEmpty()) stack.getOrCreateSubNbt("BlockStateTag").putString("type", type);
+        return stack;
+    }
     private static void temp() {
-        addEntries("buildcraft", "pipe_power_providers", BCItems.Silicon.PLUG_PULSAR,
-            BCItems.Transport.PLUG_POWER_ADAPTOR, new ItemStack(BCBlocks.Core.ENGINE),
-            new ItemStack(BCBlocks.Core.ENGINE, 1), new ItemStack(BCBlocks.Core.ENGINE, 1))//
-                .addKeyArray(BCItems.Transport.PIPE_WOOD_ITEM, BCItems.Transport.PIPE_DIAMOND_WOOD_ITEM,
-                    BCItems.Transport.PIPE_EMZULI_ITEM, BCItems.Transport.PIPE_WOOD_FLUID,
-                    BCItems.Transport.PIPE_DIAMOND_WOOD_FLUID);
-        addEntries("buildcraft", "full_power_providers", new ItemStack(BCBlocks.Core.ENGINE, 1),
-            new ItemStack(BCBlocks.Core.ENGINE, 1)).addKeyArray(BCBlocks.Builders.BUILDER, BCBlocks.Builders.FILLER,
-                BCBlocks.Builders.QUARRY, BCBlocks.Factory.DISTILLER, BCBlocks.Factory.MINING_WELL,
-                BCBlocks.Factory.PUMP, BCBlocks.Silicon.LASER);
-        addEntries("buildcraft", "laser_power_providers", BCBlocks.Silicon.LASER).addKeyArray(
-            BCBlocks.Silicon.ADVANCED_CRAFTING_TABLE, BCBlocks.Silicon.ASSEMBLY_TABLE,
-            BCBlocks.Silicon.INTEGRATION_TABLE);
-        addEntries("buildcraft", "area_markers", BCBlocks.Core.MARKER_VOLUME, BCItems.Core.VOLUME_BOX)
-            .addKeyArray(BCBlocks.Builders.QUARRY, BCBlocks.Builders.ARCHITECT, BCBlocks.Builders.FILLER);
+        addEntries("buildcraft", "pipe_power_providers", item("buildcraftsilicon:plug_pulsar"),
+            item("buildcrafttransport:plug_power_adaptor"), engine("wood"), engine("stone"), engine("iron"))
+            .addKeyArray(item("buildcrafttransport:pipe_wood_item"), item("buildcrafttransport:pipe_diamond_wood_item"),
+                item("buildcrafttransport:pipe_emzuli_item"), item("buildcrafttransport:pipe_wood_fluid"), item("buildcrafttransport:pipe_diamond_wood_fluid"));
+        addEntries("buildcraft", "full_power_providers", engine("stone"), engine("iron"))
+            .addKeyArray(item("buildcraftbuilders:builder"), item("buildcraftbuilders:filler"), item("buildcraftbuilders:quarry"),
+                item("buildcraftfactory:distiller"), item("buildcraftfactory:mining_well"), item("buildcraftfactory:pump"), item("buildcraftsilicon:laser"));
+        addEntries("buildcraft", "laser_power_providers", item("buildcraftsilicon:laser"))
+            .addKeyArray(item("buildcraftsilicon:advanced_crafting_table"), item("buildcraftsilicon:assembly_table"), item("buildcraftsilicon:integration_table"));
+        addEntries("buildcraft", "area_markers", item("buildcraftcore:marker_volume"), item("buildcraftcore:volume_box"))
+            .addKeyArray(item("buildcraftbuilders:quarry"), item("buildcraftbuilders:architect"), item("buildcraftbuilders:filler"));
     }
 
     // Known types

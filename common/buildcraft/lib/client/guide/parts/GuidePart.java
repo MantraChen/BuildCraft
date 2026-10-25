@@ -40,9 +40,7 @@ public abstract class GuidePart {
         }
 
         public PagePosition guaranteeSpace(int required, int maxPageHeight) {
-            PagePosition next = nextLine(required, maxPageHeight);
-            if (next.page == page) return this;
-            return next;
+            return pixel > 0 && pixel + required > maxPageHeight ? nextPage() : this;
         }
 
         public PagePosition nextPage() {
@@ -62,6 +60,7 @@ public abstract class GuidePart {
     protected boolean wasHovered = false;
     protected boolean wasIconHovered = false;
     protected boolean didRender = false;
+    private final java.util.Set<Integer> hoveredPages = new java.util.HashSet<>();
 
     public GuidePart(GuiGuide gui) {
         this.gui = gui;
@@ -79,11 +78,13 @@ public abstract class GuidePart {
         return wasHovered;
     }
 
+    public boolean wasHoveredOn(int page) { return hoveredPages.contains(page); }
+
     public void updateScreen() {}
 
     /** Renders a raw line at the position, lowering it appropriately */
     protected void renderTextLine(String text, int x, int y, int colour) {
-        // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(text, x, y + 8 - (fontRenderer.getFontHeight(text) / 2), colour)
+        fontRenderer.drawString(text, x, y + 8 - fontRenderer.getFontHeight(text) / 2, colour);
         RenderSystem.setShaderColor(1, 1, 1, 1.0F);
     }
 
@@ -111,6 +112,7 @@ public abstract class GuidePart {
     protected PagePosition renderLine(PagePosition current, PageLine line, int x, int y, int width, int height,
         int pageRenderIndex) {
         wasHovered = false;
+        hoveredPages.clear();
         wasIconHovered = false;
         // Firstly break off the last chunk if the total length is greater than the width allows
         int allowedWidth = width - INDENT_WIDTH * line.indent;
@@ -151,23 +153,25 @@ public abstract class GuidePart {
             int _y = y + current.pixel;
             int _w = fontRenderer.getWidth(text);
             GuiRectangle rect = new GuiRectangle(_x, _y - 2, _w, neededSpace + 3);
-            wasHovered |= rect.contains(gui.mouse);
+            boolean lineHovered = rect.contains(gui.mouse);
+            wasHovered |= lineHovered;
+            if (lineHovered) hoveredPages.add(current.page);
             if (render) {
                 didRender = true;
-                if (wasHovered) {
+                if (lineHovered) {
                     if (line.link) {
                         Gui.drawRect(_x - 2, _y - 2, _x + _w + 2, _y + 1 + neededSpace, 0xFFD3AD6C);
                     }
                     renderTooltip();
                 }
-                // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(text, _x, _y, 0)
+                fontRenderer.drawString(text, _x, _y, 0);
             }
 
             next = strings.length == 1 ? null : strings[1];
             current = current.nextLine(fontRenderer.getFontHeight(text) + 3, height);
         }
 
-        int additional = LINE_HEIGHT - fontRenderer.getFontHeight(toRender) - 3;
+        int additional = Math.max(0, LINE_HEIGHT - fontRenderer.getFontHeight(toRender) - 3);
         current = current.nextLine(additional, height);
         return current;
     }

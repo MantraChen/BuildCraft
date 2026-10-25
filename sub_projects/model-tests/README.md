@@ -19,6 +19,12 @@ Fluid tests cover RGB/ABGR/alpha conversion, all six original animated heat text
 and geometry for gas filling from a block's ceiling. The expression dependency
 contributes 13 additional tests.
 
+Ten more GUI tests (24 client tests total) cover native frame-scope nesting, icon
+sizes/offsets, matrix-transformed sprite quads, nine-slice geometry for small panels,
+dynamic texture ARGB pixels and disposal, smooth-font rasterization, and formatting-
+aware Unicode wrapping at narrow widths. Registry-dependent guide stack parsing runs
+in `port-tests` under Fabric's transformed class loader instead of plain JUnit.
+
 Reports are written to `build/reports/tests/test/index.html`. Successful tests do not
 verify native renderer registration at runtime, GPU output, resource pack reloads in
 a running client, or a playable BuildCraft mod. Those require the full build and an

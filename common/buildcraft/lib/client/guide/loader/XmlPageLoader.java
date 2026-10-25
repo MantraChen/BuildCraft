@@ -335,7 +335,7 @@ public enum XmlPageLoader implements IPageLoaderText {
                 if (c == '<') {
                     XmlTag currentTag = parseTag(line.substring(i));
                     if (currentTag != null) {
-                        Formatting formatting = Formatting.getValueByName(currentTag.name.replace("_", ""));
+                Formatting formatting = Formatting.byName(currentTag.name.replace("_", ""));
                         if (formatting != null) {
                             if (currentTag.state == XmlTagState.END) {
                                 formattingElements.remove(formatting);

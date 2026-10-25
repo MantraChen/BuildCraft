@@ -10,20 +10,12 @@ package buildcraft.lib.client.sprite;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import buildcraft.api.core.render.ISprite;
 
 import buildcraft.lib.gui.pos.IGuiArea;
 
-/** Defines and draws a 9-sliced sprite from the block atlas. */
+/** Defines and draws a 9-sliced sprite, retaining the sprite's texture and the GUI transform. */
 @Environment(EnvType.CLIENT)
 public class SpriteNineSliced {
     public final ISprite sprite;
@@ -64,38 +56,31 @@ public class SpriteNineSliced {
     }
 
     public void draw(double x, double y, double width, double height) {
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
+        if (width <= 0 || height <= 0) return;
+        var matrix = buildcraft.lib.gui.GuiDrawContext.current().getMatrices().peek().getPositionMatrix();
+        buildcraft.lib.gui.GuiSpriteRenderer.draw(sprite, out -> emit(out, matrix, x, y, width, height));
+    }
 
-        Tessellator tess = Tessellator.getInstance();
-        BufferBuilder buf = tess.getBuffer();
-        buf.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-
-        double sx = xScale, sy = yScale;
-        double[] xa = { x, x + xMin * sx, x + width + (xMax - 1) * sx, x + width };
-        double[] ya = { y, y + yMin * sy, y + height + (yMax - 1) * sy, y + height };
+    /** Emits the same geometry used by draw, without requiring an OpenGL context. */
+    public void emit(net.minecraft.client.render.VertexConsumer out, org.joml.Matrix4f matrix,
+            double x, double y, double width, double height) {
+        if (width <= 0 || height <= 0) return;
+        double[] xa = edges(x, width, xMin * xScale, (1 - xMax) * xScale);
+        double[] ya = edges(y, height, yMin * yScale, (1 - yMax) * yScale);
         double[] ua = { 0, xMin, xMax, 1 };
         double[] va = { 0, yMin, yMax, 1 };
-
         for (int xi = 0; xi < 3; xi++) {
             for (int yi = 0; yi < 3; yi++) {
-                quad(buf, xa, ya, ua, va, xi, yi);
+                if (xa[xi] == xa[xi + 1] || ya[yi] == ya[yi + 1]) continue;
+                buildcraft.lib.gui.GuiSpriteRenderer.quad(out, matrix, sprite,
+                    xa[xi], ya[yi], xa[xi + 1], ya[yi + 1], ua[xi], va[yi], ua[xi + 1], va[yi + 1]);
             }
         }
-
-        BufferRenderer.drawWithGlobalProgram(buf.end());
     }
 
-    private void quad(BufferBuilder buf, double[] x, double[] y, double[] u, double[] v, int xi, int yi) {
-        vertex(buf, x[xi],   y[yi],   u[xi],   v[yi]);
-        vertex(buf, x[xi],   y[yi+1], u[xi],   v[yi+1]);
-        vertex(buf, x[xi+1], y[yi+1], u[xi+1], v[yi+1]);
-        vertex(buf, x[xi+1], y[yi],   u[xi+1], v[yi]);
-    }
-
-    private void vertex(BufferBuilder buf, double x, double y, double texU, double texV) {
-        buf.vertex((float) x, (float) y, 0)
-            .texture((float) sprite.getInterpU(texU), (float) sprite.getInterpV(texV))
-            .next();
+    private static double[] edges(double start, double size, double before, double after) {
+        // Small panels shrink their borders instead of inverting the centre quad.
+        double factor = before + after > size ? size / (before + after) : 1;
+        return new double[] { start, start + before * factor, start + size - after * factor, start + size };
     }
 }

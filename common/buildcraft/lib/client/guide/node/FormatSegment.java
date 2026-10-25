@@ -38,10 +38,10 @@ public final class FormatSegment {
     public String toString() {
         StringBuilder miscStr = new StringBuilder();
         for (Formatting format : misc) {
-            miscStr.append(format.getFriendlyName());
+            miscStr.append(format.getName());
             miscStr.append(' ');
         }
-        return (colour == null ? "" : (colour.getFriendlyName() + ""))//
+        return (colour == null ? "" : (colour.getName() + ""))//
             + miscStr + text;
     }
 }

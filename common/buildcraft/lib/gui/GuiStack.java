@@ -32,12 +32,21 @@ public class GuiStack implements ISimpleDrawable {
 
     @Override
     public void drawAt(double x, double y) {
-        // TODO(R.Chen): requires DrawContext — wire through IGuiElement.drawBackground(DrawContext, float).
-        // For now use a temporary DrawContext from the current render frame when available.
+        drawWithContext(GuiDrawContext.current(), x, y);
     }
 
     public void drawAt(IGuiPosition pos, double scale) {
-        drawAt(pos.getX(), pos.getY());
+        if (!Double.isFinite(scale) || scale <= 0) throw new IllegalArgumentException("scale must be positive");
+        DrawContext context = GuiDrawContext.current();
+        var matrices = context.getMatrices();
+        matrices.push();
+        try {
+            matrices.translate(pos.getX(), pos.getY(), 0);
+            matrices.scale((float) scale, (float) scale, 1);
+            drawWithContext(context, 0, 0);
+        } finally {
+            matrices.pop();
+        }
     }
 
     public void drawWithContext(DrawContext context, double x, double y) {

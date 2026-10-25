@@ -1,159 +1,97 @@
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.lib.client.guide.node;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.google.common.collect.ImmutableSet;
-
 import net.minecraft.util.Formatting;
-
 import buildcraft.lib.client.guide.font.IFontRenderer;
 
+/** Formatting-aware text that wraps without cutting format codes or Unicode surrogate pairs. */
 public class FormatString {
-    private static final String WORD_GAP = " \n\t";
-    private static final Pattern FORMATTING_CODE_PATTERN = Pattern.compile("(?i)\u00a7[0-9A-FK-OR]");
-
     public final FormatSegment[] segments;
     private final String unformatted, formatted;
 
     public FormatString(FormatSegment[] segments) {
-        this.segments = segments;
-        String s = "", sf = "";
-        for (FormatSegment seg : segments) {
-            s += seg.text;
-            sf += seg.toFormatString();
+        this.segments = segments.clone();
+        StringBuilder plain = new StringBuilder(), styled = new StringBuilder();
+        for (FormatSegment segment : segments) {
+            plain.append(segment.text);
+            styled.append(segment.toFormatString());
         }
-        unformatted = s;
-        formatted = sf;
+        unformatted = plain.toString();
+        formatted = styled.toString();
     }
 
-    public String getFormatted() {
-        return formatted;
-    }
+    public String getFormatted() { return formatted; }
+    public String getUnformatted() { return unformatted; }
 
-    public String getUnformatted() {
-        return unformatted;
-    }
-
-    public static FormatString split(String formattedText) {
-        List<FormatSegment> segments = new ArrayList<>();
-
-        Formatting lastColour = null;
-        Set<Formatting> lastMisc = EnumSet.noneOf(Formatting.class);
-        int lastEnd = 0;
-
-        Matcher matcher = FORMATTING_CODE_PATTERN.matcher(formattedText);
-        while (matcher.find()) {
-            int start = matcher.start();
-
-            if (start != lastEnd) {
-                String subText = formattedText.substring(lastEnd, start);
-                ImmutableSet<Formatting> miscCopy = ImmutableSet.copyOf(lastMisc);
-                segments.add(new FormatSegment(subText, lastColour, miscCopy));
+    public static FormatString split(String text) {
+        List<FormatSegment> result = new ArrayList<>();
+        Formatting colour = null;
+        Set<Formatting> styles = EnumSet.noneOf(Formatting.class);
+        StringBuilder run = new StringBuilder();
+        for (int i = 0; i < text.length();) {
+            Formatting format = text.charAt(i) == '\u00a7' && i + 1 < text.length()
+                ? Formatting.byCode(Character.toLowerCase(text.charAt(i + 1))) : null;
+            if (format == null) {
+                int cp = text.codePointAt(i);
+                run.appendCodePoint(cp);
+                i += Character.charCount(cp);
+                continue;
             }
-
-            String matched = matcher.group();
-            Formatting format = null;
-            for (Formatting f : Formatting.values()) {
-                if (f.toString().equals(matched)) {
-                    format = f;
-                    break;
-                }
+            if (run.length() > 0) {
+                result.add(new FormatSegment(run.toString(), colour, Set.copyOf(styles)));
+                run.setLength(0);
             }
-            if (format != null) {
-                if (format == Formatting.RESET) {
-                    lastColour = null;
-                    lastMisc.clear();
-                } else if (format.isColor()) {
-                    lastColour = format;
-                } else {
-                    lastMisc.add(format);
-                }
-            }
-            lastEnd = matcher.end();
+            if (format == Formatting.RESET || format.isColor()) {
+                colour = format == Formatting.RESET ? null : format;
+                styles.clear();
+            } else styles.add(format);
+            i += 2;
         }
-        if (lastEnd != formattedText.length()) {
-            String subText = formattedText.substring(lastEnd);
-            ImmutableSet<Formatting> miscCopy = ImmutableSet.copyOf(lastMisc);
-            segments.add(new FormatSegment(subText, lastColour, miscCopy));
-        }
-        return new FormatString(segments.toArray(new FormatSegment[0]));
+        if (run.length() > 0) result.add(new FormatSegment(run.toString(), colour, Set.copyOf(styles)));
+        return new FormatString(result.toArray(FormatSegment[]::new));
     }
 
-    /** @return An array of length 1 or 2, with this wrapped down onto the next line. Note that this only wraps a single
-     *         line. */
-    public FormatString[] wrap(IFontRenderer font, int maxWidth) {
-        return wrap(font, maxWidth, true);
-    }
+    public FormatString[] wrap(IFontRenderer font, int maxWidth) { return wrap(font, maxWidth, true); }
 
-    /** @return An array of length 1 or 2, with this wrapped down onto the next line. Note that this only wraps a single
-     *         line. */
+    /** Always consumes at least one code point, even when one glyph is wider than the column. */
     public FormatString[] wrap(IFontRenderer font, int maxWidth, boolean onWords) {
-        List<FormatSegment> thisLine = new ArrayList<>();
-        int widthUsed = 0;
-
-        for (int segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
-            FormatSegment segment = segments[segmentIndex];
-
-            // TODO: Ensure that this segment doesn't join with the NEXT segment as a word!
-            int width = font.getWidth(segment.toFormatString());
-            if (width + widthUsed <= maxWidth) {
-                thisLine.add(segment);
-                widthUsed += width;
-            } else {
-                String text = segment.toFormatString();
-                int allowedLength = 1;
-                boolean words = onWords;
-                outer: while(true) {
-                    for (int i = text.length(); i > 1; i--) {
-                        String c = text.substring(i - 1, i);
-                        if (words && !WORD_GAP.contains(c)) {
-                            continue;
-                        }
-                        String subText = text.substring(0, i);
-                        int w = font.getWidth(subText);
-                        if (w + widthUsed <= maxWidth) {
-                            allowedLength = i;
-                            break outer;
-                        }
-                    }
-                    if (words && segmentIndex == 0) {
-                        words = false;
-                    } else {
-                        break;
-                    }
-                }
-                int i = allowedLength;
-                if (i > 1) {
-                    String subText = text.substring(0, allowedLength);
-                    int left = segments.length - segmentIndex;
-                    FormatSegment[] next = new FormatSegment[left];
-                    thisLine.add(new FormatSegment(subText, segment.colour, segment.misc));
-                    next[0] = new FormatSegment(text.substring(i), segment.colour, segment.misc);
-                    for (int j = 1; j < left; j++) {
-                        next[j] = segments[segmentIndex + j];
-                    }
-                    return new FormatString[] { //
-                        new FormatString(thisLine.toArray(new FormatSegment[0])), //
-                        new FormatString(next)//
-                    };
-                } else {
-                    int left = segments.length - segmentIndex;
-                    FormatSegment[] next = new FormatSegment[left];
-                    for (int j = 0; j < left; j++) {
-                        next[j] = segments[j + 1];
-                    }
-                    return new FormatString[] { //
-                        new FormatString(thisLine.toArray(new FormatSegment[0])), //
-                        new FormatString(next)//
-                    };
-                }
+        if (unformatted.isEmpty()) return new FormatString[] { this };
+        int fit = 0, wordBreak = 0;
+        while (fit < unformatted.length()) {
+            int cp = unformatted.codePointAt(fit);
+            if (cp == '\n') return cut(fit, fit + 1);
+            int next = fit + Character.charCount(cp);
+            if (font.getWidth(slice(0, next).getFormatted()) > maxWidth) {
+                if (fit == 0) fit = next;
+                else if (onWords && wordBreak > 0) fit = wordBreak;
+                return fit == unformatted.length() ? new FormatString[] { this } : cut(fit, fit);
             }
+            fit = next;
+            if (Character.isWhitespace(cp)) wordBreak = fit;
         }
         return new FormatString[] { this };
+    }
+
+    private FormatString[] cut(int end, int startNext) {
+        return new FormatString[] { slice(0, end), slice(startNext, unformatted.length()) };
+    }
+
+    private FormatString slice(int from, int to) {
+        List<FormatSegment> result = new ArrayList<>();
+        int offset = 0;
+        for (FormatSegment segment : segments) {
+            int end = offset + segment.text.length();
+            if (from < end && to > offset) {
+                result.add(new FormatSegment(segment.text.substring(Math.max(from - offset, 0),
+                    Math.min(to - offset, segment.text.length())), segment.colour, segment.misc));
+            }
+            offset = end;
+            if (offset >= to) break;
+        }
+        return new FormatString(result.toArray(FormatSegment[]::new));
     }
 }

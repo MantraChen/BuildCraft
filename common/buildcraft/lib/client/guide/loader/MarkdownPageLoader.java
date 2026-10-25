@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import buildcraft.lib.compat.forge_stubs.OreDictionaryStub;
 
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTException;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.Identifier;
 
@@ -42,56 +39,7 @@ public enum MarkdownPageLoader implements IPageLoaderText {
     }
 
     public static OptionallyDisabled<ItemStack> parseItemStack(String line) {
-        String[] args = line.split(",");
-        if (args.length == 0) {
-            return new OptionallyDisabled<>(line + " was not a valid complex item string!");
-        }
-        ItemStack stack = null;
-        Item item = buildcraft.lib.misc.StackUtil.getItemByNameOrId(args[0].trim());
-        if (item != null) {
-            stack = new ItemStack(item);
-        } else {
-            return new OptionallyDisabled<>(args[0] + " was not a valid item!");
-        }
-
-        if (args.length == 1) {
-            return new OptionallyDisabled<>(stack);
-        }
-
-        int stackSize = 1;
-        try {
-            stackSize = Integer.parseInt(args[1].trim());
-        } catch (NumberFormatException nfe) {
-            return new OptionallyDisabled<>(args[1] + " was not a valid number: " + nfe.getLocalizedMessage());
-        }
-        stack.setCount(stackSize);
-
-        if (args.length == 2) {
-            return new OptionallyDisabled<>(stack);
-        }
-
-        try {
-            int meta = Integer.parseInt(args[2].trim());
-            if (meta == -1) {
-                // Use oredict
-                meta = OreDictionaryStub.WILDCARD_VALUE;
-            }
-            stack = new ItemStack(stack.getItem(), stack.getCount());
-        } catch (NumberFormatException nfe) {
-            return new OptionallyDisabled<>(args[2] + " was not a valid number: " + nfe.getLocalizedMessage());
-        }
-
-        if (args.length == 3) {
-            return new OptionallyDisabled<>(stack);
-        }
-
-        String nbtString = args[3];
-        try {
-            stack.setNbt(JsonToNBT.getTagFromJson(nbtString));
-        } catch (NBTException e) {
-            return new OptionallyDisabled<>(nbtString + " was not a valid nbt tag: " + e.getLocalizedMessage());
-        }
-        return new OptionallyDisabled<>(stack);
+        return GuideStackParser.parse(line);
     }
 
     @Override

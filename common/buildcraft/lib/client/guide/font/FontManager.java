@@ -16,23 +16,22 @@ public enum FontManager {
     private static final boolean ENABLE_SMOOTH_FONT = Boolean.getBoolean("buildcraft.guide.smooth_font");
 
     private final Map<String, IFontRenderer> fonts = new HashMap<>();
+    private final Map<String, GuideFont> loadedFonts = new HashMap<>();
 
     public IFontRenderer getOrLoadFont(String name, int size) {
-        // if (fonts.containsKey(name)) {
-        // return fonts.get(name);
-        // }
-
-        // Try to get a Font object
-
-        // Font font = new Font(name, Font.PLAIN, size);
-        // GuideFont value = new GuideFont(font);
-        // fonts.put(name, value);
-        // return value;
+        if (size <= 0) throw new IllegalArgumentException("Font size must be positive");
+        IFontRenderer registered = fonts.get(name);
+        if (registered != null) return registered;
         if (ENABLE_SMOOTH_FONT) {
-            return new GuideFont(new Font(name, 0, size));
+            return loadedFonts.computeIfAbsent(name + "\u0000" + size, key -> new GuideFont(new Font(name, 0, size)));
         } else {
             return MinecraftFont.INSTANCE;
         }
+    }
+
+    public void clearTextures() {
+        loadedFonts.values().forEach(GuideFont::close);
+        for (IFontRenderer font : fonts.values()) if (font instanceof GuideFont smooth) smooth.close();
     }
 
     public void registerFont(String name, IFontRenderer font) {

@@ -1,66 +1,33 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.lib.client.guide.font;
-
-import java.util.List;
-
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import com.mojang.blaze3d.systems.RenderSystem;
+import buildcraft.lib.gui.GuiDrawContext;
 
-/** Implements a font that delegates to MinecraftClient's own {@link TextRenderer} */
+/** The game's font, rendered through the current native GUI frame. */
 public enum MinecraftFont implements IFontRenderer {
     INSTANCE;
 
-    private static TextRenderer getFontRenderer() {
-        return MinecraftClient.getInstance().fontRenderer;
-    }
-
-    @Override
-    public int getStringWidth(String text) {
-        return getFontRenderer().getWidth(text);
-    }
-
-    @Override
-    public int getFontHeight(String text) {
-        return getMaxFontHeight();
-    }
-
-    @Override
-    public int getMaxFontHeight() {
-        return getFontRenderer().fontHeight;
-    }
+    private static TextRenderer renderer() { return MinecraftClient.getInstance().textRenderer; }
+    @Override public int getStringWidth(String text) { return renderer().getWidth(text); }
+    @Override public int getFontHeight(String text) { return getMaxFontHeight(); }
+    @Override public int getMaxFontHeight() { return renderer().fontHeight; }
 
     @Override
     public int drawString(String text, int x, int y, int colour, boolean shadow, boolean centered, float scale) {
-        boolean _scale = scale != 1;
-        if (_scale) {
-            RenderSystem.getModelViewStack().push();
-            GL11.glScaled(scale, scale, 1);
-            x = (int) (x / scale);
-            y = (int) (y / scale);
+        if (!Float.isFinite(scale) || scale <= 0) throw new IllegalArgumentException("scale must be positive");
+        var context = GuiDrawContext.current();
+        var matrices = context.getMatrices();
+        int width = getStringWidth(text);
+        matrices.push();
+        try {
+            matrices.translate(x - (centered ? width * scale / 2 : 0), y, 0);
+            matrices.scale(scale, scale, 1);
+            context.drawText(renderer(), text, 0, 0, colour, shadow);
+        } finally {
+            matrices.pop();
         }
-        if (centered) {
-            x -= getStringWidth(text) / 2;
-        }
-        int v = getFontRenderer().drawString(text, x, y, colour, shadow);
-        v -= x;
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1.0F);
-        if (_scale) {
-            RenderSystem.getModelViewStack().pop();
-            v = (int) (v * scale);
-        }
-        return v;
-    }
-
-    @Override
-    public List<String> wrapString(String text, int maxWidth, boolean shadow, float scale) {
-        return getFontRenderer().listFormattedStringToWidth(text, (int) (maxWidth / scale));
+        return (int) Math.ceil((width + (shadow ? 1 : 0)) * scale);
     }
 }

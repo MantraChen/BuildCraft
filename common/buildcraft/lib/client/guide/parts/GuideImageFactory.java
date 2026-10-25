@@ -1,69 +1,35 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.lib.client.guide.parts;
 
-import java.io.IOException;
-
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.renderer.texture.PngSizeInfo;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.resources.IResource;
 import net.minecraft.util.Identifier;
-
 import buildcraft.api.core.BCLog;
-import buildcraft.api.core.render.ISprite;
-
 import buildcraft.lib.client.guide.GuiGuide;
 import buildcraft.lib.client.sprite.SpriteAtlas;
 import buildcraft.lib.client.sprite.SpriteRaw;
 
 public class GuideImageFactory implements GuidePartFactory {
-    private final ISprite sprite;
-    private final int srcWidth, srcHeight;
+    private final Identifier location;
     private final int width, height;
-
-    public GuideImageFactory(String location) {
-        this(location, -1, -1);
-    }
-
+    public GuideImageFactory(String location) { this(location, -1, -1); }
     public GuideImageFactory(String location, int width, int height) {
-        net.minecraft.client.renderer.texture.TextureMap textureMap = new net.minecraft.client.renderer.texture.TextureMap(buildcraft.lib.compat.McTextureCompat.getBlockAtlas());
-        Sprite stitched = textureMap.getAtlasSprite(location);
-        if (stitched != textureMap.getMissingSprite()) {
-            this.sprite = new SpriteAtlas(stitched);
-            this.srcWidth = stitched.getContents().getWidth();
-            this.srcHeight = stitched.getContents().getHeight();
-        } else {
-            ISprite s;
-            int sw, sh;
-            Identifier resLoc = new Identifier(location);
-            try (IResource resource = MinecraftClient.getInstance().getResourceManager().getResource(resLoc)) {
-                PngSizeInfo size = PngSizeInfo.makeFromResource(resource);
-                s = new SpriteRaw(resLoc, 0, 0, 1, 1);
-                sw = size.pngWidth;
-                sh = size.pngHeight;
-            } catch (IOException io) {
-                BCLog.logger.warn("[lib.guide.loader.image] Couldn't load image '" + resLoc + "' because " + io.getMessage());
-                stitched = textureMap.getMissingSprite();
-                s = new SpriteAtlas(stitched);
-                sw = stitched.getContents().getWidth();
-                sh = stitched.getContents().getHeight();
-            }
-            this.sprite = s;
-            this.srcWidth = sw;
-            this.srcHeight = sh;
-        }
-        this.width = width <= 0 ? srcWidth : width;
-        this.height = height <= 0 ? srcHeight : height;
+        this.location = new Identifier(location);
+        this.width = width;
+        this.height = height;
     }
-
-    @Override
-    public GuideImage createNew(GuiGuide gui) {
-        return new GuideImage(gui, sprite, srcWidth, srcHeight, width, height);
+    @Override public GuideImage createNew(GuiGuide gui) {
+        var client = MinecraftClient.getInstance();
+        var resource = client.getResourceManager().getResource(location);
+        if (resource.isPresent()) {
+            try (var input = resource.get().getInputStream(); var image = NativeImage.read(input)) {
+                return new GuideImage(gui, new SpriteRaw(location, 0, 0, 1, 1), image.getWidth(), image.getHeight(), width, height);
+            } catch (java.io.IOException error) {
+                BCLog.logger.warn("[lib.guide] Cannot read image {}", location, error);
+            }
+        }
+        var sprite = client.getSpriteAtlas(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).apply(location);
+        return new GuideImage(gui, new SpriteAtlas(sprite), sprite.getContents().getWidth(), sprite.getContents().getHeight(), width, height);
     }
 }

@@ -10,10 +10,8 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import buildcraft.lib.compat.forge_stubs.OreDictionaryStub;
 
-import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.collection.DefaultedList;
 
 // STUB(R.Chen): OreDictionaryStub removed — TODO(R.Chen): implement via Tags
 
@@ -25,9 +23,9 @@ import buildcraft.lib.misc.StackUtil;
  * input (for example a pipe colouring recipe) */
 public final class ChangingItemStack extends ChangingObject<ItemStackKey> {
     /** Creates a stack list that iterates through all of the given stacks. This does NOT check possible variants.
-     * 
+     *
      * @param stacks The list to iterate through. */
-    public ChangingItemStack(DefaultedList<ItemStack> stacks) {
+    public ChangingItemStack(List<ItemStack> stacks) {
         super(makeListArray(stacks));
     }
 
@@ -43,7 +41,7 @@ public final class ChangingItemStack extends ChangingObject<ItemStackKey> {
         this(OreDictionaryStub.getOres(oreId));
     }
 
-    private static ItemStackKey[] makeListArray(DefaultedList<ItemStack> stacks) {
+    private static ItemStackKey[] makeListArray(List<ItemStack> stacks) {
         return makeStackArray(stacks.toArray(new ItemStack[0]));
     }
 
@@ -52,9 +50,9 @@ public final class ChangingItemStack extends ChangingObject<ItemStackKey> {
             return new ItemStackKey[] { ItemStackKey.EMPTY };
         }
         if (stack.getDamage() == OreDictionaryStub.WILDCARD_VALUE) {
-            DefaultedList<ItemStack> subs = DefaultedList.of();
-            stack.getItem().getSubItems(ItemGroup.SEARCH, subs);
-            return makeListArray(subs);
+            ItemStack undamaged = stack.copy();
+            undamaged.setDamage(0);
+            return new ItemStackKey[] { new ItemStackKey(undamaged) };
         } else {
             return new ItemStackKey[] { new ItemStackKey(stack) };
         }

@@ -37,6 +37,8 @@ public class BCLibClientInitializer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(
+            client -> buildcraft.lib.client.guide.font.FontManager.INSTANCE.clearTextures());
         buildcraft.lib.net.BCNetworkManager.registerClient();
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((entity, world) -> {
             if (entity instanceof buildcraft.lib.tile.TileBC_Neptune tile) {
@@ -52,12 +54,28 @@ public class BCLibClientInitializer implements ClientModInitializer {
         });
 
         buildcraft.api.registry.BuildCraftRegistryManager.managerResourcePacks = buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS;
+        buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS.registerRegistry(
+            buildcraft.lib.client.guide.GuidePageRegistry.INSTANCE);
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
             .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS);
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
+            .registerReloadListener(buildcraft.lib.client.guide.GuideManager.INSTANCE);
+        net.fabricmc.fabric.api.event.player.UseItemCallback.EVENT.register((player, world, hand) -> {
+            var stack = player.getStackInHand(hand);
+            if (world.isClient && stack.getItem() instanceof buildcraft.lib.item.ItemGuide) {
+                net.minecraft.client.MinecraftClient.getInstance().setScreen(new buildcraft.lib.client.guide.GuiGuide(
+                    buildcraft.lib.item.ItemGuide.getBookName(stack)));
+                return net.minecraft.util.TypedActionResult.success(stack);
+            }
+            return net.minecraft.util.TypedActionResult.pass(stack);
+        });
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
             buildcraft.lib.marker.MarkerCache.clearClient();
+        });
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            buildcraft.lib.client.guide.GuideManager.INSTANCE.reload();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();

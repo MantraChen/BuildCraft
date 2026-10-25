@@ -12,11 +12,9 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.collection.DefaultedList;
 
-import buildcraft.api.BCBlocks;
 import buildcraft.api.recipes.AssemblyRecipe;
 
 import buildcraft.lib.client.guide.parts.GuidePartFactory;
@@ -31,7 +29,8 @@ public enum GuideAssemblyRecipes implements IStackRecipes {
     @Override
     public List<GuidePartFactory> getUsages(@Nonnull ItemStack stack) {
         List<GuidePartFactory> usages = new ArrayList<>();
-        boolean all = stack.getItem() == Item.fromBlock(BCBlocks.Silicon.ASSEMBLY_TABLE);
+        boolean all = net.minecraft.registry.Registries.ITEM.getId(stack.getItem())
+            .equals(new net.minecraft.util.Identifier("buildcraftsilicon", "assembly_table"));
         for (AssemblyRecipe recipe : AssemblyRecipeRegistry.REGISTRY.values()) {
             for (ItemStack output: recipe.getOutputPreviews()) {
                 if (all || recipe.getInputsFor(output).stream().anyMatch((definition) -> definition.ingredient.test(stack))) {

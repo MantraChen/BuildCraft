@@ -1,31 +1,28 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-// STUB(R.Chen): guide image rendering deferred
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.lib.client.guide.parts;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
+import buildcraft.api.core.render.ISprite;
 import buildcraft.lib.client.guide.GuiGuide;
+import buildcraft.lib.gui.GuiIcon;
 
-@Environment(EnvType.CLIENT)
 public class GuideImage extends GuidePart {
-
-    public GuideImage(GuiGuide gui) {
+    private final ISprite sprite;
+    private final int imageWidth, imageHeight;
+    public GuideImage(GuiGuide gui, ISprite sprite, int srcWidth, int srcHeight, int width, int height) {
         super(gui);
+        this.sprite = sprite;
+        imageWidth = width > 0 ? width : srcWidth;
+        imageHeight = height > 0 ? height : srcHeight;
     }
-
-    @Override
-    public PagePosition renderIntoArea(int x, int y, int width, int height, PagePosition current, int index) {
-        return current;
+    @Override public PagePosition renderIntoArea(int x, int y, int width, int height, PagePosition current, int index) {
+        double scale = Math.min(1, Math.min(width / (double) imageWidth, (height - 1.0) / imageHeight));
+        int w = Math.max(1, (int)(imageWidth * scale)), h = Math.max(1, (int)(imageHeight * scale));
+        current = current.guaranteeSpace(h, height);
+        if (current.page == index) GuiIcon.draw(sprite, x, y + current.pixel, x + w, y + current.pixel + h);
+        return current.nextLine(h + 1, height);
     }
-
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public PagePosition handleMouseClick(int x, int y, int width, int height, PagePosition current, int index,
-            int mouseX, int mouseY, int mouseButton) {
-        return null;
+    @Override public PagePosition handleMouseClick(int x, int y, int width, int height, PagePosition current,
+            int index, int mouseX, int mouseY) {
+        return renderIntoArea(x, y, width, height, current, -1);
     }
 }

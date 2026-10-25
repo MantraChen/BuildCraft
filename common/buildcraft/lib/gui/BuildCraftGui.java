@@ -89,7 +89,11 @@ public class BuildCraftGui extends HandledScreen {
     }
 
     // ------------------------------------------------------------------ tick
-    // Note: HandledScreen.tick() is final — BC element ticking happens inside render().
+    @Override
+    protected void handledScreenTick() {
+        super.handledScreenTick();
+        tickElements();
+    }
 
     protected void tickElements() {
         if (currentMenu != null) currentMenu.tick();
@@ -102,10 +106,11 @@ public class BuildCraftGui extends HandledScreen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.lastPartialTicks = delta;
         mouse.setMousePosition(mouseX, mouseY);
-        tickElements();
-        renderBackground(context);
-        super.render(context, mouseX, mouseY, delta);
-        drawMouseoverTooltip(context, mouseX, mouseY);
+        try (GuiDrawContext frame = GuiDrawContext.use(context)) {
+            renderBackground(context);
+            super.render(context, mouseX, mouseY, delta);
+            drawMouseoverTooltip(context, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -115,7 +120,14 @@ public class BuildCraftGui extends HandledScreen {
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        drawElementForegrounds(context, lastPartialTicks);
+        // BC element areas already contain the window offset; HandledScreen adds it before this hook.
+        context.getMatrices().push();
+        try {
+            context.getMatrices().translate(-x, -y, 0);
+            drawElementForegrounds(context, lastPartialTicks);
+        } finally {
+            context.getMatrices().pop();
+        }
     }
 
     public void drawElementBackgrounds(DrawContext context, float partialTicks) {
