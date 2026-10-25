@@ -1,0 +1,41 @@
+# Build the complete mod, then load the actual jar in a real Fabric GameTest world.
+# Remake by FelixMantra.
+$ErrorActionPreference = 'Stop'
+$taskRoot = Split-Path -Parent $PSScriptRoot
+& (Join-Path $PSScriptRoot 'gradle.ps1') remapJar --console=plain
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$artifact = Get-ChildItem -LiteralPath (Join-Path $taskRoot 'build\libs') -Filter 'buildcraft-*.jar' |
+    Where-Object { $_.Name -notmatch '-sources|-dev' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $artifact) { throw 'The complete BuildCraft jar was not produced.' }
+$verification = Join-Path $taskRoot 'verification'
+New-Item -ItemType Directory -Path $verification -Force | Out-Null
+Copy-Item -LiteralPath $artifact.FullName -Destination (Join-Path $verification 'buildcraft-under-test.jar') -Force
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$nestedDirectory = Join-Path $verification 'full-test-libs'
+New-Item -ItemType Directory -Path $nestedDirectory -Force | Out-Null
+$packedJar = [IO.Compression.ZipFile]::OpenRead($artifact.FullName)
+try {
+    foreach ($entry in $packedJar.Entries) {
+        if ($entry.FullName -like 'META-INF/jars/*.jar') {
+            $destination = Join-Path $nestedDirectory ([IO.Path]::GetFileName($entry.FullName))
+            [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destination, $true)
+        }
+    }
+} finally { $packedJar.Dispose() }
+$testConfigDirectory = Join-Path $verification 'full-gametest-run\config\buildcraft'
+New-Item -ItemType Directory -Path $testConfigDirectory -Force | Out-Null
+$testConfigFile = Join-Path $testConfigDirectory 'main.cfg'
+if (-not (Test-Path -LiteralPath $testConfigFile)) {
+    @'
+general {
+    B:"enableMjDynamo"=true
+    B:"enableRfEngine"=true
+}
+'@ | Set-Content -LiteralPath $testConfigFile -Encoding utf8
+} else {
+    $testConfig = Get-Content -LiteralPath $testConfigFile -Raw
+    $testConfig = $testConfig -replace '(B:"enable(?:MjDynamo|RfEngine)"=)false', '${1}true'
+    Set-Content -LiteralPath $testConfigFile -Value $testConfig -Encoding utf8
+}
+& (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runGameTest --console=plain
+exit $LASTEXITCODE

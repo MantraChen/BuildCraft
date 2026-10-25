@@ -11,9 +11,10 @@ From the repository root on Windows:
 
 The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not create a
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
-compilation or startup; the root `build` and real client/server checks remain required.
+compilation or startup; the root `remapJar`, full-mod fixture and real client checks
+cover those separately.
 
-Current coverage: 140 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 148 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
 resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
 policy, persistent configuration (legacy files, reloads, migrations, defaults and bounds),
@@ -38,6 +39,10 @@ after all common initializers (including Fabric's ingredient serializers) have c
 Five snapshot regressions cover template/blueprint NBT and stable hashes, copy isolation,
 rotated coordinate transforms, false-valued plane edits, bounded dimensions/facing/data,
 legacy blueprint lists and invalid palette indices.
+
+Eight further regressions cover Dynamo energy conversion, per-tick quotas and nested
+transaction rollback; snapshot response framing, NBT payloads and content hashes;
+and dimension-aware zone-map serialization including negative/zero heights.
 
 For the regression tests followed by 69 tests in a real Minecraft world:
 

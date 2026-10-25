@@ -9,9 +9,9 @@ The original 60 migration commits are ancestors of `main`, with their original h
 authors and dates. `archive/pr-4754` preserves the exact imported revision
 `2051fb41455312a2e6c5ffeb972c6639e2a32bb9`.
 
-**Status: incomplete experimental port.** The imported source contains unfinished
-registration, rendering, networking and machine implementations. A successful partial
-compilation does not imply a working mod. See [the migration assessment](docs/MIGRATION_STATUS.md)
+**Status: incomplete experimental port.** The complete production source compiles and
+the packaged mod starts a Fabric GameTest world. Rendering, transport and machine
+integration still need work and gameplay validation. See [the migration assessment](docs/MIGRATION_STATUS.md)
 and [the history/contributions record](docs/HISTORY.md).
 
 ## Development
@@ -21,17 +21,24 @@ Use JDK 17 and the checked-in Gradle wrapper. Initialize submodules before build
 ```sh
 git clone --recurse-submodules https://github.com/MantraChen/BuildCraft-Fabric.git
 cd BuildCraft-Fabric
-./gradlew build
+./gradlew remapJar
 ```
 
-On Windows, use `./gradlew.bat`, or `./scripts/gradle.ps1 build` to discover a JDK 17
+On Windows, use `./gradlew.bat`, or `./scripts/gradle.ps1 remapJar` to discover a JDK 17
 extracted under `.tools/` and Git installed in its standard Windows location.
 The helper changes environment variables only for its own invocation.
-`./gradlew compileLibLeaf` checks only the selected
-migrated subset; `./gradlew :sub_projects:expression:test` checks the expression library.
-The target is Minecraft 1.20.1, Yarn mappings and Fabric Loader/API. Full build and
-gameplay validation are still being restored; these commands describe the development
-workflow, not a claim that the imported build passes.
+`./gradlew compileLibLeaf` is now an alias for the complete `compileJava` task;
+`./gradlew :sub_projects:expression:test` checks the expression library.
+The target is Minecraft 1.20.1, Yarn mappings and Fabric Loader/API. The distributable
+is written to `build/libs/` and includes the expression and energy libraries.
+The historical root Forge tests are not yet migrated, so root `build` is not the
+supported validation entrypoint. Use the fixtures below.
+
+`./scripts/full-smoke.ps1` builds the complete jar and loads that exact artifact in a
+separate Fabric GameTest project. It verifies the registered block entities, native
+tank placement and transactional MJ Dynamo output. See [the full-mod fixture](sub_projects/full-tests/README.md).
+Use `./gradlew runClient` for a development client. Finish compilation before starting
+manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 
 Focused regression tests run with
 `./scripts/gradle.ps1 -p sub_projects/port-tests runServer --console=plain` on Windows,

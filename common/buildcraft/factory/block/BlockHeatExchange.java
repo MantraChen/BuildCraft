@@ -60,6 +60,7 @@ public class BlockHeatExchange extends BlockBCTile_Neptune implements ICustomPip
 
     @Override
     protected void appendProperties(StateManager.Builder<net.minecraft.block.Block, BlockState> builder) {
+        super.appendProperties(builder);
         builder.add(PROP_PART, PROP_CONNECTED_Y, PROP_CONNECTED_LEFT, PROP_CONNECTED_RIGHT);
     }
 

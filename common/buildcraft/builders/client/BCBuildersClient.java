@@ -33,8 +33,13 @@ public final class BCBuildersClient {
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (previousWorld != client.world) { ClientArchitectTables.clear(); previousWorld = client.world; }
             ClientArchitectTables.tick();
+            buildcraft.builders.snapshot.ClientSnapshots.INSTANCE.onClientTick();
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientArchitectTables.clear());
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.INIT.register(
+            (handler, client) -> buildcraft.builders.snapshot.ClientSnapshots.INSTANCE.clear());
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register(
+            (handler, client) -> buildcraft.builders.snapshot.ClientSnapshots.INSTANCE.clear());
         if (BCBuildersItems.snapshot != null) ModelPredicateProviderRegistry.register(BCBuildersItems.snapshot, new Identifier("buildcraftbuilders", "snapshot_type"),
             (stack, world, entity, seed) -> ItemSnapshot.EnumItemSnapshotType.getFromStack(stack).ordinal());
         HandledScreens.<ContainerBC_Neptune, GuiFiller>register(BCBuildersScreens.FILLER,

@@ -46,12 +46,29 @@ import buildcraft.BuildCraftFabric;
  * Typed Fabric receivers run on the game thread and use NetworkRouting for access checks.
  */
 public final class BCNetworkManager {
+    private static final java.util.Map<ServerPlayerEntity, Long> SNAPSHOT_REQUESTS = new java.util.WeakHashMap<>();
 
     private BCNetworkManager() {}
 
     /** Call from a {@code ModInitializer.onInitialize()} (common side). */
     public static void registerCommon() {
         BuildCraftFabric.LOGGER.info("[BCNetwork] Registering common packet receivers");
+        ServerPlayNetworking.registerGlobalReceiver(buildcraft.builders.snapshot.MessageSnapshotRequest.TYPE,
+            (packet, player, sender) -> handle(() -> {
+                long now = System.nanoTime();
+                Long last = SNAPSHOT_REQUESTS.get(player);
+                if (last == null || now - last >= 250_000_000L) {
+                    SNAPSHOT_REQUESTS.put(player, now);
+                    sender.sendPacket(packet.response(player));
+                }
+            }, player.networkHandler::disconnect));
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(
+            server -> buildcraft.robotics.zone.ZonePlannerMapDataServer.INSTANCE.clear());
+        ServerPlayNetworking.registerGlobalReceiver(buildcraft.robotics.zone.MessageZoneMapRequest.TYPE,
+            (packet, player, sender) -> handle(() -> {
+                var response = packet.response(player);
+                if (response != null) sender.sendPacket(response);
+            }, player.networkHandler::disconnect));
         ServerPlayNetworking.registerGlobalReceiver(MessageDebugRequest.TYPE, (packet, player, sender) ->
             handle(() -> sender.sendPacket(NetworkRouting.debugResponse(packet, player,
                 buildcraft.lib.item.ItemDebugger.isShowDebugInfo(player))), player.networkHandler::disconnect));
@@ -67,31 +84,9 @@ public final class BCNetworkManager {
                 player.networkHandler::disconnect));
     }
 
-    /** Call from a {@code ClientModInitializer.onInitializeClient()}. */
     @Environment(EnvType.CLIENT)
-    public static void registerClient() {
-        BuildCraftFabric.LOGGER.info("[BCNetwork] Registering client packet receivers");
-        ClientPlayNetworking.registerGlobalReceiver(MessageDebugResponse.TYPE, (packet, player, sender) ->
-            buildcraft.lib.debug.ClientDebuggables.accept(packet));
-
-        ClientPlayNetworking.registerGlobalReceiver(MessageUpdateTile.TYPE, (packet, player, sender) ->
-            handle(() -> NetworkRouting.receiveTile(packet, new NetworkContext(player, sender::sendPacket)),
-                player.networkHandler.getConnection()::disconnect));
-        ClientPlayNetworking.registerGlobalReceiver(MessageContainer.TYPE, (packet, player, sender) ->
-            handle(() -> NetworkRouting.receiveContainer(packet, new NetworkContext(player, sender::sendPacket)),
-                player.networkHandler.getConnection()::disconnect));
-        ClientPlayNetworking.registerGlobalReceiver(buildcraft.lib.net.cache.MessageObjectCacheResponse.TYPE,
-            (packet, player, sender) -> handle(packet::apply, player.networkHandler.getConnection()::disconnect));
-        ClientPlayNetworking.registerGlobalReceiver(MessageMarker.TYPE, (packet, player, sender) -> handle(() -> {
-            if (!player.getWorld().getRegistryKey().getValue().equals(packet.dimension)) return;
-            if (packet.cacheId >= buildcraft.lib.marker.MarkerCache.CACHES.size()) {
-                throw new IllegalArgumentException("Unknown marker cache: " + packet.cacheId);
-            }
-            buildcraft.lib.marker.MarkerCache.CACHES.get(packet.cacheId).getSubCache(player.getWorld()).handleMessageMain(packet);
-        }, player.networkHandler.getConnection()::disconnect));
-    }
-
-    private static void handle(PacketAction action, Consumer<net.minecraft.text.Text> disconnect) {
+    public static void registerClient() { BCClientNetworkManager.registerClient(); }
+    static void handle(PacketAction action, Consumer<net.minecraft.text.Text> disconnect) {
         try {
             action.run();
         } catch (java.io.IOException | RuntimeException exception) {
@@ -101,7 +96,7 @@ public final class BCNetworkManager {
     }
 
     @FunctionalInterface
-    private interface PacketAction { void run() throws java.io.IOException; }
+    interface PacketAction { void run() throws java.io.IOException; }
 
     // -----------------------------------------------------------------------
     // Send helpers (kept close to legacy MessageManager signatures)

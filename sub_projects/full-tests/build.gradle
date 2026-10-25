@@ -1,0 +1,27 @@
+plugins { id 'fabric-loom' version '1.10.5' }
+version = '1.0.0'
+group = 'buildcraft.tests'
+repositories { mavenCentral() }
+dependencies {
+    minecraft 'com.mojang:minecraft:1.20.1'
+    mappings 'net.fabricmc:yarn:1.20.1+build.10:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.15.11'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.2+1.20.1'
+    // This is the complete remapped distributable, copied by scripts/full-smoke.ps1.
+    modImplementation files('../../verification/buildcraft-under-test.jar')
+    // Loom strips nested jars while remapping a development dependency. Use the
+    // dependencies extracted from that exact artifact, not project/source substitutes.
+    modImplementation fileTree(dir: '../../verification/full-test-libs', include: '*.jar')
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+loom {
+    runs {
+        gameTest {
+            server()
+            runDir '../../verification/full-gametest-run'
+            vmArg '-Dfabric-api.gametest'
+            vmArg '-Dfabric-api.gametest.report-file=../full-gametest-results.xml'
+        }
+    }
+}

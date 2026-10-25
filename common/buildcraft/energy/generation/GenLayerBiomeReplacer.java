@@ -44,7 +44,6 @@ public abstract class GenLayerBiomeReplacer extends GenLayer {
         final int[] outputBiomeIDs = IntCache.getIntCache(width * length);
         for (int xIter = 0; xIter < width; ++xIter) {
             for (int zIter = 0; zIter < length; ++zIter) {
-                initChunkSeed(xIter + x, zIter + z);
                 int currentBiomeId = inputBiomeIDs[xIter + 1 + (zIter + 1) * (width + 2)];
                 if (canReplaceBiome(currentBiomeId) && SimplexNoise.noise((xIter + x + xOffset) * noiseScale,
                     (zIter + z + zOffset) * noiseScale) > noiseThreshold) {

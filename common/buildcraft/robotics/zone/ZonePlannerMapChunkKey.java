@@ -1,60 +1,35 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.robotics.zone;
 
-import java.util.Arrays;
-
-import io.netty.buffer.ByteBuf;
-
+import java.util.Objects;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
 
-public class ZonePlannerMapChunkKey {
+/** A level is an absolute upper Y slice, including negative levels in modern worlds. */
+public final class ZonePlannerMapChunkKey {
     public static final int LEVEL_HEIGHT = 32;
-
     public final ChunkPos chunkPos;
-    public final int dimensionalId;
+    public final Identifier dimension;
     public final int level;
-    private final int hash;
-
-    public ZonePlannerMapChunkKey(ChunkPos chunkPos, int dimensionalId, int level) {
-        this.chunkPos = chunkPos;
-        this.dimensionalId = dimensionalId;
+    public ZonePlannerMapChunkKey(ChunkPos chunkPos, Identifier dimension, int level) {
+        if (Math.abs((long) chunkPos.x) > 1_875_000 || Math.abs((long) chunkPos.z) > 1_875_000
+            || level < -64 || level > 64) throw new IllegalArgumentException("Map key out of range");
+        this.chunkPos = Objects.requireNonNull(chunkPos);
+        this.dimension = Objects.requireNonNull(dimension);
         this.level = level;
-        hash = Arrays.hashCode(new int[] { chunkPos.x, chunkPos.z, dimensionalId, level });
     }
-
-    public ZonePlannerMapChunkKey(ByteBuf buf) {
-        chunkPos = new ChunkPos(buf.readInt(), buf.readInt());
-        dimensionalId = buf.readInt();
-        level = buf.readInt();
-        hash = Arrays.hashCode(new int[] { chunkPos.x, chunkPos.z, dimensionalId, level });
+    public ZonePlannerMapChunkKey(PacketByteBuf buf) {
+        this(buf.readChunkPos(), buf.readIdentifier(), buf.readVarInt());
     }
-
-    public void toBytes(ByteBuf buf) {
-        buf.writeInt(chunkPos.x);
-        buf.writeInt(chunkPos.z);
-        buf.writeInt(dimensionalId);
-        buf.writeInt(level);
+    public void write(PacketByteBuf buf) {
+        buf.writeChunkPos(chunkPos);
+        buf.writeIdentifier(dimension);
+        buf.writeVarInt(level);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) return true;
-        if (o == null) return false;
-        if (o.getClass() != getClass()) return false;
-        ZonePlannerMapChunkKey other = (ZonePlannerMapChunkKey) o;
-        if (dimensionalId != other.dimensionalId) return false;
-        if (level != other.level) return false;
-        return chunkPos.x == other.chunkPos.x && chunkPos.z == other.chunkPos.z;
-
+    @Override public boolean equals(Object obj) {
+        return obj instanceof ZonePlannerMapChunkKey other && chunkPos.equals(other.chunkPos)
+            && dimension.equals(other.dimension) && level == other.level;
     }
-
-    @Override
-    public int hashCode() {
-        return hash;
-    }
+    @Override public int hashCode() { return Objects.hash(chunkPos, dimension, level); }
 }

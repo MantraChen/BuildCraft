@@ -1,0 +1,5 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "particle": "buildcraftfactory:blocks/heat_exchange/sprite_a" },
+  "elements": []
+}

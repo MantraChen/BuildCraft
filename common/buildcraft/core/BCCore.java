@@ -63,7 +63,7 @@ public class BCCore {
         BCCoreBlocks.preInit();
         BCCoreItems.preInit();
         BCCoreStatements.preInit();
-        BCCoreRecipes.fmlPreInit();
+        // Recipes are supplied by the Fabric data pack; there is no Forge recipe pre-init phase.
 
         BCCoreProxy.getProxy().fmlPreInit();
 

@@ -1,42 +1,41 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.builders.snapshot;
 
-import io.netty.buffer.ByteBuf;
+import java.util.Arrays;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import buildcraft.builders.item.ItemSnapshot;
+import buildcraft.lib.misc.HashUtil;
 
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.fabricmc.api.EnvType;
-
-import buildcraft.lib.net.PacketBufferBC;
-
-public class MessageSnapshotRequest implements IMessage {
-    private Snapshot.Key key;
-
-    @SuppressWarnings("unused")
-    public MessageSnapshotRequest() {
-    }
-
+public final class MessageSnapshotRequest implements FabricPacket {
+    public static final PacketType<MessageSnapshotRequest> TYPE = PacketType.create(
+        new Identifier("buildcraftbuilders", "snapshot_request"), MessageSnapshotRequest::new);
+    public final Snapshot.Key key;
     public MessageSnapshotRequest(Snapshot.Key key) {
-        this.key = key;
+        if (key.hash.length != HashUtil.DIGEST_LENGTH) throw new IllegalArgumentException("Invalid snapshot hash");
+        this.key = new Snapshot.Key(new Snapshot.Key(), key.hash.clone());
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void toBytes(ByteBuf buf) {
-        key.writeToByteBuf(new PacketBufferBC(buf));
+    private MessageSnapshotRequest(PacketByteBuf buffer) {
+        this(new Snapshot.Key(new Snapshot.Key(), buffer.readByteArray(HashUtil.DIGEST_LENGTH)));
+        if (buffer.isReadable()) throw new IllegalArgumentException("Trailing snapshot request data");
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void fromBytes(ByteBuf buf) {
-        key = new Snapshot.Key(new PacketBufferBC(buf));
+    @Override public PacketType<MessageSnapshotRequest> getType() { return TYPE; }
+    @Override public void write(PacketByteBuf buffer) { buffer.writeByteArray(key.hash); }
+    private boolean matches(ItemStack stack) {
+        var header = stack.getItem() instanceof ItemSnapshot item ? item.getHeader(stack) : null;
+        return header != null && Arrays.equals(header.key.hash, key.hash);
     }
-
-    public static final IMessageHandler<MessageSnapshotRequest, MessageSnapshotResponse> HANDLER = (message, ctx) -> {
-        Snapshot snapshot = GlobalSavedDataSnapshots.get(buildcraft.lib.tile.TileBC_Neptune.NetSide.SERVER).getSnapshot(message.key);
-        return snapshot != null ? new MessageSnapshotResponse(snapshot) : null;
-    };
+    public MessageSnapshotResponse response(ServerPlayerEntity player) {
+        // Only expose blueprints the player actually holds or is viewing in an accessible screen.
+        boolean authorized = false;
+        for (int i = 0; i < player.getInventory().size(); i++) authorized |= matches(player.getInventory().getStack(i));
+        if (!authorized && player.currentScreenHandler.canUse(player))
+            authorized = player.currentScreenHandler.slots.stream().anyMatch(slot -> matches(slot.getStack()));
+        return MessageSnapshotResponse.of(key, authorized
+            ? GlobalSavedDataSnapshots.get(player.getWorld()).getSnapshot(key) : null);
+    }
 }

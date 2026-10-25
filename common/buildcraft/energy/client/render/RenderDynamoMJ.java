@@ -1,47 +1,19 @@
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.energy.client.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.util.profiler.Profiler;
-
-import net.minecraftforge.client.model.animation.FastTESR;
-
-import buildcraft.lib.client.model.MutableQuad;
-
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.screen.PlayerScreenHandler;
 import buildcraft.energy.BCEnergyModels;
 import buildcraft.energy.tile.TileDynamoMJ;
 
-public class RenderDynamoMJ extends FastTESR<TileDynamoMJ> {
+public final class RenderDynamoMJ implements BlockEntityRenderer<TileDynamoMJ> {
     public static final RenderDynamoMJ INSTANCE = new RenderDynamoMJ();
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void renderTileEntityFast(
-        TileDynamoMJ engine, double x, double y, double z, float partialTicks, int destroyStage, float partial,
-        BufferBuilder vb
-    ) {
-        Profiler profiler = MinecraftClient.getInstance().getProfiler();
-        profiler.push("bc");
-        profiler.push("engine");
-
-        profiler.push("compute");
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: vb.setTranslation(x, y, z);
-        MutableQuad[] quads = BCEnergyModels.getMjDynamoQuads(engine, partialTicks);
-        profiler.swap("render");
-        MutableQuad copy = new MutableQuad(0, null);
-        int lightc = buildcraft.lib.compat.WorldCompat.getCombinedLight(engine.getWorld(), engine.getPos(), 0);
-        int light_block = (lightc >> 4) & 15;
-        int light_sky = (lightc >> 20) & 15;
-        for (MutableQuad q : quads) {
-            copy.copyFrom(q);
-            copy.maxLighti(light_block, light_sky);
-            copy.multShade();
-            copy.render(vb);
-        }
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: vb.setTranslation(0, 0, 0);
-
-        profiler.pop();
-        profiler.pop();
-        profiler.pop();
+    @Override public void render(TileDynamoMJ tile, float delta, MatrixStack matrices,
+            VertexConsumerProvider consumers, int light, int overlay) {
+        var buffer = consumers.getBuffer(RenderLayer.getEntityCutout(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+        for (var quad : BCEnergyModels.getMjDynamoQuads(tile, delta)) quad.render(buffer, matrices.peek(), light, overlay);
     }
-
 }

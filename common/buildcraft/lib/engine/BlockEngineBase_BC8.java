@@ -123,6 +123,12 @@ public abstract class BlockEngineBase_BC8<E extends Enum<E> & IEngineType> exten
 
     // Misc Block Overrides
 
+    @Override
+    public int getOpacity(BlockState state, BlockView world, BlockPos pos) {
+        // The animated piston occupies only part of the block; sample light inside it.
+        return 0;
+    }
+
     // @Override -- removed: method does not exist in Fabric 1.20.1
     public boolean isOpaqueCube(BlockState state) {
         return false;

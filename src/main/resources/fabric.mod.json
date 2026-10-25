@@ -29,6 +29,7 @@
       "buildcraft.lib.BCLibInitializer",
       "buildcraft.core.BCCoreInitializer",
       "buildcraft.energy.BCEnergyInitializer",
+      "buildcraft.transport.BCTransportInitializer",
       "buildcraft.factory.BCFactoryInitializer",
       "buildcraft.silicon.BCSiliconInitializer",
       "buildcraft.builders.BCBuildersInitializer"

@@ -3,7 +3,6 @@
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
  */
-// STUB(R.Chen): BlockDynamoMJ deferred
 package buildcraft.energy.blocks;
 
 import net.minecraft.block.AbstractBlock;
@@ -20,7 +19,7 @@ import buildcraft.lib.block.BlockBCTile_Neptune;
 
 import buildcraft.energy.tile.TileDynamoMJ;
 
-public class BlockDynamoMJ extends BlockBCTile_Neptune implements ICustomRotationHandler {
+public class BlockDynamoMJ extends BlockBCTile_Neptune implements buildcraft.lib.block.IBlockWithFacing {
 
     public BlockDynamoMJ(AbstractBlock.Settings settings, String id) {
         super(settings, id);
@@ -31,8 +30,10 @@ public class BlockDynamoMJ extends BlockBCTile_Neptune implements ICustomRotatio
         return buildcraft.lib.registry.BlockEntityRegistry.create(TileDynamoMJ.class, pos, state);
     }
 
+    @Override public boolean canFaceVertically() { return true; }
+
     @Override
-    public ActionResult attemptRotation(World world, BlockPos pos, BlockState state, Direction side) {
-        return ActionResult.PASS;
+    public int getOpacity(BlockState state, net.minecraft.world.BlockView world, BlockPos pos) {
+        return 0;
     }
 }

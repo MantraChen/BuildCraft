@@ -33,10 +33,15 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
     );
 
     public ContainerFillerPlanner(PlayerEntity player) {
-        super(player);
+        this(player, 0);
+    }
+
+    public ContainerFillerPlanner(PlayerEntity player, int syncId) {
+        super(player, syncId);
         Pair<VolumeBox, EnumAddonSlot> selectingVolumeBoxAndSlot = EnumAddonSlot.getSelectingVolumeBoxAndSlot(
             player,
-            BCCoreProxy.getProxy().getVolumeBoxes(player.getWorld())
+            player.getWorld().isClient ? buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.volumeBoxes
+                : WorldSavedDataVolumeBoxes.get(player.getWorld()).volumeBoxes
         );
         addon = Optional.ofNullable(selectingVolumeBoxAndSlot.getLeft())
             .map(volumeBox -> volumeBox.addons.get(selectingVolumeBoxAndSlot.getRight()))
@@ -84,9 +89,15 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
         IContainerFilling.super.readMessage(id, buffer, isClient, ctx);
     }
 
-    @SuppressWarnings("NullableProblems")
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public boolean canInteractWith(PlayerEntity player) {
-        return true;
+    @Override
+    public boolean canUse(PlayerEntity player) {
+        VolumeBox volume = addon.volumeBox;
+        if (player.getWorld() != volume.world || player.isSpectator() || !volume.addons.containsValue(addon)
+            || volume.isEditing() && !volume.isEditingBy(player)) return false;
+        var bounds = addon.getBoundingBox();
+        var center = bounds.getCenter();
+        var pos = net.minecraft.util.math.BlockPos.ofFloored(center);
+        return player.squaredDistanceTo(center) <= 64 && player.getWorld().isChunkLoaded(pos)
+            && player.getWorld().canPlayerModifyAt(player, pos);
     }
 }

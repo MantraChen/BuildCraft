@@ -33,7 +33,7 @@ public class LedgerDynamoMJ extends Ledger_Neptune {
         this.title = "gui.power";
 
         appendText(LocaleUtil.localize("gui.currentOutput") + ":", SUB_HEADER_COLOUR).setDropShadow(true);
-        appendText(() -> LocaleUtil.localizeRfFlow(engine.getCurrentOutput()), TEXT_COLOUR);
+        appendText(() -> LocaleUtil.localizeRfFlow(Math.toIntExact(engine.getCurrentOutput())), TEXT_COLOUR);
         appendText(LocaleUtil.localize("gui.stored") + ":", SUB_HEADER_COLOUR).setDropShadow(true);
         appendText(() -> LocaleUtil.localizeMj(engine.getMjStored()), TEXT_COLOUR);
         appendText(LocaleUtil.localize("gui.heat") + ":", SUB_HEADER_COLOUR).setDropShadow(true);

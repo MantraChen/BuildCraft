@@ -133,9 +133,9 @@ public enum ZonePlannerMapRenderer {
                     drawBlockCuboid(
                             builder,
                             key.chunkPos.getStartX() + x,
-                            data.getY(),
+                            data.posY,
                             key.chunkPos.getStartZ() + z,
-                            data.getY()
+                            data.posY
                     );
                 }
             }

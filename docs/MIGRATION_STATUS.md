@@ -57,21 +57,36 @@ features explicitly as work proceeds.
   SHA-256, and launched successfully on Windows with JDK 17.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
-- Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 22 errors**. No full BuildCraft client or dedicated-server
-  startup has been claimed.
-- Fabric regression fixture: **140 tests passed**, zero failures/ignored tests. This
+- Full `compileJava`: the imported source produced **357 errors**; the complete
+  production tree now **compiles successfully**. The selected `libLeaf` source set
+  has been removed and its task is a compatibility alias for full compilation.
+- Fabric regression fixture: **148 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **69 world tests passed** after 140 regression tests.
+- Headless Fabric GameTest: **69 world tests passed** after 148 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
-- Runtime packaging configuration now includes the expression library and Team Reborn
-  Energy; final packaged-jar validation remains blocked on full compilation.
+- `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
+  A separate fixture loads the actual remapped artifact and its bundled dependencies;
+  **4 full-mod GameTests pass**. All **839 non-null registered block-entity states**
+  construct with compatible types and round-trip NBT. Native tank placement/ticks and
+  optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
+  pass in a real headless Minecraft world. Animated engines also retain non-opaque
+  native states so they do not block their own skylight. This does not establish complete machine
+  behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
+  Root `build` still includes historical Forge tests that need migration.
+- Full development client: created and entered a local creative superflat world,
+  ran `/buildcraft version` (including `Remake by FelixMantra`), placed a tank and
+  Stirling engine, opened its native screen, and saved/exited cleanly. A fresh client
+  reloaded that world. Newly placed engines show their base/piston textures after the
+  native opacity fix; a block saved with the previous opaque settings retained its old
+  light cache until removed. Startup still
+  reports legacy resource paths/formats, missing models and unavailable guide links;
+  this is not a clean-resource or complete-playability result.
 - Client model/GUI fixture: **32 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
-  All five engine variants bake across every power stage and facing; referenced textures
+  All six engine/dynamo variants bake across every power stage and facing; referenced textures
   exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
   reload invalidation, signed packed normals, matrix transforms and overlay/light output.
   These tests do not establish that a complete client can start or display the models.
@@ -79,6 +94,26 @@ features explicitly as work proceeds.
   templates and gas geometry anchored to the top of a block.
 
 ## Repair progress
+
+- Restored the missing common transport entrypoint and native pipe-holder block/entity
+  registration. Pipe pluggable render methods are client-only, including their API base
+  declaration, so dedicated servers can load the common pipe definitions. Full pipe
+  item registration, placement and transport behavior still require integration.
+- Separated client packet callbacks from common network initialization. Removed source
+  classes shadowing Minecraft's native `Chunk` and LWJGL's `BufferUtils`; the latter
+  prevented a real client from initializing LWJGL 3.
+- Added the native MJ Dynamo energy bridge with exact MJ conversion, per-tick output
+  allowance, nested transaction rollback, directional output, upgrade inventory,
+  persistence, native screen and animated model. It remains optional and disabled by
+  default. The separate RF engine is still incomplete.
+- Restored native snapshot request/response packets with ownership checks, bounded
+  payloads, content-hash verification and bounded client caches. Zone-map packets now
+  carry dimension identifiers, preserve negative/zero heights, reject unloaded or
+  out-of-range requests and limit request/cache growth. Their preview/planner GUI
+  integration remains unfinished.
+- Heat-exchanger models now use a native baked-model wrapper with a reload-aware state
+  cache. The auto-workbench recipe preview uses the real crafting recipe manager.
+  Heat-exchanger multiblock operation and actual auto-workbench crafting are still open.
 
 - The laser path now emits native vertex consumers with real original texture rows,
   atlas-backed marker/power/stripe types, sampled light and world-to-local coordinates.
@@ -359,12 +394,13 @@ features explicitly as work proceeds.
   Three Fabric tests cover stack literals, embedded SNBT commas, invalid IDs/counts
   and damageable-item NBT. The original guide assets still need an in-game content audit
   (including legacy engine metadata and untranslated strings). Full guide resource
-  reload, GPU rendering, live input and actual machine screens remain unverified until
-  the complete mod builds and launches; compiling the restored guide is not startup validation.
+  reload, GPU rendering and live guide input remain unverified. The Stirling engine
+  screen has now been opened in the full client; other screens still need validation.
 
-Remaining work includes full compilation, transport/item and machine-screen registration, network
-debug/robotics messages, renderers, fluid/energy integration, full quarry operation, packaged
-dependencies, and actual client/server/world validation. The working fixture does not
-establish that any machine is ready for a survival world.
+Remaining work includes legacy resource/model/recipe migration, transport items and
+placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
+integration, full quarry operation, and broader connected-client/save-reload gameplay
+validation. Compile/package/startup success does not establish that every machine is
+ready for a survival world.
 
 Remake by FelixMantra.

@@ -44,8 +44,11 @@ public class BCEnergyInitializer implements ModInitializer {
         BCEnergyBlocks.preInit();
         BCEnergyItems.preInit();
         BCEnergyScreens.register();
+        if (BCEnergyBlocks.mjDynamo != null) team.reborn.energy.api.EnergyStorage.SIDED.registerForBlockEntity(
+            (tile, side) -> side == tile.facing() ? tile.energyStorage : null,
+            buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.energy.tile.TileDynamoMJ.class));
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
-        // Remaining native screens: ENGINE_RF and DYNAMO_MJ.
+        // Remaining native screen: ENGINE_RF.
         // Client model/sprite/render registration is owned by BCLibClientInitializer.
         // STUB(R.Chen): EnergyStorage.SIDED.registerForBlockEntityType(
         //               (be, side) -> be.rfEnergyStorage, ENGINE_RF_TYPE, null)

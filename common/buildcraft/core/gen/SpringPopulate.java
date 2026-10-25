@@ -16,7 +16,6 @@ import net.minecraft.world.World;
 
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.terraingen.TerrainGen;
-import net.minecraftforge.fml.common.eventhandler.Event.Result;
 // STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
 
 import buildcraft.api.enums.EnumSpring;
@@ -36,7 +35,6 @@ public class SpringPopulate {
         boolean doGen = TerrainGen.populate(event.getGen(), world, rand, chunkX, chunkZ, event.isHasVillageGenerated(), PopulateChunkEvent.Populate.EventType.CUSTOM);
 
         if (!doGen || !EnumSpring.WATER.canGen) {
-            event.setResult(Result.ALLOW);
             return;
         }
 
@@ -48,9 +46,8 @@ public class SpringPopulate {
     }
 
     private static void doPopulate(World world, Random random, int x, int z) {
-        int dimId = System.identityHashCode(world);
         // No water springs will generate in the Nether or End.
-        if (dimId == -1 || dimId == 1) {
+        if (world.getRegistryKey() != World.OVERWORLD || BCCoreBlocks.spring == null) {
             return;
         }
 
@@ -62,7 +59,7 @@ public class SpringPopulate {
         int posX = x + random.nextInt(16);
         int posZ = z + random.nextInt(16);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = world.getBottomY(); i < world.getBottomY() + 5; i++) {
             BlockPos pos = new BlockPos(posX, i, posZ);
             Block candidate = world.getBlockState(pos).getBlock();
 
@@ -71,14 +68,14 @@ public class SpringPopulate {
             }
 
             // Handle flat bedrock maps
-            int y = i > 0 ? i : i - 1;
+            int y = i;
 
             BlockState springState = BCCoreBlocks.spring.getDefaultState();
             springState = springState.with(BuildCraftProperties.SPRING_TYPE, EnumSpring.WATER);
 
             world.setBlockState(new BlockPos(posX, y, posZ), springState);
 
-            for (int j = y + 2; j < world.getHeight(); j++) {
+            for (int j = y + 2; j < world.getTopY(); j++) {
                 if (world.isAir(new BlockPos(posX, j, posZ))) {
                     break;
                 } else {

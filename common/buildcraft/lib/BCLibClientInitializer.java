@@ -84,6 +84,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
         });
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
+            buildcraft.robotics.zone.ZonePlannerMapDataClient.INSTANCE.clear();
             buildcraft.lib.debug.ClientDebuggables.clear();
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
             buildcraft.lib.marker.MarkerCache.clearClient();
@@ -92,6 +93,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
             buildcraft.lib.client.guide.GuideManager.INSTANCE.reload();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            buildcraft.robotics.zone.ZonePlannerMapDataClient.INSTANCE.clear();
             buildcraft.lib.debug.ClientDebuggables.clear();
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
             buildcraft.lib.marker.MarkerCache.clearClient();
@@ -100,6 +102,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
         // Forge: ClientTickEvent (Phase.END)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (previousMarkerWorld != client.world) {
+                buildcraft.robotics.zone.ZonePlannerMapDataClient.INSTANCE.clear();
                 if (previousMarkerWorld != null) buildcraft.lib.marker.MarkerCache.onWorldUnload(previousMarkerWorld);
                 previousMarkerWorld = client.world;
             }
@@ -115,9 +118,11 @@ public class BCLibClientInitializer implements ClientModInitializer {
 
         buildcraft.core.BCCoreModels.fmlPreInit();
         buildcraft.energy.BCEnergyModels.fmlPreInit();
+        buildcraft.factory.BCFactoryModels.fmlPreInit();
         buildcraft.energy.BCEnergySprites.fmlPreInit();
         buildcraft.core.BCCoreModels.fmlInit();
         buildcraft.energy.BCEnergyModels.fmlInit();
+        buildcraft.factory.BCFactoryModels.fmlInit();
         buildcraft.energy.client.gui.BCEnergyClientScreens.register();
         buildcraft.factory.client.BCFactoryClient.register();
         buildcraft.builders.client.BCBuildersClient.register();

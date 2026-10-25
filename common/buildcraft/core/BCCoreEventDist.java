@@ -24,7 +24,7 @@ public enum BCCoreEventDist {
 
     // @SubscribeEvent — TODO(R.Chen): port to Fabric event
     public void onWorldTick(TickEvent.WorldTickEvent event) {
-        if (event.getWorld() != null && !event.getWorld().isClient && event.getWorld().getMinecraftServer() != null) {
+        if (event.getWorld() instanceof net.minecraft.server.world.ServerWorld) {
             WorldSavedDataVolumeBoxes.get(event.getWorld()).tick();
         }
     }

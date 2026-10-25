@@ -21,6 +21,7 @@ public final class BCEnergyScreens {
     }
     public static final ScreenHandlerType<ContainerBC_Neptune> STONE = type(TileEngineStone_BC8.class, ContainerEngineStone_BC8::new);
     public static final ScreenHandlerType<ContainerBC_Neptune> IRON = type(TileEngineIron_BC8.class, ContainerEngineIron_BC8::new);
+    public static final ScreenHandlerType<ContainerBC_Neptune> DYNAMO = type(TileDynamoMJ.class, ContainerDynamoMJ::new);
     private static <T extends TileBC_Neptune> ScreenHandlerType<ContainerBC_Neptune> type(Class<T> tileClass, Factory<T> factory) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, data) -> {
             BlockPos pos = data.readBlockPos();
@@ -32,6 +33,7 @@ public final class BCEnergyScreens {
     public static void register() {
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftenergy", "engine_stone"), STONE);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftenergy", "engine_iron"), IRON);
+        Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftenergy", "mj_dynamo"), DYNAMO);
     }
     public static void open(PlayerEntity player, BlockPos pos, BCEnergyGuis gui) {
         if (!(player instanceof ServerPlayerEntity) || !player.getWorld().isChunkLoaded(pos)) return;
@@ -40,6 +42,8 @@ public final class BCEnergyScreens {
             open(player, stone, ContainerEngineStone_BC8::new, "gui.buildcraftenergy.engine_stone");
         else if (gui == BCEnergyGuis.ENGINE_IRON && tile instanceof TileEngineIron_BC8 iron)
             open(player, iron, ContainerEngineIron_BC8::new, "gui.buildcraftenergy.engine_iron");
+        else if (gui == BCEnergyGuis.DYNAMO_MJ && tile instanceof TileDynamoMJ dynamo)
+            open(player, dynamo, ContainerDynamoMJ::new, "tile.mjDynamo.name");
     }
     private static <T extends TileBC_Neptune> void open(PlayerEntity player, T tile, Factory<T> factory, String title) {
         if (!tile.canInteractWith(player)) return;

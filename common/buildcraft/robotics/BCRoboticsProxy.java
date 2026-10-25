@@ -54,8 +54,7 @@ public abstract class BCRoboticsProxy implements IGuiHandler {
     }
 
     public void fmlPreInit() {
-        MessageManager.registerMessageClass(BCModules.ROBOTICS, MessageZoneMapRequest.class, MessageZoneMapRequest.HANDLER, EnvType.SERVER);
-        MessageManager.registerMessageClass(BCModules.ROBOTICS, MessageZoneMapResponse.class, EnvType.CLIENT);
+        // Native map packet receivers are registered by BCNetworkManager.
     }
 
     public void fmlInit() {
@@ -87,7 +86,6 @@ public abstract class BCRoboticsProxy implements IGuiHandler {
         @Override
         public void fmlPreInit() {
             super.fmlPreInit();
-            MessageManager.setHandler(MessageZoneMapResponse.class, MessageZoneMapResponse.HANDLER, EnvType.CLIENT);
         }
 
         @Override

@@ -46,7 +46,9 @@ public class BCCoreBlocks {
             powerTester = HELPER.addBlockAndItem("block.power_tester", () -> new BlockPowerConsumerTester(MaterialBC.IRON, "block.power_tester"));
         }
 
-        engine = HELPER.addBlockAndItem("block.engine.bc", () -> new BlockEngine_BC8(MaterialBC.IRON, "block.engine.bc"), ItemEngine_BC8::new);
+        engine = HELPER.addBlockAndItem("block.engine.bc", () -> new BlockEngine_BC8(
+            net.minecraft.block.AbstractBlock.Settings.create().mapColor(net.minecraft.block.MapColor.IRON_GRAY)
+                .nonOpaque(), "block.engine.bc"), ItemEngine_BC8::new);
         if (engine != null) {
             engine.registerEngine(EnumEngineType.WOOD, TileEngineRedstone_BC8.class);
             engine.registerEngine(EnumEngineType.CREATIVE, TileEngineCreative.class);

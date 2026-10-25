@@ -1,63 +1,53 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. MPL-2.0. */
 package buildcraft.builders.snapshot;
 
-import java.io.IOException;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtTagSizeTracker;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
+import buildcraft.lib.misc.HashUtil;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
-
-
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-
-public class MessageSnapshotResponse implements IMessage {
-    private Snapshot snapshot;
-
-    @SuppressWarnings("unused")
-    public MessageSnapshotResponse() {
+/** Bounded native NBT; unavailable or oversized previews return an empty response. */
+public final class MessageSnapshotResponse implements FabricPacket {
+    public static final int MAX_BYTES = 1_000_000;
+    public static final PacketType<MessageSnapshotResponse> TYPE = PacketType.create(
+        new Identifier("buildcraftbuilders", "snapshot_response"), MessageSnapshotResponse::new);
+    public final Snapshot.Key key;
+    private final NbtCompound nbt;
+    private MessageSnapshotResponse(Snapshot.Key key, NbtCompound nbt) { this.key = key; this.nbt = nbt; }
+    private MessageSnapshotResponse(PacketByteBuf buffer) {
+        if (buffer.readableBytes() > MAX_BYTES) throw new IllegalArgumentException("Snapshot response too large");
+        byte[] hash = buffer.readByteArray(HashUtil.DIGEST_LENGTH);
+        if (hash.length != HashUtil.DIGEST_LENGTH) throw new IllegalArgumentException("Invalid snapshot hash");
+        key = new Snapshot.Key(new Snapshot.Key(), hash);
+        nbt = buffer.readNbt(new NbtTagSizeTracker(2_097_152));
+        if (buffer.isReadable()) throw new IllegalArgumentException("Trailing snapshot response data");
     }
-
-    public MessageSnapshotResponse(Snapshot snapshot) {
-        this.snapshot = snapshot;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void toBytes(ByteBuf buf) {
-
-//        byte[] bytes = NbtSquisher.squishBuildCraftV1(Snapshot.writeToNBT(snapshot));
-//        buf.writeInt(bytes.length);
-//        buf.writeBytes(bytes);
-//        try {
-//            net.minecraft.nbt.NbtIo.write(Snapshot.writeToNBT(snapshot), new ByteBufOutputStream(buf));
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+    public static MessageSnapshotResponse of(Snapshot.Key key, Snapshot snapshot) {
+        NbtCompound tag = snapshot == null ? null : Snapshot.writeToNBT(snapshot);
+        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
         try {
-            net.minecraft.nbt.NbtIo.writeCompressed(Snapshot.writeToNBT(snapshot), new ByteBufOutputStream(buf));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            // Read with the same allocation budget as the receiver before choosing to send it.
+            buffer.writeNbt(tag);
+            if (buffer.readableBytes() + 64 > MAX_BYTES) tag = null;
+            else buffer.readNbt(new NbtTagSizeTracker(2_097_152));
+        } catch (RuntimeException tooLarge) { tag = null; }
+        finally { buffer.release(); }
+        return new MessageSnapshotResponse(key, tag);
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void fromBytes(ByteBuf buf) {
-        try {
-//            snapshot = Snapshot.readFromNBT(NbtSquisher.expand(buf.readBytes(buf.readInt()).array()));
-//            snapshot = Snapshot.readFromNBT(net.minecraft.nbt.NbtIo.read(new ByteBufInputStream(buf), NBTSizeTracker.INFINITE));
-            snapshot = Snapshot.readFromNBT(net.minecraft.nbt.NbtIo.readCompressed(new ByteBufInputStream(buf)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Snapshot snapshot() throws java.io.IOException {
+        if (nbt == null) return null;
+        Snapshot snapshot = Snapshot.readFromNBT(nbt);
+        Snapshot.Key stored = snapshot.key;
+        snapshot.computeKey();
+        if (!java.util.Arrays.equals(key.hash, snapshot.key.hash)
+            || !java.util.Arrays.equals(stored.hash, snapshot.key.hash))
+            throw new IllegalArgumentException("Snapshot hash does not match its content");
+        return snapshot;
     }
-
-    public static final IMessageHandler<MessageSnapshotResponse, IMessage> HANDLER = (message, ctx) -> {
-        ClientSnapshots.INSTANCE.onSnapshotReceived(message.snapshot);
-        return null;
-    };
+    @Override public PacketType<MessageSnapshotResponse> getType() { return TYPE; }
+    @Override public void write(PacketByteBuf buffer) { buffer.writeByteArray(key.hash); buffer.writeNbt(nbt); }
 }

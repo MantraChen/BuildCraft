@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "buildcraft_full_tests",
+  "version": "1.0.0",
+  "name": "BuildCraft complete mod startup tests",
+  "environment": "server",
+  "entrypoints": { "fabric-gametest": ["buildcraft.test.full.FullModGameTests"] },
+  "depends": { "buildcraft": "*", "fabric-api": "*", "minecraft": "1.20.1", "java": ">=17" }
+}

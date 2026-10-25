@@ -15,8 +15,11 @@ import net.minecraft.world.World;
 
 public abstract class ZonePlannerMapData {
     protected final Cache<ZonePlannerMapChunkKey, ZonePlannerMapChunk> data = CacheBuilder.newBuilder()
+            .maximumSize(1024)
             .expireAfterWrite(2, TimeUnit.MINUTES)
             .build();
+
+    public void clear() { data.invalidateAll(); }
 
     /** Use {@link #getChunk(World, ZonePlannerMapChunkKey)} for a cached version */
     protected abstract ZonePlannerMapChunk loadChunk(World world, ZonePlannerMapChunkKey key);

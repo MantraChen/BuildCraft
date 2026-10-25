@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTException;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Formatting;
@@ -790,8 +790,8 @@ public enum XmlPageLoader implements IPageLoaderText {
 
         if (nbt != null) {
             try {
-                stack.setNbt(JsonToNBT.getTagFromJson(nbt));
-            } catch (NBTException e) {
+                stack.setNbt(net.minecraft.nbt.StringNbtReader.parse(nbt));
+            } catch (CommandSyntaxException e) {
                 BCLog.logger.warn("[lib.guide.loader.xml] " + nbt + " was not a valid nbt tag: " + e.getMessage());
             }
         }

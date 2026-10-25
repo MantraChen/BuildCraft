@@ -118,7 +118,8 @@ public class VariableModelTest {
     @Test public void everyEngineVariantAndStageBakesUsingExistingTextures() throws Exception {
         for (String location : new String[] { "buildcraftcore:models/block/engine_redstone.json",
                 "buildcraftcore:models/block/engine_creative.json", "buildcraftenergy:models/block/engine_stone.json",
-                "buildcraftenergy:models/block/engine_iron.json", "buildcraftenergy:models/block/engine_rf.json" }) {
+                "buildcraftenergy:models/block/engine_iron.json", "buildcraftenergy:models/block/engine_rf.json",
+                "buildcraftenergy:models/block/mj_dynamo.json" }) {
             JsonVariableModel model = load(location);
             progress.value = 0.35;
             for (EnumPowerStage power : EnumPowerStage.values()) {

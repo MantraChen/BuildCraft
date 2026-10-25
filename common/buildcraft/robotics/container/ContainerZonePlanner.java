@@ -11,6 +11,12 @@ import buildcraft.lib.gui.ContainerBCTile;
 import buildcraft.robotics.tile.TileZonePlanner;
 
 public class ContainerZonePlanner extends ContainerBCTile<TileZonePlanner> {
+    private long mapRequestTick = Long.MIN_VALUE;
+    private int mapRequests;
+    public boolean allowMapRequest(long tick) {
+        if (tick != mapRequestTick) { mapRequestTick = tick; mapRequests = 0; }
+        return ++mapRequests <= 4;
+    }
     public ContainerZonePlanner(PlayerEntity player, TileZonePlanner tile) {
         super(player, tile);
         addFullPlayerInventory(88, 146);

@@ -26,10 +26,22 @@ public final class BCEnergyModels {
     private static final EngineModel STONE = new EngineModel("buildcraftenergy:models/block/engine_stone.json");
     private static final EngineModel IRON = new EngineModel("buildcraftenergy:models/block/engine_iron.json");
     private static final EngineModel RF = new EngineModel("buildcraftenergy:models/block/engine_rf.json");
+    private static final EngineModel DYNAMO = new EngineModel("buildcraftenergy:models/block/mj_dynamo.json");
 
     public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 
     public static void fmlInit() {
+        if (BCEnergyBlocks.mjDynamo != null) {
+            net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCEnergyBlocks.mjDynamo,
+                (stack, mode, matrices, consumers, light, overlay) -> {
+                    var buffer = consumers.getBuffer(net.minecraft.client.render.RenderLayer.getEntityCutout(
+                        net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+                    for (var quad : DYNAMO.getItemQuads(EnumPowerStage.BLUE)) quad.render(buffer, matrices.peek(), light, overlay);
+                });
+            BlockEntityRendererFactories.register(
+            BlockEntityRegistry.type(buildcraft.energy.tile.TileDynamoMJ.class),
+            context -> buildcraft.energy.client.render.RenderDynamoMJ.INSTANCE);
+        }
         if (BCCoreBlocks.engine == null) return;
         BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileEngineStone_BC8.class),
             context -> RenderEngineStone.INSTANCE);
@@ -61,5 +73,8 @@ public final class BCEnergyModels {
     }
     public static MutableQuad[] getRfEngineQuads(TileEngineRF tile, float tickDelta) {
         return getQuads(RF, tile, tickDelta);
+    }
+    public static MutableQuad[] getMjDynamoQuads(buildcraft.energy.tile.TileDynamoMJ tile, float delta) {
+        return DYNAMO.getQuads(tile.progress(delta), tile.getPowerStage(), tile.facing(), tile.clientModelData);
     }
 }

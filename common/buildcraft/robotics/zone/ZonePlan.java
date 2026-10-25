@@ -77,17 +77,9 @@ public class ZonePlan implements IZone {
 
     public List<Point2i> getAll() {
         ImmutableList.Builder<Point2i> builder = ImmutableList.builder();
-        for (int zChunk = 0; zChunk < 16; zChunk++) {
-            for (int xChunk = 0; xChunk < 16; xChunk++) {
-                if (get(xChunk, zChunk)) {
-                    builder.add(new Point2i(xChunk, zChunk));
-                }
-            }
-        }
         chunkMapping.forEach((chunkPos, zoneChunk) -> {
-            List<Point2i> zoneChunkAll = zoneChunk.getAll();
-            zoneChunkAll.forEach(p -> p.add(new Point2i(chunkPos.getStartX(), chunkPos.getStartZ())));
-            builder.addAll(zoneChunkAll);
+            zoneChunk.getAll().forEach(p -> builder.add(
+                new Point2i(p.x + chunkPos.getStartX(), p.y + chunkPos.getStartZ())));
         });
         return builder.build();
     }

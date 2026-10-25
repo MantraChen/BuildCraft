@@ -77,6 +77,7 @@ public class PluggableBlocker extends PipePluggable {
     }
 
     @Override
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
     public PluggableModelKey getModelRenderKey(RenderLayer layer) {
         if (layer == RenderLayer.getCutout()) return new KeyPlugBlocker(side);
         return null;

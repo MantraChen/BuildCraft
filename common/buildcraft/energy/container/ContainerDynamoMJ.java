@@ -16,7 +16,11 @@ import buildcraft.energy.tile.TileDynamoMJ;
 public class ContainerDynamoMJ extends ContainerBCTile<TileDynamoMJ> {
 
     public ContainerDynamoMJ(PlayerEntity player, TileDynamoMJ engine) {
-        super(player, engine);
+        this(player, 0, engine);
+    }
+
+    public ContainerDynamoMJ(PlayerEntity player, int syncId, TileDynamoMJ engine) {
+        super(buildcraft.energy.BCEnergyScreens.DYNAMO, player, syncId, engine);
 
         addFullPlayerInventory(95);
         for (int slot = 0; slot < 4; slot++) {

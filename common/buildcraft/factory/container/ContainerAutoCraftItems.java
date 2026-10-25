@@ -33,7 +33,7 @@ public class ContainerAutoCraftItems extends ContainerBCTile<TileAutoWorkbenchIt
             addSlot(new SlotPhantom(tile.invMaterialFilter, x, -1000000, -1000000));
             addSlot(materialSlots[x] = new SlotBase(tile.invMaterials, x, 8 + x * 18, 84));
         }
-        addSlot(new SlotDisplay(i -> tile.resultClient, 0, 93, 27));
+        addSlot(new SlotDisplay(i -> tile.getRecipePreview(), 0, 93, 27));
 
         addFullPlayerInventory(115);
     }

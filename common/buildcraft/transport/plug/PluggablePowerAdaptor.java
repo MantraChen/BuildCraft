@@ -86,6 +86,7 @@ public class PluggablePowerAdaptor extends PipePluggable {
 
     @Override
     @Nullable
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
     public PluggableModelKey getModelRenderKey(RenderLayer layer) {
         if (layer == RenderLayer.getCutout()) {
             return new KeyPlugPowerAdaptor(side);

@@ -40,7 +40,9 @@ public class BCEnergyBlocks {
         }
 
         if (BCEnergyConfig.enableMjDynamo) {
-            mjDynamo = HELPER.addForcedBlock(new BlockDynamoMJ(MaterialBC.IRON, "block.mj_dynamo"));
+            mjDynamo = HELPER.addForcedBlock(new BlockDynamoMJ(
+                AbstractBlock.Settings.create().mapColor(net.minecraft.block.MapColor.IRON_GRAY)
+                    .nonOpaque(), "block.mj_dynamo"));
             HELPER.addForcedItem(new ItemBlockBC_Neptune(mjDynamo));
             HELPER.registerTile(TileDynamoMJ.class, "tile.mj_dynamo", TileDynamoMJ::new, mjDynamo);
         }

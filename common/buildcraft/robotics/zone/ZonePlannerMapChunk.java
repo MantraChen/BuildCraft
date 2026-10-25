@@ -11,19 +11,25 @@ import javax.annotation.Nullable;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.WorldChunk;
 
 public class ZonePlannerMapChunk {
     private final MapColourData[][] data = new MapColourData[16][16];
 
     public ZonePlannerMapChunk(World world, ZonePlannerMapChunkKey key) {
-        Chunk chunk = world.getChunk(key.chunkPos.x, key.chunkPos.z);
+        if (!world.getRegistryKey().getValue().equals(key.dimension)
+            || !world.isChunkLoaded(key.chunkPos.x, key.chunkPos.z))
+            throw new IllegalArgumentException("Map sampling requires a loaded chunk in the requested dimension");
+        WorldChunk chunk = world.getChunk(key.chunkPos.x, key.chunkPos.z);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 // Scan down from the max height value of a chunk until we find a block
-                for (int y = key.level * ZonePlannerMapChunkKey.LEVEL_HEIGHT; y > 0; y--) {
-                    int colour = chunk.getBlockState(new BlockPos(x, y, z)).getMapColor(world, new BlockPos(x, y, z)).colorValue;
-                    if (colour != 0) {
+                for (int y = Math.min(world.getTopY() - 1, key.level * ZonePlannerMapChunkKey.LEVEL_HEIGHT);
+                    y >= world.getBottomY(); y--) {
+                    BlockPos pos = new BlockPos(key.chunkPos.getStartX() + x, y, key.chunkPos.getStartZ() + z);
+                    var mapColor = chunk.getBlockState(pos).getMapColor(world, pos);
+                    if (mapColor != net.minecraft.block.MapColor.CLEAR) {
+                        int colour = mapColor.color;
                         data[x][z] = new MapColourData(y, colour);
                         break;
                     }
@@ -35,8 +41,9 @@ public class ZonePlannerMapChunk {
     public ZonePlannerMapChunk(PacketByteBuf buffer) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int posY = buffer.readInt();
-                if (posY > 0) {
+                if (buffer.readBoolean()) {
+                    int posY = buffer.readInt();
+                    if (posY < -2032 || posY > 2031) throw new IllegalArgumentException("Map height out of range");
                     int colour = buffer.readInt();
                     data[x][z] = new MapColourData(posY, colour);
                 }
@@ -48,9 +55,8 @@ public class ZonePlannerMapChunk {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 MapColourData colour = data[x][z];
-                if (colour == null) {
-                    buffer.writeInt(-1);
-                } else {
+                buffer.writeBoolean(colour != null);
+                if (colour != null) {
                     buffer.writeInt(colour.posY);
                     buffer.writeInt(colour.colour);
                 }
