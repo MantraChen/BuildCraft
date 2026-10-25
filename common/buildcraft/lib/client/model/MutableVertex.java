@@ -153,6 +153,19 @@ public class MutableVertex {
           .next();
     }
 
+    /** Entity-format output, preserving the reusable model and combining emitted and world light. */
+    public void render(VertexConsumer consumer, net.minecraft.client.util.math.MatrixStack.Entry matrix,
+            int light, int overlay, boolean shade) {
+        float brightness = shade ? MutableQuad.diffuseLight(normal_x, normal_y, normal_z) : 1;
+        int combinedLight = (Math.max((light >> 4) & 15, light_block) << 4)
+            | (Math.max((light >> 20) & 15, light_sky) << 20);
+        consumer.vertex(matrix.getPositionMatrix(), position_x, position_y, position_z)
+            .color(colour_r / 255f * brightness, colour_g / 255f * brightness,
+                colour_b / 255f * brightness, colour_a / 255f)
+            .texture(tex_u, tex_v).overlay(overlay).light(combinedLight)
+            .normal(matrix.getNormalMatrix(), normal_x, normal_y, normal_z).next();
+    }
+
     // Partial-chain helpers — each returns the VertexConsumer for further chaining.
 
     public VertexConsumer renderPosition(VertexConsumer vc) {
@@ -214,9 +227,9 @@ public class MutableVertex {
     }
 
     public MutableVertex normali(int combined) {
-        normal_x = ((combined >> 0) & 0xFF) / 0x7f;
-        normal_y = ((combined >> 8) & 0xFF) / 0x7f;
-        normal_z = ((combined >> 16) & 0xFF) / 0x7f;
+        normal_x = (byte) combined / 127f;
+        normal_y = (byte) (combined >> 8) / 127f;
+        normal_z = (byte) (combined >> 16) / 127f;
         return this;
     }
 
@@ -237,7 +250,7 @@ public class MutableVertex {
 
     private static int normalAsByte(float norm, int offset) {
         int as = (int) (norm * 0x7f);
-        return as << offset;
+        return (as & 0xFF) << offset;
     }
 
     public MutableVertex colourv(Vector4f vec) {
@@ -351,7 +364,7 @@ public class MutableVertex {
     }
 
     public Vector2f lightvf() {
-        return new Vector2f(light_block * 15f, light_sky * 15f);
+        return new Vector2f(light_block / 15f, light_sky / 15f);
     }
 
     /** Returns the packed lightmap value: (sky<<20) | (block<<4). */
@@ -451,6 +464,10 @@ public class MutableVertex {
         float z = position_z;
         position_y = y * cos - z * sin;
         position_z = y * sin + z * cos;
+        y = normal_y;
+        z = normal_z;
+        normal_y = y * cos - z * sin;
+        normal_z = y * sin + z * cos;
     }
 
     public void rotateDirectlyY(float cos, float sin) {
@@ -458,6 +475,10 @@ public class MutableVertex {
         float z = position_z;
         position_x = x * cos - z * sin;
         position_z = x * sin + z * cos;
+        x = normal_x;
+        z = normal_z;
+        normal_x = x * cos - z * sin;
+        normal_z = x * sin + z * cos;
     }
 
     public void rotateDirectlyZ(float cos, float sin) {
@@ -465,6 +486,10 @@ public class MutableVertex {
         float y = position_y;
         position_x = x * cos + y * sin;
         position_y = x * -sin + y * cos;
+        x = normal_x;
+        y = normal_y;
+        normal_x = x * cos + y * sin;
+        normal_y = x * -sin + y * cos;
     }
 
     public MutableVertex rotateX_90(float scale) {

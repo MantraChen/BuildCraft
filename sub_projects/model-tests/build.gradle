@@ -1,0 +1,56 @@
+plugins { id 'fabric-loom' version '1.10.5' }
+
+version = '1.0.0'
+group = 'buildcraft.tests'
+repositories { mavenCentral() }
+dependencies {
+    minecraft 'com.mojang:minecraft:1.20.1'
+    mappings 'net.fabricmc:yarn:1.20.1+build.10:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.15.11'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.2+1.20.1'
+    implementation project(':expression')
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testImplementation 'junit:junit:4.13.2'
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// Real client geometry/resource classes, tested without starting Minecraft or a GL context.
+// Root compilation remains unchanged and still includes the entire mod.
+sourceSets.main.java {
+    srcDir '../../common'
+    srcDir '../../BuildCraftAPI/api'
+    include 'buildcraft/lib/client/model/json/JsonVariable*.java'
+    include 'buildcraft/lib/client/model/json/VariablePart*.java'
+    include 'buildcraft/lib/client/model/json/JsonTexture.java'
+    include 'buildcraft/lib/client/model/json/JsonModelRule.java'
+    include 'buildcraft/lib/client/model/ModelHolder*.java'
+    include 'buildcraft/lib/client/model/EngineModel.java'
+    include 'buildcraft/lib/client/model/ResourceLoaderContext.java'
+    include 'buildcraft/lib/client/model/ModelUtil.java'
+    include 'buildcraft/lib/client/model/Mutable*.java'
+    include 'buildcraft/lib/json/JsonVariableObject.java'
+    include 'buildcraft/lib/misc/ExpressionCompat.java'
+    include 'buildcraft/lib/misc/ColourUtil.java'
+    include 'buildcraft/lib/misc/JsonUtil.java'
+    include 'buildcraft/lib/misc/MathUtil.java'
+    include 'buildcraft/lib/misc/NBTUtilBC.java'
+    include 'buildcraft/lib/misc/data/ModelVariableData.java'
+    include 'buildcraft/lib/gui/pos/*.java'
+    include 'buildcraft/lib/compat/FluidStackBC.java'
+    include 'buildcraft/lib/compat/FluidRegistryBC.java'
+    include 'buildcraft/lib/compat/BCFluidStorage.java'
+    include 'buildcraft/api/core/BCLog.java'
+    include 'buildcraft/api/core/BCDebugging.java'
+    include 'buildcraft/api/core/render/ISprite.java'
+    include 'buildcraft/api/enums/EnumPowerStage.java'
+    include 'buildcraft/api/tiles/IControllable.java'
+}
+sourceSets.test.java {
+    srcDir '../../src/test/java'
+    include 'buildcraft/test/lib/client/model/*.java'
+}
+test {
+    workingDir rootProject.projectDir
+    testLogging { events 'failed'; exceptionFormat 'full' }
+}

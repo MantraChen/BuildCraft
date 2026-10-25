@@ -59,7 +59,6 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.util.Identifier;
 import net.minecraft.text.Text;
 
-import net.minecraftforge.common.util.Constants;
 import net.minecraft.fluid.Fluid;
 import buildcraft.lib.compat.FluidRegistryBC;
 import buildcraft.lib.compat.FluidStackBC;

@@ -142,6 +142,14 @@ public class MutableQuad {
         vertex_3.render(vc);
     }
 
+    public void render(VertexConsumer consumer, net.minecraft.client.util.math.MatrixStack.Entry matrix,
+            int light, int overlay) {
+        vertex_0.render(consumer, matrix, light, overlay, shade);
+        vertex_1.render(consumer, matrix, light, overlay, shade);
+        vertex_2.render(consumer, matrix, light, overlay, shade);
+        vertex_3.render(consumer, matrix, light, overlay, shade);
+    }
+
     public Vector3f getCalculatedNormal() {
         Vector3f a = new Vector3f(vertex_1.positionvf());
         a.sub(vertex_0.positionvf());
@@ -170,6 +178,7 @@ public class MutableQuad {
         float zz = z * z;
 
         float t = xx + yy + zz;
+        if (t == 0) return 1;
         float light = (xx * 0.6f + zz * 0.8f) / t;
 
         float yyt = yy / t;

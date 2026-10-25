@@ -25,7 +25,7 @@ public class ModelVariableData {
     }
 
     public boolean hasNoNodes() {
-        return tickableNodes == null;
+        return !checkModelBake();
     }
 
     public void setNodes(ITickableNode[] nodes) {

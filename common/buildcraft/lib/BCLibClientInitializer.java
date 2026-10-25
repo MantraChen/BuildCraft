@@ -24,8 +24,8 @@ import buildcraft.BuildCraftFabric;
  * the {@code @SidedProxy} client proxy in {@link BCLibProxy}.
  *
  * Event mapping (Forge → Fabric):
- *   TextureStitchEvent.Pre/Post → STUB (use ClientSpriteRegistryCallback or ModelLoadingPlugin)
- *   ModelBakeEvent              → STUB (ModelLoadingPlugin#onInitializeModelLoader)
+ *   TextureStitchEvent.Pre/Post → atlas source JSON + resource reload listener
+ *   ModelBakeEvent              → ModelHolderRegistry after Minecraft's model reload
  *   RenderWorldLastEvent        → {@link WorldRenderEvents#LAST}
  *   ClientTickEvent (END)       → {@link ClientTickEvents#END_CLIENT_TICK}
  *   ClientConnectedToServer     → {@link ClientPlayConnectionEvents#JOIN}
@@ -80,8 +80,11 @@ public class BCLibClientInitializer implements ClientModInitializer {
         // Forge: RenderWorldLastEvent → DetachedRenderer event bus
         DetachedRenderer.registerEvents();
 
-        // STUB(R.Chen): TextureStitchEvent → ModelLoadingPlugin / ClientSpriteRegistryCallback.
-        // STUB(R.Chen): ModelBakeEvent → ModelLoadingPlugin#onInitializeModelLoader.
+        buildcraft.core.BCCoreModels.fmlPreInit();
+        buildcraft.energy.BCEnergyModels.fmlPreInit();
+        buildcraft.core.BCCoreModels.fmlInit();
+        buildcraft.energy.BCEnergyModels.fmlInit();
+        buildcraft.lib.client.model.ModelHolderRegistry.registerReloadListener();
         // STUB(R.Chen): EventBuildCraftReload.FinishLoad → wire via custom ResourceReloader.
 
         BuildCraftFabric.LOGGER.info("[BCLib] Client initialization complete");

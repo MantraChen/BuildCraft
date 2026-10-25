@@ -58,7 +58,7 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 167 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 157 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **93 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
@@ -69,9 +69,27 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
+- Client model fixture: **11 tests passed**, plus the expression library's 13 tests.
+  Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
+  All five engine variants bake across every power stage and facing; referenced textures
+  exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
+  reload invalidation, signed packed normals, matrix transforms and overlay/light output.
+  These tests do not establish that a complete client can start or display the models.
 
 ## Repair progress
 
+- Restored the original variable-model parser, expression-driven cuboids, nested models,
+  texture aliases and transformation rules against native Minecraft/JOML APIs. Parent
+  resources close reliably and recursive references fail with a useful error. Model
+  reload invalidates per-engine animation state before it is next used.
+- Engine block-entity rendering now uses `BlockEntityRenderer`, `MatrixStack` and
+  `VertexConsumer`, including texture, color, normals, emission and overlays. Five
+  engine renderers register through native factories; the shared engine item selects
+  its model using the stack's existing variant data. Atlas sources include the legacy
+  `blocks`/`items` directories, and engine blockstates use the native variants format.
+  The MJ dynamo's unfinished simulation/rendering, other machine renderers and actual
+  client startup are still outstanding. Static legacy model holders and partial-UV
+  texture expansion are also still incomplete.
 - Item insertion/extraction now uses Fabric transactions, including all-or-none
   insertion, simulation, batch capacity accounting and minimum extraction across slots.
 - Machine inventory groups retain named NBT data, preserve phantom filters, exclude

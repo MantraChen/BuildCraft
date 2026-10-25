@@ -1,18 +1,24 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team.
+ * This Source Code Form is subject to the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.lib.client.model.json;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import com.google.gson.JsonObject;
+import net.minecraft.util.math.Direction;
+import buildcraft.lib.expression.FunctionContext;
+import buildcraft.lib.client.model.json.JsonVariableModel.ITextureGetter;
 
-// STUB(R.Chen): model/json — Phase 5.
-@Environment(EnvType.CLIENT)
-public class VariablePartLed {
-    VariablePartLed() {}
+/** LED faces use a white atlas texel, with colour and emission supplied by the model. */
+public class VariablePartLed extends VariablePartCuboidBase {
+    public VariablePartLed(JsonObject obj, FunctionContext context) { super(obj, context); }
+
+    @Override
+    protected VariableFaceData getFaceData(Direction side, ITextureGetter textures) {
+        VariableFaceData face = new VariableFaceData();
+        face.sprite = textures.get("buildcraftlib:blocks/white").sprite;
+        face.uvs.minU = face.uvs.maxU = 0.5F;
+        face.uvs.minV = face.uvs.maxV = 0.5F;
+        return face;
+    }
 }

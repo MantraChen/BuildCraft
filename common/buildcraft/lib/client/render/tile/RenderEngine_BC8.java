@@ -1,50 +1,25 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team.
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.lib.client.render.tile;
 
-import javax.annotation.Nonnull;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.util.profiler.Profiler;
-
-import net.minecraftforge.client.model.animation.FastTESR;
-
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.screen.PlayerScreenHandler;
 import buildcraft.lib.client.model.MutableQuad;
 import buildcraft.lib.engine.TileEngineBase_BC8;
 
-public abstract class RenderEngine_BC8<T extends TileEngineBase_BC8> extends FastTESR<T> {
-    // TODO: Cache the model!
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void renderTileEntityFast(@Nonnull T engine, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder vb) {
-        Profiler profiler = MinecraftClient.getInstance().getProfiler();
-        profiler.push("bc");
-        profiler.push("engine");
-
-        profiler.push("compute");
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: vb.setTranslation(x, y, z);
-        MutableQuad[] quads = getEngineModel(engine, partialTicks);
-        profiler.swap("render");
-        MutableQuad copy = new MutableQuad(0, null);
-        int lightc = buildcraft.lib.compat.WorldCompat.getCombinedLight(engine.getWorld(), engine.getPos(), 0);
-        int light_block = (lightc >> 4) & 15;
-        int light_sky = (lightc >> 20) & 15;
-        for (MutableQuad q : quads) {
-            copy.copyFrom(q);
-            copy.maxLighti(light_block, light_sky);
-            copy.multShade();
-            copy.render(vb);
+public abstract class RenderEngine_BC8<T extends TileEngineBase_BC8> implements BlockEntityRenderer<T> {
+    @Override
+    public void render(T engine, float tickDelta, MatrixStack matrices, VertexConsumerProvider consumers,
+            int light, int overlay) {
+        var buffer = consumers.getBuffer(RenderLayer.getEntityCutout(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+        for (MutableQuad quad : getEngineModel(engine, tickDelta)) {
+            quad.render(buffer, matrices.peek(), light, overlay);
         }
-        // TODO(R.Chen): setTranslation removed — use MatrixStack instead: vb.setTranslation(0, 0, 0);
-
-        profiler.pop();
-        profiler.pop();
-        profiler.pop();
     }
 
     protected abstract MutableQuad[] getEngineModel(T engine, float partialTicks);

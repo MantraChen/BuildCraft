@@ -31,17 +31,10 @@ import buildcraft.lib.client.model.json.JsonVariableModel;
 import buildcraft.lib.expression.FunctionContext;
 import buildcraft.lib.expression.node.value.ITickableNode;
 
-/**
- * STUB(R.Chen): client model — Phase 5.
- *
- * The Forge original resolved sprites via {@code MinecraftClient.getInstance().getTextureMapBlocks()}
- * during ModelBakeEvent. In Fabric 1.20.1 sprite resolution goes through a Fabric atlas pipeline.
- * The public API surface (fields, getCutoutQuads/getTranslucentQuads) is preserved so callers
- * compile. Sprite lookup stubs return null; baking produces empty arrays until Phase 5.
- */
+/** Resource-backed animated model, baked against the current block atlas on demand. */
 @Environment(EnvType.CLIENT)
 public class ModelHolderVariable extends ModelHolder {
-    // STUB(R.Chen): Sprite map used by Phase-5 render pass to inject custom sprites.
+    /** Runtime textures such as a fluid's sprite, keyed by the model's '~' references. */
     public final Map<String, Sprite> customSprites = new HashMap<>();
     private final FunctionContext context;
     private JsonVariableModel rawModel;
@@ -61,6 +54,8 @@ public class ModelHolderVariable extends ModelHolder {
     protected void onTextureStitchPre(Set<Identifier> toRegisterSprites) {
         rawModel = null;
         failReason = null;
+        unseen = true;
+        customSprites.clear();
 
         try {
             rawModel = JsonVariableModel.deserialize(modelLocation, context);
@@ -83,10 +78,17 @@ public class ModelHolderVariable extends ModelHolder {
         // NO-OP: variable models are baked on demand
     }
 
-    // STUB(R.Chen): Phase 5 — sprite resolution via Fabric atlas pipeline.
     private TexturedFace lookupTexture(String lookup) {
+        JsonTexture texture = rawModel.resolveTexture(lookup);
         TexturedFace face = new TexturedFace();
-        face.sprite = null; // STUB
+        face.faceData = texture.faceData;
+        face.sprite = customSprites.get(texture.location);
+        if (face.sprite == null) {
+            Identifier id = texture.location.startsWith("~")
+                ? net.minecraft.client.texture.MissingSprite.getMissingSpriteId() : new Identifier(texture.location);
+            face.sprite = net.minecraft.client.MinecraftClient.getInstance()
+                .getSpriteAtlas(net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(id);
+        }
         return face;
     }
 

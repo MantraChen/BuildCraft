@@ -1,146 +1,63 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team.
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.core;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.util.math.Direction;
-
-import net.minecraftforge.client.event.ModelBakeEvent;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-// STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
+import net.minecraft.screen.PlayerScreenHandler;
 import buildcraft.api.enums.EnumEngineType;
 import buildcraft.api.enums.EnumPowerStage;
-
-import buildcraft.lib.client.model.ModelHolderVariable;
-import buildcraft.lib.client.model.ModelItemSimple;
+import buildcraft.lib.client.model.EngineModel;
 import buildcraft.lib.client.model.MutableQuad;
 import buildcraft.lib.engine.TileEngineBase_BC8;
-import buildcraft.lib.expression.DefaultContexts;
-import buildcraft.lib.expression.FunctionContext;
-import buildcraft.lib.expression.node.value.NodeVariableDouble;
-import buildcraft.lib.expression.node.value.NodeVariableObject;
-import buildcraft.lib.misc.ExpressionCompat;
-import buildcraft.lib.misc.data.ModelVariableData;
-
+import buildcraft.lib.registry.BlockEntityRegistry;
 import buildcraft.core.client.render.RenderEngineCreative;
 import buildcraft.core.client.render.RenderEngineWood;
-import buildcraft.core.client.render.RenderMarkerVolume;
 import buildcraft.core.tile.TileEngineCreative;
 import buildcraft.core.tile.TileEngineRedstone_BC8;
-import buildcraft.core.tile.TileMarkerVolume;
+import buildcraft.energy.BCEnergyModels;
 
-public class BCCoreModels {
-    private static final NodeVariableDouble ENGINE_PROGRESS;
-    private static final NodeVariableObject<EnumPowerStage> ENGINE_STAGE;
-    private static final NodeVariableObject<Direction> ENGINE_FACING;
+@Environment(EnvType.CLIENT)
+public final class BCCoreModels {
+    private static final EngineModel REDSTONE = new EngineModel("buildcraftcore:models/block/engine_redstone.json");
+    private static final EngineModel CREATIVE = new EngineModel("buildcraftcore:models/block/engine_creative.json");
 
-    private static final ModelHolderVariable ENGINE_REDSTONE;
-    private static final ModelHolderVariable ENGINE_CREATIVE;
-
-    static {
-        FunctionContext fnCtx = new FunctionContext(ExpressionCompat.ENUM_POWER_STAGE, DefaultContexts.createWithAll());
-        ENGINE_PROGRESS = fnCtx.putVariableDouble("progress");
-        ENGINE_STAGE = fnCtx.putVariableObject("stage", EnumPowerStage.class);
-        ENGINE_FACING = fnCtx.putVariableObject("direction", Direction.class);
-
-        ENGINE_REDSTONE = new ModelHolderVariable(
-            "buildcraftcore:models/block/engine_redstone.json",
-            fnCtx
-        );
-        ENGINE_CREATIVE = new ModelHolderVariable(
-            "buildcraftcore:models/block/engine_creative.json",
-            fnCtx
-        );
-    }
-
-    public static void fmlPreInit() {
-        // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCCoreModels.class);
-    }
-
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    @Environment(EnvType.CLIENT)
-    public static void onModelRegistry(ModelRegistryEvent event) {
-        if (BCCoreBlocks.engine != null) {
-
-        }
-    }
+    public static void fmlPreInit() { /* Class initialization constructs the resource holders. */ }
 
     public static void fmlInit() {
-        ClientRegistry.bindTileEntitySpecialRenderer(TileMarkerVolume.class, RenderMarkerVolume.INSTANCE);
-        ClientRegistry.bindTileEntitySpecialRenderer(TileEngineRedstone_BC8.class, RenderEngineWood.INSTANCE);
-        ClientRegistry.bindTileEntitySpecialRenderer(TileEngineCreative.class, RenderEngineCreative.INSTANCE);
+        if (BCCoreBlocks.engine == null) return;
+        BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileEngineRedstone_BC8.class),
+            context -> RenderEngineWood.INSTANCE);
+        BlockEntityRendererFactories.register(BlockEntityRegistry.type(TileEngineCreative.class),
+            context -> RenderEngineCreative.INSTANCE);
+        BuiltinItemRendererRegistry.INSTANCE.register(BCCoreBlocks.engine,
+            (stack, mode, matrices, consumers, light, overlay) -> {
+                EnumEngineType type = BCCoreBlocks.engine.getEngineType(stack);
+                MutableQuad[] quads = switch (type) {
+                    case WOOD -> REDSTONE.getItemQuads(EnumPowerStage.BLUE);
+                    case CREATIVE -> CREATIVE.getItemQuads(EnumPowerStage.BLACK);
+                    default -> BCEnergyModels.getItemQuads(type);
+                };
+                var buffer = consumers.getBuffer(RenderLayer.getEntityCutout(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+                for (MutableQuad quad : quads) quad.render(buffer, matrices.peek(), light, overlay);
+            });
     }
 
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    public static void onModelBake(ModelBakeEvent event) {
-        ENGINE_PROGRESS.value = 0.2;
-        ENGINE_STAGE.value = EnumPowerStage.BLUE;
-        ENGINE_FACING.value = Direction.UP;
-        ModelVariableData varData = new ModelVariableData();
-        varData.setNodes(ENGINE_REDSTONE.createTickableNodes());
-        varData.tick();
-        varData.refresh();
-        event.getModelRegistry().putObject(
-            new ModelIdentifier(new net.minecraft.util.Identifier(EnumEngineType.WOOD.getItemModelLocation()), "inventory"),
-            new ModelItemSimple(
-                Arrays.stream(ENGINE_REDSTONE.getCutoutQuads())
-                    .map(MutableQuad::toBakedItem)
-                    .collect(Collectors.toList()),
-                ModelItemSimple.TRANSFORM_BLOCK,
-                true
-            )
-        );
-        ENGINE_STAGE.value = EnumPowerStage.BLACK;
-        varData.setNodes(ENGINE_CREATIVE.createTickableNodes());
-        varData.tick();
-        varData.refresh();
-        event.getModelRegistry().putObject(
-            new ModelIdentifier(new net.minecraft.util.Identifier(EnumEngineType.CREATIVE.getItemModelLocation()), "inventory"),
-            new ModelItemSimple(
-                Arrays.stream(ENGINE_CREATIVE.getCutoutQuads())
-                    .map(MutableQuad::toBakedItem)
-                    .collect(Collectors.toList()),
-                ModelItemSimple.TRANSFORM_BLOCK,
-                true
-            )
-        );
+    private static MutableQuad[] getQuads(EngineModel model, TileEngineBase_BC8 tile, float tickDelta) {
+        return model.getQuads(tile.getProgressClient(tickDelta), tile.getPowerStage(),
+            tile.getCurrentFacing(), tile.clientModelData);
     }
 
-    private static MutableQuad[] getEngineQuads(ModelHolderVariable model,
-                                                TileEngineBase_BC8 tile,
-                                                float partialTicks) {
-        ENGINE_PROGRESS.value = tile.getProgressClient(partialTicks);
-        ENGINE_STAGE.value = tile.getPowerStage();
-        ENGINE_FACING.value = tile.getCurrentFacing();
-        if (tile.clientModelData.hasNoNodes()) {
-            tile.clientModelData.setNodes(model.createTickableNodes());
-        }
-        tile.clientModelData.refresh();
-        return model.getCutoutQuads();
+    public static MutableQuad[] getRedstoneEngineQuads(TileEngineRedstone_BC8 tile, float tickDelta) {
+        return getQuads(REDSTONE, tile, tickDelta);
     }
 
-    public static MutableQuad[] getRedstoneEngineQuads(TileEngineRedstone_BC8 tile, float partialTicks) {
-        return getEngineQuads(ENGINE_REDSTONE, tile, partialTicks);
-    }
-
-    public static MutableQuad[] getCreativeEngineQuads(TileEngineCreative tile, float partialTicks) {
-        return getEngineQuads(ENGINE_CREATIVE, tile, partialTicks);
+    public static MutableQuad[] getCreativeEngineQuads(TileEngineCreative tile, float tickDelta) {
+        return getQuads(CREATIVE, tile, tickDelta);
     }
 }
