@@ -92,8 +92,13 @@ public class PipeBehaviourLimiter extends PipeBehaviour {
     public boolean onPipeActivate(
         PlayerEntity player, HitResult trace, float hitX, float hitY, float hitZ, EnumPipePart part
     ) {
-        // STUB(R.Chen): EntityUtil.getWrenchHand not migrated — wrench detection disabled.
+        var hand = buildcraft.lib.misc.EntityUtil.getWrenchHand(player);
+        if (hand == null || !pipe.getHolder().canPlayerInteract(player)) return false;
+        var stack = player.getStackInHand(hand);
+        var wrench = (buildcraft.api.tools.IToolWrench) stack.getItem();
+        if (!wrench.canWrench(player, hand, stack, trace)) return false;
         if (!player.getWorld().isClient) {
+            wrench.wrenchUsed(player, hand, stack, trace);
             limitShift++;
             if (limitShift > MAX_SHIFT) {
                 limitShift = 0;
@@ -114,6 +119,7 @@ public class PipeBehaviourLimiter extends PipeBehaviour {
             player.sendMessage(Text.translatable(key, limit), true);
 
             requestReconfigure();
+            player.getWorld().markDirty(pipe.getHolder().getPipePos());
         }
         return true;
     }

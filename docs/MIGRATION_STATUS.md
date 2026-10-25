@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **29 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **36 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -83,6 +83,9 @@ features explicitly as work proceeds.
   Nine pipe tests cover all 46 native pipe items, placement/picking, dye/material
   connections, cross-face transaction rollback, chute-to-pipe delivery, saved travelling
   stacks, MJ-powered wooden extraction, wrench use, flow packets and survival recipes.
+  Seven further tests cover native diamond filter editing, phantom-item isolation,
+  filter persistence/drops, weighted routing, owner advancement, colour routing and
+  wrench-controlled delivery/settings.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -102,6 +105,9 @@ features explicitly as work proceeds.
   Plain and blue-dyed stone-pipe circuits now render in that world, with diamonds
   visibly circulating through the native item renderer. F3+T resource reload and
   saving/re-entering the world both retain the pipe models and moving contents.
+  The diamond pipe shows its six coloured outputs and native filter screen. Editing
+  an east-side filter to weight two leaves all seven real diamonds in the hotbar;
+  closing/reopening, resource reload and saving/re-entering preserve that setting.
 - Packaged GPU client: **928 visible block states, 127 items and 158 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
@@ -146,7 +152,11 @@ features explicitly as work proceeds.
   from cutout layers and rebuilds its bounded cache with each resource reload.
   Native transactional item insertion feeds the original item routing logic. Wooden
   MJ extraction, stone delivery, saved travel timing and server-authoritative item
-  animation snapshots are restored. Full fluid/power/RF transport, special filtering
+  animation snapshots are restored. Diamond item pipes now save their 54 filter samples,
+  expose the native filter screen, display six coloured direction textures and preserve
+  weighted routing. Lapis and Daizuli wrench controls select item colours; iron-pipe
+  rotation changes delivery direction. Power/RF limiter controls require a wrench.
+  Full fluid/power/RF transport, wooden-diamond/Emzuli/obsidian/stripes behavior
   and pluggable/gate gameplay still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.

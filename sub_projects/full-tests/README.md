@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The 29 server tests currently verify:
+The 36 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -67,6 +67,18 @@ The 29 server tests currently verify:
   directions, clear old client contents and reject oversized snapshots.
 - Native recipes return eight basic transport pipes; all 17 structure/item recipes
   are loaded, and placement awards the pipe advancement.
+- The native diamond filter screen has 54 ghost slots and 36 player slots. Filter
+  copies preserve NBT and adjustable weights without consuming cursor items; shift,
+  swap, clone, throw, drag and pickup-all cannot turn filters into real inventory.
+  Distant players and replaced pipe instances lose editing access.
+- All 54 filters survive native unattached NBT loading. Breaking the pipe drops its
+  real contents once and never drops filter samples. Matching items split 2:1 by
+  configured weight; unmatched items use the unfiltered side. Filling a filter row
+  awards the owner advancement and unlocks the restored list recipe.
+- Lapis/Daizuli colour selection and power/RF limiter settings require a wrench and
+  survive NBT loading. Sneaking reverses colour selection. Actual lapis-to-Daizuli
+  transport separates matching/nonmatching colours, and iron-pipe wrench rotation
+  redirects subsequent deliveries to the other connected output.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,

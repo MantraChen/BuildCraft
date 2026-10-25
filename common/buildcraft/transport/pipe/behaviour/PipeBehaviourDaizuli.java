@@ -82,8 +82,19 @@ public class PipeBehaviourDaizuli extends PipeBehaviourDirectional {
 
     @Override
     public boolean onPipeActivate(PlayerEntity player, HitResult trace, float hitX, float hitY, float hitZ, EnumPipePart part) {
-        // STUB(R.Chen): EntityUtil.getWrenchHand not migrated — wrench detection disabled.
-        return false;
+        if (part != EnumPipePart.CENTER && part != currentDir) return super.onPipeActivate(player, trace, hitX, hitY, hitZ, part);
+        var hand = buildcraft.lib.misc.EntityUtil.getWrenchHand(player);
+        if (hand == null || !pipe.getHolder().canPlayerInteract(player)) return false;
+        var stack = player.getStackInHand(hand);
+        var wrench = (buildcraft.api.tools.IToolWrench) stack.getItem();
+        if (!wrench.canWrench(player, hand, stack, trace)) return false;
+        if (!player.getWorld().isClient) {
+            colour = DyeColor.byId((colour.getId() + (player.isSneaking() ? 15 : 1)) & 15);
+            player.getWorld().markDirty(pipe.getHolder().getPipePos());
+            pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
+            wrench.wrenchUsed(player, hand, stack, trace);
+        }
+        return true;
     }
 
     @PipeEventHandler

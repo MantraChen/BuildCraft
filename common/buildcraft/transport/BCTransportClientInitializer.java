@@ -31,6 +31,9 @@ public class BCTransportClientInitializer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BCTransportModels.init();
+        net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune, buildcraft.transport.gui.GuiDiamondPipe>register(
+            BCTransportScreens.DIAMOND, (handler, inventory, title) -> new buildcraft.transport.gui.GuiDiamondPipe(
+                (buildcraft.transport.container.ContainerDiamondPipe) handler, inventory, title));
         net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(BCTransportBlocks.pipeHolder, net.minecraft.client.render.RenderLayer.getCutout());
         // Register pipe tile entity renderer
         BlockEntityRendererRegistry.INSTANCE.register(

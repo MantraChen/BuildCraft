@@ -23,10 +23,10 @@ public class ContainerDiamondPipe extends ContainerPipe {
     private final ItemHandlerSimple filterInv;
 
     public ContainerDiamondPipe(PlayerEntity player, int syncId, PipeBehaviourDiamond pipe) {
-        super(player, syncId, pipe.pipe.getHolder());
+        super(buildcraft.transport.BCTransportScreens.DIAMOND, player, syncId, pipe.pipe.getHolder());
         this.behaviour = pipe;
         this.filterInv = pipe.filters;
-        behaviour.pipe.getHolder().onPlayerOpen(player);
+        if (!player.getWorld().isClient) behaviour.pipe.getHolder().onPlayerOpen(player);
 
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 9; x++) {

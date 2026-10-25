@@ -30,6 +30,9 @@ public enum BCTransportGuis {
     }
 
     public void openGui(PlayerEntity player, BlockPos pos) {
-        // STUB(R.Chen): Phase 5.
+        if (this == PIPE_DIAMOND && player.getWorld().getBlockEntity(pos) instanceof buildcraft.transport.tile.TilePipeHolder holder
+                && holder.getPipe() != null && holder.getPipe().behaviour instanceof buildcraft.transport.pipe.behaviour.PipeBehaviourDiamond diamond) {
+            BCTransportScreens.openDiamond(player, diamond);
+        }
     }
 }

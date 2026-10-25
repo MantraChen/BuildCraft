@@ -39,6 +39,8 @@ separate Fabric GameTest project. It verifies the registered block entities, nat
 tank placement, transactional MJ Dynamo output and chute collection, output, screens,
 save data and crafting. It also verifies pipe placement, transactional item input,
 wooden MJ extraction, stone-pipe delivery and travelling-item save data.
+Diamond filter screens, weighted routing, colour routing and iron-pipe direction
+changes are covered as well.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
