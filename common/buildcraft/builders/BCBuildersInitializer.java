@@ -40,9 +40,13 @@ public class BCBuildersInitializer implements ModInitializer {
         // --- Forge preInit (BCBuilders.preInit) ----------------------------------
         BCBuildersConfig.preInit();
         BCBuildersTags.register();
+        BCBuildersRegistries.preInit();
+        BCBuildersStatements.preInit();
+        BCBuildersRegistries.init();
         BCBuildersItems.fmlPreInit();
         BCBuildersBlocks.fmlPreInit();
         BCBuildersBlocks.fmlInit();
+        BCBuildersScreens.register();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ARCHITECT_TABLE, BUILDER, FILLER, LIBRARY, REPLACER, QUARRY.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCBuildersEventDist.INSTANCE) — port the quarry

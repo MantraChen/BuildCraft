@@ -33,7 +33,7 @@ public enum TemplateRegistry implements ITemplateRegistry {
 
     @Override
     public void addHandler(ITemplateHandler handler, EnumHandlerPriority priority) {
-        handlers.get(priority).add(handler);
+        if (!handlers.get(priority).contains(handler)) handlers.get(priority).add(handler);
     }
 
     @Override

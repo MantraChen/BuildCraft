@@ -101,7 +101,13 @@ public abstract class Snapshot {
 
     @SuppressWarnings({"WeakerAccess", "unused"})
     public static int getDataSize(int x, int y, int z) {
-        return x * y * z;
+        long volume = (long) x * y * z;
+        if (x <= 0 || y <= 0 || z <= 0 || x > BuildingExecutor.MAX_VOLUME
+            || y > BuildingExecutor.MAX_VOLUME || z > BuildingExecutor.MAX_VOLUME
+            || volume <= 0 || volume > BuildingExecutor.MAX_VOLUME) {
+            throw new IllegalArgumentException("Invalid snapshot size: " + x + " x " + y + " x " + z);
+        }
+        return (int) volume;
     }
 
     @SuppressWarnings({"WeakerAccess", "unused"})
@@ -146,6 +152,14 @@ public abstract class Snapshot {
         size = net.minecraft.nbt.NbtHelper.toBlockPos(nbt.getCompound("size"));
         facing = NBTUtilBC.readEnum(nbt.get("facing"), Direction.class);
         offset = net.minecraft.nbt.NbtHelper.toBlockPos(nbt.getCompound("offset"));
+        try {
+            getDataSize();
+        } catch (IllegalArgumentException invalid) {
+            throw new InvalidInputDataException(invalid.getMessage());
+        }
+        if (facing == null || !facing.getAxis().isHorizontal()) {
+            throw new InvalidInputDataException("Invalid snapshot facing: " + facing);
+        }
     }
 
     abstract public Snapshot copy();

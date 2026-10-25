@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 59 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 51 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **132 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **137 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **38 world tests passed** after 132 regression tests.
+- Headless Fabric GameTest: **50 world tests passed** after 137 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -80,6 +80,26 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Restored the template work executor with bounded surveys/queues, MJ credit, live material
+  checks, break-before-place ordering, native owner-aware harvesting/placement, cancellation
+  refunds, saved work identity and chunk-loaded checks. Queued jobs reserve no items.
+  Twelve real-world tests cover placement, external changes, partial energy/reload,
+  failed placement refunds, protected/unbreakable targets, missing resources, unloaded
+  chunks and starvation by early tasks waiting for dependencies. A regression caught
+  and fixed a queue that continually re-admitted unready work ahead of ready blocks.
+- Reconnected the filler to its native item storage, MJ receiver, region markers/planner
+  locks, pattern/inversion state, tick control and NBT. Added its native screen handler,
+  shape/parameter/inversion/excavation controls, aligned material slots, translated labels,
+  remake footer and native region outline. Locked settings packets cannot change inversion;
+  incoming settings are fully decoded and normalized before applying them. Full client,
+  actual filler block/marker integration and its screen still await whole-mod validation.
+- Fixed recursive template/blueprint serialization, false-valued XZ/XY fill operations,
+  snapshot dimension/facing/palette validation, repeated blueprint entity reads, missing
+  filler facing/hash, and statement parameter-zero/max-count handling. Five snapshot
+  tests exercise the actual serialization, hashing, copying, rotation and malformed inputs.
+  Build volumes are currently bounded to 1,048,576 positions. Blueprint placement and
+  entity/fluid construction remain unfinished; the restored executor does not establish
+  support for those features. Filler work animation is not yet restored (region outline only).
 - Registered the native Brigadier `/buildcraft` command tree: installed version and
   remake credit, a link to this repository's real commit history, and operator-only
   data-registry reload with error reporting. Native client resource access now supplies

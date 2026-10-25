@@ -71,32 +71,27 @@ public interface IContainerFilling {
     }
 
     default void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
-        if (!isClient) {
-            if (id == ContainerBC_Neptune.NET_DATA) {
-                if (isLocked()) {
-                    new FullStatement<>(
-                        FillerType.INSTANCE,
-                        4,
-                        (a, b) -> {
-                        }
-                    ).readFromBuffer(buffer);
-                } else {
-                    getPatternStatement().readFromBuffer(buffer);
-                }
-                setInverted(buffer.readBoolean());
-                valuesChanged();
-                sendData();
-            }
-        } else if (isClient) {
-            if (id == ContainerBC_Neptune.NET_DATA) {
-                getPatternStatement().readFromBuffer(buffer);
-                setInverted(buffer.readBoolean());
-                getPatternStatementClient().set(getPatternStatement().get());
-                IntStream.range(0, 4).forEach(i ->
-                    getPatternStatementClient().getParamRef(i).set(getPatternStatement().getParamRef(i).get())
-                );
-                valuesChanged();
-            }
+        if (id != ContainerBC_Neptune.NET_DATA) return;
+        FullStatement<IFillerPattern> incoming = new FullStatement<>(FillerType.INSTANCE, 4, null);
+        incoming.readFromBuffer(buffer);
+        boolean inverted = buffer.readBoolean();
+        if (buffer.isReadable()) throw new IOException("Trailing filler settings data");
+        if (!isClient && isLocked()) {
+            sendData();
+            return;
         }
+        // Decode the entire message before changing machine settings; normalize stale or invalid parameters.
+        FullStatement<IFillerPattern> target = getPatternStatement();
+        target.set(incoming.get());
+        for (int i = 0; i < 4; i++) {
+            var parameter = incoming.get(i);
+            if (target.canSet(i, parameter)) target.set(i, parameter);
+        }
+        setInverted(inverted);
+        if (isClient) {
+            getPatternStatementClient().set(target.get(), target.getParameters());
+        }
+        valuesChanged();
+        if (!isClient) sendData();
     }
 }

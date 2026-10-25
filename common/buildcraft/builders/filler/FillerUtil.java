@@ -22,6 +22,12 @@ public class FillerUtil {
                                                            FullStatement<IFillerPattern> patternStatement,
                                                            IStatementParameter[] params,
                                                            boolean inverted) {
+        if (!filler.hasBox()) return null;
+        try {
+            buildcraft.builders.snapshot.Snapshot.getDataSize(filler.getBox().size());
+        } catch (IllegalArgumentException invalidSize) {
+            return null;
+        }
         Template.FilledTemplate filledTemplate = (Template.FilledTemplate) patternStatement.get().createTemplate(
             filler,
             params
@@ -32,6 +38,7 @@ public class FillerUtil {
         if (inverted) {
             filledTemplate.getTemplate().invert();
         }
+        filledTemplate.getTemplate().computeKey();
         return filledTemplate.getTemplate().new BuildingInfo(BlockPos.ORIGIN, BlockRotation.NONE);
     }
 }

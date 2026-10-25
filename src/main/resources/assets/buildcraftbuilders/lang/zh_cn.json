@@ -1,0 +1,6 @@
+{
+  "gui.buildcraftbuilders.filler": "填充机",
+  "gui.buildcraftbuilders.invert": "反转：%s",
+  "gui.buildcraftbuilders.excavate": "挖掘：%s",
+  "gui.buildcraftbuilders.remaining": "剩余：挖掘 %s 个，放置 %s 个。按住 Shift 点击可反向切换。"
+}

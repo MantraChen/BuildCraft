@@ -48,6 +48,7 @@ public enum FillerRegistry implements IFillerRegistry {
         Template template = new Template();
         template.size = size;
         template.offset = pos;
+        template.facing = net.minecraft.util.math.Direction.NORTH;
         template.data = new BitSet(Snapshot.getDataSize(size));
         return template.getFilledTemplate();
     }

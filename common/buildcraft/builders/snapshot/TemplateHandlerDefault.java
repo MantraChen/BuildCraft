@@ -24,7 +24,11 @@ public enum TemplateHandlerDefault implements ITemplateHandler {
 
     @Override
     public boolean handle(World world, BlockPos pos, PlayerEntity player, ItemStack stack) {
+        if (world.isClient || !(stack.getItem() instanceof net.minecraft.item.BlockItem)
+            || !world.isInBuildLimit(pos) || !world.getWorldBorder().contains(pos) || !world.isChunkLoaded(pos)
+            || !world.isAir(pos) || !world.canPlayerModifyAt(player, pos)) return false;
         BlockHitResult hit = new BlockHitResult(Vec3d.ofBottomCenter(pos), Direction.UP, pos, false);
-        return stack.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit)).isAccepted();
+        ActionResult result = stack.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit));
+        return result.isAccepted() && !world.isAir(pos);
     }
 }

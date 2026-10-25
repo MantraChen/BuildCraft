@@ -61,7 +61,7 @@ public class Blueprint extends Snapshot {
     @Override
     public NbtCompound createNbt() { return serializeNBT(); }
     public NbtCompound serializeNBT() {
-        NbtCompound nbt = super.createNbt();
+        NbtCompound nbt = super.serializeNBT();
         nbt.put("palette", NBTUtilBC.writeCompoundList(palette.stream().map(SchematicBlockManager::writeToNBT)));
         NbtList list = new NbtList();
         for (int z = 0; z < size.getZ(); z++) {
@@ -117,6 +117,10 @@ public class Blueprint extends Snapshot {
                 }
             }
         }
+        for (int entry : data) {
+            if (entry < 0 || entry >= palette.size()) throw new InvalidInputDataException("Invalid blueprint palette index: " + entry);
+        }
+        entities.clear();
         for (NbtCompound schematicEntityTag :
             NBTUtilBC.readCompoundList(nbt.get("entities")).collect(Collectors.toList())) {
             entities.add(SchematicEntityManager.readFromNBT(schematicEntityTag));

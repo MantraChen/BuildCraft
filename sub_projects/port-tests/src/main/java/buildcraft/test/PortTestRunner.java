@@ -31,7 +31,8 @@ public final class PortTestRunner implements DedicatedServerModInitializer {
             buildcraft.test.lib.inventory.FluidTankStorageTest.class,
             buildcraft.test.lib.engine.EngineFuelTest.class,
             buildcraft.test.lib.net.DebugPacketTest.class,
-            buildcraft.test.lib.inventory.TagListHandlerTest.class);
+            buildcraft.test.lib.inventory.TagListHandlerTest.class,
+            buildcraft.test.lib.builders.SnapshotTest.class);
         for (Failure failure : result.getFailures()) {
             System.err.println(failure.getTestHeader());
             System.err.println(failure.getTrace());

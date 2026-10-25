@@ -1,71 +1,63 @@
 /*
  * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-// STUB(R.Chen): SnapshotBuilder logic deferred — BlockUtil.breakBlockAndGetDrops + IItemTransactor migration pending
 package buildcraft.builders.snapshot;
 
+import com.mojang.authlib.GameProfile;
 import java.util.List;
-
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import buildcraft.api.inventory.IItemTransactor;
+import buildcraft.api.mj.MjBattery;
 
-import net.minecraftforge.common.util.INBTSerializable;
-
-public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> implements INBTSerializable<NbtCompound> {
-
+public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> extends BuildingExecutor {
     protected final T tile;
 
-    public SnapshotBuilder(T tile) {
-        this.tile = tile;
-    }
+    public SnapshotBuilder(T tile) { this.tile = tile; }
 
     protected abstract Snapshot.BuildingInfo getBuildingInfo();
-
-    protected abstract boolean isAir(BlockPos blockPos);
-
-    protected abstract boolean canPlace(BlockPos blockPos);
-
-    protected abstract boolean isReadyToPlace(BlockPos blockPos);
-
-    protected abstract boolean hasEnoughToPlaceItems(BlockPos blockPos);
-
-    protected abstract List<ItemStack> getToPlaceItems(BlockPos blockPos);
-
-    protected abstract boolean doPlaceTask(PlaceTask placeTask);
-
-    protected abstract boolean isBlockCorrect(BlockPos blockPos);
-
-    public void tick() {
-        // STUB
+    @Override protected World workWorld() { return tile.getWorldBC(); }
+    @Override protected MjBattery workBattery() { return tile.getBattery(); }
+    @Override protected GameProfile workOwner() { return tile.getOwner(); }
+    @Override protected BlockPos workOrigin() { return tile.getBuilderPos(); }
+    @Override protected boolean excavates() { return tile.canExcavate(); }
+    @Override protected int workSize() {
+        return getBuildingInfo() == null ? 0 : getBuildingInfo().getSnapshot().getDataSize();
     }
-
-    public boolean isBuildFinished() {
-        return false;
+    @Override protected BlockPos workPosition(int index) {
+        return getBuildingInfo().toWorld(getBuildingInfo().getSnapshot().indexToPos(index));
     }
-
-    public void updateSnapshot() {
-        // STUB
+    @Override protected NbtCompound workIdentity() {
+        NbtCompound identity = new NbtCompound();
+        Snapshot.BuildingInfo info = getBuildingInfo();
+        if (info != null) {
+            identity.putByteArray("hash", info.getSnapshot().key.hash);
+            identity.putLong("size", info.getSnapshot().size.asLong());
+            identity.putLong("offset", info.offsetPos.asLong());
+            identity.putString("rotation", info.rotation.name());
+        }
+        return identity;
     }
-
-    @Override
-    public NbtCompound serializeNBT() {
-        return new NbtCompound();
+    @Override protected void workChanged() {
+        if (tile instanceof BlockEntity entity) entity.markDirty();
     }
-
-    @Override
-    public void deserializeNBT(NbtCompound nbt) {
-        // STUB
-    }
-
-    public static class PlaceTask {
-        public final BlockPos pos;
-        public final List<ItemStack> required;
-        public PlaceTask(BlockPos pos, List<ItemStack> required) {
-            this.pos = pos;
-            this.required = required;
+    @Override protected void cancelPlaceTask(PlaceTask task) { acceptDrops(task.required); }
+    @Override protected void acceptDrops(List<ItemStack> drops) {
+        IItemTransactor inventory = tile instanceof ITileForTemplateBuilder template ? template.getInvResources()
+            : tile instanceof ITileForBlueprintBuilder blueprint ? blueprint.getInvResources() : null;
+        for (ItemStack stack : drops) {
+            if (stack.isEmpty()) continue;
+            ItemStack overflow = inventory == null ? stack : inventory.insert(stack, false, false);
+            if (!overflow.isEmpty()) {
+                BlockPos pos = tile.getBuilderPos();
+                tile.getWorldBC().spawnEntity(new ItemEntity(tile.getWorldBC(), pos.getX() + .5,
+                    pos.getY() + 1, pos.getZ() + .5, overflow.copy()));
+            }
         }
     }
 }

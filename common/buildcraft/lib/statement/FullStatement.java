@@ -111,7 +111,7 @@ public class FullStatement<S extends IStatement> implements IReference<S> {
             return;
         }
         for (int i = 0; i < params.length; i++) {
-            if (i > statement.maxParameters()) {
+            if (i >= statement.maxParameters()) {
                 params[i] = null;
             } else {
                 params[i] = statement.createParameter(params[i], i);
@@ -193,7 +193,7 @@ public class FullStatement<S extends IStatement> implements IReference<S> {
 
     public void set(S statement, IStatementParameter[] params) {
         set(statement);
-        for (int i = Math.min(getParamCount(), params.length) - 1; i > 0; i--) {
+        for (int i = Math.min(getParamCount(), params.length) - 1; i >= 0; i--) {
             set(i, params[i]);
         }
     }

@@ -13,7 +13,7 @@ The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not crea
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
 compilation or startup; the root `build` and real client/server checks remain required.
 
-Current coverage: 132 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 137 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
 resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
 policy, persistent configuration (legacy files, reloads, migrations, defaults and bounds),
@@ -35,7 +35,11 @@ tags to check material/form/class equivalence, broad-tag exclusions and live rel
 Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 
-For the regression tests followed by 38 tests in a real Minecraft world:
+Five snapshot regressions cover template/blueprint NBT and stable hashes, copy isolation,
+rotated coordinate transforms, false-valued plane edits, bounded dimensions/facing/data,
+legacy blueprint lists and invalid palette indices.
+
+For the regression tests followed by 50 tests in a real Minecraft world:
 
 ```powershell
 ./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
@@ -63,6 +67,11 @@ Two debug-query tests verify dimension, distance, permission and unloaded-chunk 
 Three projectile tests exercise the production access widener and extraction service with
 tipped/spectral arrows and a named, damaged, enchanted trident, including simulation,
 filter/pickup denial and protection against repeated extraction.
+Twelve building tests exercise the production work executor and native template placement:
+MJ/material conservation, no early item reservations, cancellation/reload, failed placement,
+dependency starvation, external completion, queue saturation, excavation ordering/drops,
+unbreakable/protected targets and unloaded chunks. These tests use a small fixture host;
+they do not instantiate the complete filler/blueprint machine or its client screen.
 This still loads selected production classes;
 full BuildCraft registration, rendering, machines and transport require separate checks.
 

@@ -15,8 +15,8 @@ import net.minecraft.server.world.ServerWorld;
 
 import net.fabricmc.fabric.api.entity.FakePlayer;
 
-import buildcraft.api.core.BuildCraftAPI;
 import buildcraft.api.template.TemplateApi;
+import buildcraft.lib.misc.FakePlayerProvider;
 
 public class TemplateBuilder extends SnapshotBuilder<ITileForTemplateBuilder> {
     public TemplateBuilder(ITileForTemplateBuilder tile) {
@@ -55,29 +55,29 @@ public class TemplateBuilder extends SnapshotBuilder<ITileForTemplateBuilder> {
 
     @Override
     protected List<ItemStack> getToPlaceItems(BlockPos blockPos) {
-        return Collections.singletonList(tile.getInvResources().extract(null, 1, 1, false));
+        ItemStack stack = tile.getInvResources().extract(null, 1, 1, false);
+        return stack.isEmpty() ? null : Collections.singletonList(stack);
     }
 
     @Override
     protected boolean doPlaceTask(PlaceTask placeTask) {
-        FakePlayer fakePlayer = BuildCraftAPI.fakePlayerProvider.getFakePlayer(
+        FakePlayer fakePlayer = FakePlayerProvider.INSTANCE.getFakePlayer(
             (ServerWorld) tile.getWorldBC(),
             tile.getOwner(),
             tile.getBuilderPos()
         );
+        ItemStack previous = fakePlayer.getMainHandStack();
         fakePlayer.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, placeTask.required.get(0));
-        return TemplateApi.templateRegistry.handle(
-            tile.getWorldBC(),
-            placeTask.pos,
-            fakePlayer,
-            placeTask.required.get(0)
-        );
-    }
-
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    protected void cancelPlaceTask(PlaceTask placeTask) {
-        // STUB(R.Chen): base SnapshotBuilder has no cancelPlaceTask in the Fabric port — Phase 10
-        tile.getInvResources().insert(placeTask.required.get(0), false, false);
+        try {
+            boolean placed = TemplateApi.templateRegistry.handle(tile.getWorldBC(), placeTask.pos,
+                fakePlayer, placeTask.required.get(0));
+            // Handlers may replace the held stack with a container remainder.
+            placeTask.required.set(0, fakePlayer.getMainHandStack());
+            if (placed) acceptDrops(placeTask.required);
+            return placed;
+        } finally {
+            fakePlayer.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, previous);
+        }
     }
 
     @Override
