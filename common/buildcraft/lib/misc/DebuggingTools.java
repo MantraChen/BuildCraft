@@ -1,53 +1,20 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.lib.misc;
-
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.world.WorldEvent;
-// STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
 
 import buildcraft.api.core.BCDebugging;
 import buildcraft.api.core.BCLog;
 
-import buildcraft.lib.world.WorldEventListenerAdapter;
-
-public class DebuggingTools {
+/** Optional tracing of native renderer invalidations caused by BuildCraft calls. */
+public final class DebuggingTools {
+    private DebuggingTools() {}
     public static final boolean ENABLE = BCDebugging.shouldDebugComplex("lib.debug.getWorld()");
-
-    public static void fmlInit() {
-        if (ENABLE) {
-            MinecraftForge.EVENT_BUS.register(new EventHook());
-        }
-    }
-
-    private static class EventHook {
-        // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-        public void worldLoadEvent(WorldEvent.Load load) {
-            load.getWorld().addEventListener(new WorldListener());
-        }
-    }
-
-    private static class WorldListener extends WorldEventListenerAdapter {
-        @Override
-        public void markBlockRangeForRenderUpdate(int x1, int y1, int z1, int x2, int y2, int z2) {
-            StackTraceElement[] elements = new Throwable().getStackTrace();
-            String[] bc = new String[elements.length];
-            int bcIndex = 0;
-            for (int i = 1; i < elements.length; i++) {
-                StackTraceElement ste = elements[i];
-                if (!ste.getClassName().startsWith("buildcraft")) continue;
-                bc[bcIndex++] = ste.getClassName() + " # " + ste.getMethodName() + " : " + ste.getLineNumber();
-            }
-            if (bcIndex > 0) {
-                BCLog.logger.info("[lib.debug.getWorld()] markBlockRangeForRenderUpdate(" + x1 + ", " + y1 + ", " + z1 + ", " + x2 + ", " + y2 + ", " + z2 + ")");
-                for (int i = 0; i < bcIndex; i++) {
-                    BCLog.logger.info("[lib.debug.getWorld()]   at " + bc[i]);
-                }
-            }
-        }
+    public static void traceRenderUpdate(int x1, int y1, int z1, int x2, int y2, int z2) {
+        if (!ENABLE) return;
+        var frames = java.util.Arrays.stream(Thread.currentThread().getStackTrace())
+            .filter(frame -> frame.getClassName().startsWith("buildcraft.")
+                && !frame.getClassName().equals(DebuggingTools.class.getName())).toList();
+        if (frames.isEmpty()) return;
+        BCLog.logger.info("[lib.debug.getWorld()] scheduleBlockRenders({}, {}, {}, {}, {}, {})", x1, y1, z1, x2, y2, z2);
+        for (var frame : frames) BCLog.logger.info("[lib.debug.getWorld()]   at {}", frame);
     }
 }

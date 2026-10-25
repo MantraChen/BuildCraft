@@ -53,7 +53,7 @@ public class BlockQuarry extends BlockBCTile_Neptune implements IBlockWithFacing
 
     private boolean isConnected(BlockView world, BlockPos pos, BlockState state, Direction side) {
         Direction facing = side;
-        if (Arrays.asList(Direction.HORIZONTALS).contains(facing)) {
+        if (facing.getAxis().isHorizontal()) {
             facing = Direction.fromHorizontal(
                 side.getHorizontal() + 2 + state.get(getFacingProperty()).getHorizontal());
         }
@@ -83,10 +83,10 @@ public class BlockQuarry extends BlockBCTile_Neptune implements IBlockWithFacing
     @Override
     public void breakBlock(World world, BlockPos pos, BlockState state) {
         BlockEntity tile = world.getBlockEntity(pos);
-        if (tile instanceof TileQuarry) {
+        if (!world.isClient && tile instanceof TileQuarry) {
             for (BlockPos blockPos : ((TileQuarry) tile).framePoses) {
                 if (world.getBlockState(blockPos).getBlock() == BCBuildersBlocks.frame) {
-                    world.setBlockState(blockPos);
+                    world.removeBlock(blockPos, false);
                 }
             }
         }

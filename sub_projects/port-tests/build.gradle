@@ -75,6 +75,10 @@ sourceSets.main.java {
     include 'buildcraft/lib/net/IContainerPayloadReceiver.java'
     include 'buildcraft/lib/net/NetworkContext.java'
     include 'buildcraft/lib/net/NetworkRouting.java'
+    include 'buildcraft/lib/net/MessageDebugRequest.java'
+    include 'buildcraft/lib/net/MessageDebugResponse.java'
+    include 'buildcraft/api/tiles/IDebuggable.java'
+    include 'buildcraft/test/lib/net/DebugPacketTest.java'
     include 'buildcraft/lib/net/MessageUpdateTile.java'
     include 'buildcraft/lib/net/MessageContainer.java'
     include 'buildcraft/lib/net/MessageMarker.java'
@@ -126,6 +130,10 @@ sourceSets.main.java {
     include 'buildcraft/api/recipes/IngredientStack.java'
     include 'buildcraft/lib/list/ListHandler.java'
     include 'buildcraft/lib/list/ListMatchHandlerClass.java'
+    include 'buildcraft/lib/list/ListMatchHandlerTags.java'
+    include 'buildcraft/test/lib/inventory/TagListHandlerTest.java'
+    include 'buildcraft/lib/inventory/TransactorEntityArrow.java'
+    include 'buildcraft/test/lib/world/ProjectileGameTests.java'
     include 'buildcraft/lib/misc/StackUtil.java'
     include 'buildcraft/test/lib/inventory/ListHandlerTest.java'
     include 'buildcraft/api/inventory/IItemTransactor.java'
@@ -151,6 +159,7 @@ sourceSets.main.java {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
 loom {
+    accessWidenerPath = file('../../src/main/resources/buildcraft.accesswidener')
     runs {
         server {
             server()
@@ -165,3 +174,5 @@ loom {
         }
     }
 }
+
+processResources { from('../../src/main/resources/buildcraft.accesswidener') }

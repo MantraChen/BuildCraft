@@ -58,6 +58,8 @@ public abstract class StreamConfigManager {
 
     protected abstract void read();
 
+    protected final void clearProperties() { properties.clear(); }
+
     protected final void read(InputStream streamIn) {
         if (streamIn != null) {
             try (Reader reader = new InputStreamReader(streamIn, StandardCharsets.UTF_8)) {

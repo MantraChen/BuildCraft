@@ -40,19 +40,19 @@ public enum DebugRenderHelper implements IDetachedRenderer {
         }
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
+    @Override
     @Environment(EnvType.CLIENT)
-    public void render(PlayerEntity player, float partialTicks) {
+    public void render(float partialTicks) {
         IAdvDebugTarget target = BCAdvDebugging.INSTANCE.targetClient;
         if (target == null) {
             return;
         } else if (!target.doesExistInWorld()) {
-            // targetClient = null;
-            // return;
+            BCAdvDebugging.setClientDebugTarget(null);
+            return;
         }
         IDetachedRenderer renderer = target.getDebugRenderer();
         if (renderer != null) {
-            renderer.render(player, partialTicks);
+            if (renderer != this) renderer.render(partialTicks);
         }
     }
 
@@ -90,6 +90,4 @@ public enum DebugRenderHelper implements IDetachedRenderer {
         // TODO(R.Chen): setTranslation removed — use MatrixStack instead: bb.setTranslation(0, 0, 0);
     }
 
-    @Override
-    public void render(float partialTicks) { /* STUB */ }
 }

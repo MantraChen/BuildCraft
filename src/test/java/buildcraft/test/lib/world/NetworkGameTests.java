@@ -149,13 +149,47 @@ public class NetworkGameTests implements FabricGameTest {
         @Override public BlockEntity createBlockEntity(BlockPos pos, BlockState state) { return new ReceiverTile(pos, state); }
     }
 
-    private static final class ReceiverTile extends BlockEntity implements IPayloadReceiver {
+    @GameTest(templateName = EMPTY_STRUCTURE)
+    public void debugQueriesRespectDistanceDimensionAndTilePermission(TestContext test) {
+        ReceiverTile tile = place(test);
+        FakePlayer player = player(test);
+        var request = new MessageDebugRequest(test.getWorld().getRegistryKey().getValue(), tile.getPos(), net.minecraft.util.math.Direction.NORTH);
+        var answer = NetworkRouting.debugResponse(request, player, true);
+        test.assertTrue(answer.left().equals(List.of("value = 0")) && tile.debugCalls == 1, "Allowed nearby query must reach the actual tile");
+        NetworkRouting.debugResponse(request, player, false);
+        tile.allowed = false; NetworkRouting.debugResponse(request, player, true); tile.allowed = true;
+        NetworkRouting.debugResponse(new MessageDebugRequest(new Identifier("test", "other_world"), tile.getPos(), request.side()), player, true);
+        player.setPosition(player.getX() + 9, player.getY(), player.getZ());
+        NetworkRouting.debugResponse(request, player, true);
+        player.setPosition(player.getX() - 9, player.getY(), player.getZ()); player.changeGameMode(GameMode.SPECTATOR);
+        NetworkRouting.debugResponse(request, player, true);
+        test.assertTrue(tile.debugCalls == 1, "Denied debug queries must not call tile methods");
+        test.complete();
+    }
+
+    @GameTest(templateName = EMPTY_STRUCTURE)
+    public void debugQueriesNeverLoadMissingChunks(TestContext test) {
+        FakePlayer player = player(test);
+        BlockPos far = new BlockPos(1_000_000, 100, 1_000_000);
+        player.setPosition(far.getX() + .5, far.getY() + .5, far.getZ() + .5);
+        var request = new MessageDebugRequest(test.getWorld().getRegistryKey().getValue(), far, net.minecraft.util.math.Direction.UP);
+        test.assertTrue(!test.getWorld().isChunkLoaded(far), "Chunk must start unloaded");
+        test.assertTrue(NetworkRouting.debugResponse(request, player, true).left().isEmpty(), "Unloaded target has no debug response");
+        test.assertTrue(!test.getWorld().isChunkLoaded(far), "Debug lookup must not load the chunk");
+        test.complete();
+    }
+
+    private static final class ReceiverTile extends BlockEntity implements IPayloadReceiver, buildcraft.api.tiles.IDebuggable {
         boolean allowed = true, fail, reply;
         int value;
+        int debugCalls;
         PlayerEntity sender;
         PacketBufferBC lastBuffer;
         ReceiverTile(BlockPos pos, BlockState state) { super(TYPE, pos, state); }
         @Override public boolean canReceivePayload(PlayerEntity player) { return allowed; }
+        @Override public void getDebugInfo(List<String> left, List<String> right, net.minecraft.util.math.Direction side) {
+            debugCalls++; left.add("value = " + value);
+        }
         @Override public MessageUpdateTile receivePayload(NetworkContext context, PacketBufferBC payload) throws IOException {
             lastBuffer = payload;
             sender = context.player();

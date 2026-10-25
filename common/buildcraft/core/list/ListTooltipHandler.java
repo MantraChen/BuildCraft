@@ -10,8 +10,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Formatting;
 
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-// STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
+import java.util.List;
+import net.minecraft.text.Text;
 
 import buildcraft.api.items.IList;
 
@@ -20,15 +20,12 @@ import buildcraft.lib.misc.LocaleUtil;
 public enum ListTooltipHandler {
     INSTANCE;
 
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    public void itemTooltipEvent(ItemTooltipEvent event) {
-        final PlayerEntity player = event.getEntityPlayer();
-        final ItemStack stack = event.getItemStack();
+    public void append(PlayerEntity player, ItemStack stack, List<Text> lines) {
         if (!stack.isEmpty() && player != null && player.currentScreenHandler instanceof ContainerList) {
             ItemStack list = player.getMainHandStack();
             if (!list.isEmpty() && list.getItem() instanceof IList) {
                 if (((IList) list.getItem()).matches(list, stack)) {
-                    event.getToolTip().add(Formatting.GREEN + LocaleUtil.localize("tip.list.matches"));
+                    lines.add(Text.translatable("tip.list.matches").formatted(Formatting.GREEN));
                 }
             }
         }

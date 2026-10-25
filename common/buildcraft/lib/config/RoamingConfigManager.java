@@ -33,9 +33,14 @@ public class RoamingConfigManager extends StreamConfigManager {
         this.identifier = identifier;
     }
 
+    public static void clearCaches() {
+        instances.values().forEach(manager -> { manager.cacheExists = null; manager.clearProperties(); });
+    }
+
     @Override
     protected void read() {
         cacheExists = null;
+        clearProperties();
         try (InputStream stream = BCLibProxy.getProxy().getStreamForIdentifier(identifier)) {
             read(stream);
             cacheExists = Boolean.TRUE;

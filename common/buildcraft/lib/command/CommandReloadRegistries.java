@@ -1,30 +1,22 @@
 package buildcraft.lib.command;
 
-import net.minecraft.command.ICommandSender;
-
-import com.mojang.brigadier.Command;
-import net.minecraft.command.CommandException;
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.MinecraftServer;
-
+import net.minecraft.text.Text;
 import buildcraft.lib.script.ReloadableRegistryManager;
+import buildcraft.api.core.BCLog;
 
-public class CommandReloadRegistries extends CommandBase {
-
-    public CommandReloadRegistries() {}
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public String getName() {
-        return "reload";
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public String getUsage(ICommandSender sender) {
-        return "command.buildcraft.reload";
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        ReloadableRegistryManager.DATA_PACKS.reloadAll();
+public final class CommandReloadRegistries {
+    private CommandReloadRegistries() {}
+    public static int execute(CommandContext<ServerCommandSource> ctx) {
+        try {
+            ReloadableRegistryManager.DATA_PACKS.reloadAll();
+            ctx.getSource().sendFeedback(() -> Text.translatable("command.buildcraft.reload.success"), true);
+            return 1;
+        } catch (RuntimeException failure) {
+            BCLog.logger.error("BuildCraft registry reload failed", failure);
+            ctx.getSource().sendError(Text.translatable("command.buildcraft.reload.failure"));
+            return 0;
+        }
     }
 }

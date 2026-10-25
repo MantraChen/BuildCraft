@@ -25,6 +25,15 @@ import net.minecraft.world.World;
 public class BCLibProxy {
     private static Supplier<World> clientWorldSupplier = () -> null;
     private static final BCLibProxy INSTANCE = new BCLibProxy();
+    @FunctionalInterface
+    public interface ResourceOpener {
+        java.io.InputStream open(net.minecraft.util.Identifier id) throws java.io.IOException;
+    }
+    private static ResourceOpener resourceOpener = id -> {
+        java.io.InputStream stream = BCLibProxy.class.getClassLoader().getResourceAsStream("assets/" + id.getNamespace() + "/" + id.getPath());
+        if (stream == null) throw new java.io.FileNotFoundException(id.toString());
+        return stream;
+    };
 
     private BCLibProxy() {}
 
@@ -43,5 +52,11 @@ public class BCLibProxy {
     /** Returns the current client-side world, or {@code null} on the server. */
     public World getClientWorld() {
         return clientWorldSupplier.get();
+    }
+
+    public static void setResourceOpener(ResourceOpener opener) { resourceOpener = java.util.Objects.requireNonNull(opener); }
+
+    public java.io.InputStream getStreamForIdentifier(net.minecraft.util.Identifier id) throws java.io.IOException {
+        return resourceOpener.open(id);
     }
 }

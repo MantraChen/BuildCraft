@@ -63,4 +63,22 @@ public final class NetworkRouting {
     private static void requireEmpty(PacketBufferBC buffer) throws IOException {
         if (buffer.isReadable()) throw new IOException("Unread BuildCraft payload bytes: " + buffer.readableBytes());
     }
+
+    public static MessageDebugResponse debugResponse(MessageDebugRequest request, PlayerEntity player, boolean allowed) {
+        var empty = new MessageDebugResponse(request.dimension(), request.pos(), java.util.List.of(), java.util.List.of());
+        World world = player.getWorld();
+        BlockPos pos = request.pos();
+        if (!allowed || player.isSpectator() || !world.getRegistryKey().getValue().equals(request.dimension())
+            || !world.isInBuildLimit(pos) || !world.getWorldBorder().contains(pos) || !world.isChunkLoaded(pos)
+            || player.squaredDistanceTo(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5) > 64
+            || !world.canPlayerModifyAt(player, pos)) return empty;
+        BlockEntity tile = world.getBlockEntity(pos);
+        if (!(tile instanceof buildcraft.api.tiles.IDebuggable debug) || tile.isRemoved()
+            || (tile instanceof IPayloadReceiver receiver && !receiver.canReceivePayload(player))) return empty;
+        var left = new java.util.ArrayList<String>();
+        var right = new java.util.ArrayList<String>();
+        debug.getDebugInfo(left, right, request.side());
+        return new MessageDebugResponse(request.dimension(), pos,
+            MessageDebugResponse.boundedLines(left), MessageDebugResponse.boundedLines(right));
+    }
 }

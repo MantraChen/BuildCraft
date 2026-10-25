@@ -144,11 +144,6 @@ public class BCLib {
         // STUB(R.Chen): MessageManager.fmlPostInit() removed
     }
 
-    @Mod.EventHandler
-    public static void serverStarting(FMLServerStartingEvent event) {
-        event.registerServerCommand(new CommandBuildCraft());
-    }
-
     static { BCLibTags.register(); }
 
     private static TagEntry registerTag(String id) {

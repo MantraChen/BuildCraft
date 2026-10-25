@@ -37,6 +37,19 @@ public class BCLibClientInitializer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
+        BCLibProxy.setClientWorldSupplier(() -> net.minecraft.client.MinecraftClient.getInstance().world);
+        BCLibProxy.setResourceOpener(id -> net.minecraft.client.MinecraftClient.getInstance().getResourceManager()
+            .getResource(id).orElseThrow(() -> new java.io.FileNotFoundException(id.toString())).getInputStream());
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
+            .registerReloadListener(new net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener() {
+                public net.minecraft.util.Identifier getFabricId() { return new net.minecraft.util.Identifier("buildcraft", "config_overrides"); }
+                public void reload(net.minecraft.resource.ResourceManager manager) {
+                    buildcraft.lib.config.RoamingConfigManager.clearCaches();
+                    buildcraft.lib.config.DetailedConfigOption.reloadAll();
+                }
+            });
+        net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register((stack, context, lines) ->
+            buildcraft.core.list.ListTooltipHandler.INSTANCE.append(net.minecraft.client.MinecraftClient.getInstance().player, stack, lines));
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(
             client -> buildcraft.lib.client.guide.font.FontManager.INSTANCE.clearTextures());
         buildcraft.lib.net.BCNetworkManager.registerClient();
@@ -71,6 +84,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
         });
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
+            buildcraft.lib.debug.ClientDebuggables.clear();
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
             buildcraft.lib.marker.MarkerCache.clearClient();
         });
@@ -78,6 +92,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
             buildcraft.lib.client.guide.GuideManager.INSTANCE.reload();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            buildcraft.lib.debug.ClientDebuggables.clear();
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
             buildcraft.lib.marker.MarkerCache.clearClient();
         });
@@ -92,7 +107,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
             if (client.player != null && client.getNetworkHandler() != null) {
                 buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientTick(buildcraft.lib.net.BCNetworkManager::sendToServer);
             }
-            // STUB(R.Chen): ItemDebugger hover-debug request → use MinecraftClient#crosshairTarget.
+            buildcraft.lib.debug.ClientDebuggables.tick(client);
         });
 
         // Forge: RenderWorldLastEvent → DetachedRenderer event bus

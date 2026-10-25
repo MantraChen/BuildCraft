@@ -6,14 +6,13 @@
 
 package buildcraft.lib.list;
 
-import buildcraft.lib.compat.forge_stubs.OreDictionaryStub;
-
-// STUB(R.Chen): OreDictionaryStub removed — TODO(R.Chen): implement via Tags
-
 import buildcraft.api.lists.ListRegistry;
 
 public class VanillaListHandlers {
+    private static boolean initialized, tagsInitialized;
     public static void fmlInit() {
+        if (initialized) return;
+        initialized = true;
         ListRegistry.registerHandler(new ListMatchHandlerClass());
         ListRegistry.registerHandler(new ListMatchHandlerFluid());
         ListRegistry.registerHandler(new ListMatchHandlerTools());
@@ -21,9 +20,9 @@ public class VanillaListHandlers {
     }
 
     public static void fmlPostInit() {
-        for (String s : OreDictionaryStub.getOreNames()) {
-            ListOreDictionaryCache.INSTANCE.registerName(s);
-        }
-        ListRegistry.registerHandler(new ListMatchHandlerOreDictionary());
+        if (tagsInitialized) return;
+        tagsInitialized = true;
+        // Membership is read from the current tag table; datapack reloads need no stale ID cache.
+        ListRegistry.registerHandler(new ListMatchHandlerTags());
     }
 }

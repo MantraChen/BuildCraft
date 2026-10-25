@@ -52,6 +52,9 @@ public final class BCNetworkManager {
     /** Call from a {@code ModInitializer.onInitialize()} (common side). */
     public static void registerCommon() {
         BuildCraftFabric.LOGGER.info("[BCNetwork] Registering common packet receivers");
+        ServerPlayNetworking.registerGlobalReceiver(MessageDebugRequest.TYPE, (packet, player, sender) ->
+            handle(() -> sender.sendPacket(NetworkRouting.debugResponse(packet, player,
+                buildcraft.lib.item.ItemDebugger.isShowDebugInfo(player))), player.networkHandler::disconnect));
 
         ServerPlayNetworking.registerGlobalReceiver(MessageUpdateTile.TYPE, (packet, player, sender) ->
             handle(() -> NetworkRouting.receiveTile(packet, new NetworkContext(player, sender::sendPacket)),
@@ -68,6 +71,8 @@ public final class BCNetworkManager {
     @Environment(EnvType.CLIENT)
     public static void registerClient() {
         BuildCraftFabric.LOGGER.info("[BCNetwork] Registering client packet receivers");
+        ClientPlayNetworking.registerGlobalReceiver(MessageDebugResponse.TYPE, (packet, player, sender) ->
+            buildcraft.lib.debug.ClientDebuggables.accept(packet));
 
         ClientPlayNetworking.registerGlobalReceiver(MessageUpdateTile.TYPE, (packet, player, sender) ->
             handle(() -> NetworkRouting.receiveTile(packet, new NetworkContext(player, sender::sendPacket)),

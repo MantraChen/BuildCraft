@@ -256,7 +256,7 @@ public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib
     }
 
     private void scanEntities() {
-        world.getEntitiesWithinAABB(Entity.class, box.getBoundingBox()).stream()
+        world.getEntitiesByClass(Entity.class, box.getBoundingBox(), entity -> true).stream()
             .map(entity ->
                 SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(
                     world,

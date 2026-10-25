@@ -1,0 +1,3 @@
+accessWidener v2 named
+# Preserve the native pickup stack, including tipped-arrow data and modded projectile overrides.
+accessible method net/minecraft/entity/projectile/PersistentProjectileEntity asItemStack ()Lnet/minecraft/item/ItemStack;

@@ -77,7 +77,7 @@ public class StatementParameterItemStackExact implements IStatementParameter {
 
     public static StatementParameterItemStackExact readFromNbt(NbtCompound nbt) {
         StatementParameterItemStackExact param = new StatementParameterItemStackExact();
-        param.stack = new ItemStack(nbt.getCompound("stack"));
+            param.stack = ItemStack.fromNbt(nbt.getCompound("stack"));
         return param;
     }
 

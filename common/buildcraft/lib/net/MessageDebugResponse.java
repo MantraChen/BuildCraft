@@ -1,58 +1,41 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
 package buildcraft.lib.net;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.IntStream;
+import java.util.*;
+import net.fabricmc.fabric.api.networking.v1.*;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
-import io.netty.buffer.ByteBuf;
-
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-
-import buildcraft.lib.debug.ClientDebuggables;
-
-public class MessageDebugResponse implements IMessage {
-    private final List<String> left = new ArrayList<>();
-    private final List<String> right = new ArrayList<>();
-
-    public MessageDebugResponse() {}
-
-    public MessageDebugResponse(List<String> left, List<String> right) {
-        this.left.addAll(left);
-        this.right.addAll(right);
+/** Immutable, bounded response; position and dimension prevent stale text on another target. */
+public record MessageDebugResponse(Identifier dimension, BlockPos pos, List<String> left, List<String> right) implements FabricPacket {
+    public static final int MAX_LINES = 64, MAX_LINE_LENGTH = 512;
+    public static final PacketType<MessageDebugResponse> TYPE = PacketType.create(new Identifier("buildcraft", "debug_response"), MessageDebugResponse::read);
+    public MessageDebugResponse {
+        Objects.requireNonNull(dimension); pos = pos.toImmutable(); left = List.copyOf(left); right = List.copyOf(right);
+        for (var lines : List.of(left, right)) {
+            if (lines.size() > MAX_LINES || lines.stream().anyMatch(line -> line.length() > MAX_LINE_LENGTH))
+                throw new IllegalArgumentException("Debug text exceeds packet limits");
+        }
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void toBytes(ByteBuf buffer) {
-        PacketBufferBC buf = PacketBufferBC.asPacketBufferBc(buffer);
-        buf.writeInt(left.size());
-        left.forEach(buf::writeString);
-        buf.writeInt(right.size());
-        right.forEach(buf::writeString);
+    public static List<String> boundedLines(List<String> lines) {
+        return lines.stream().filter(Objects::nonNull).limit(MAX_LINES)
+            .map(line -> line.substring(0, Math.min(line.length(), MAX_LINE_LENGTH))).toList();
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void fromBytes(ByteBuf buffer) {
-        PacketBufferBC buf = PacketBufferBC.asPacketBufferBc(buffer);
-        IntStream.range(0, buf.readInt())
-            .mapToObj(i -> new PacketBufferBC(buf).readString())
-            .forEach(left::add);
-        IntStream.range(0, buf.readInt())
-            .mapToObj(i -> new PacketBufferBC(buf).readString())
-            .forEach(right::add);
+    private static List<String> readLines(PacketByteBuf buffer) {
+        int count = buffer.readVarInt();
+        if (count < 0 || count > MAX_LINES) throw new IllegalArgumentException("Invalid debug line count");
+        List<String> lines = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) lines.add(buffer.readString(MAX_LINE_LENGTH));
+        return lines;
     }
-
-    public static final IMessageHandler<MessageDebugResponse, IMessage> HANDLER = (message, ctx) -> {
-        ClientDebuggables.SERVER_LEFT.clear();
-        ClientDebuggables.SERVER_LEFT.addAll(message.left);
-        ClientDebuggables.SERVER_RIGHT.clear();
-        ClientDebuggables.SERVER_RIGHT.addAll(message.right);
-        return null;
-    };
+    public static MessageDebugResponse read(PacketByteBuf buffer) {
+        var result = new MessageDebugResponse(buffer.readIdentifier(), buffer.readBlockPos(), readLines(buffer), readLines(buffer));
+        if (buffer.isReadable()) throw new IllegalArgumentException("Trailing debug response data");
+        return result;
+    }
+    public void write(PacketByteBuf buffer) {
+        buffer.writeIdentifier(dimension); buffer.writeBlockPos(pos);
+        for (var lines : List.of(left, right)) { buffer.writeVarInt(lines.size()); for (String line : lines) buffer.writeString(line, MAX_LINE_LENGTH); }
+    }
+    public PacketType<?> getType() { return TYPE; }
 }

@@ -8,32 +8,32 @@ package buildcraft.lib.inventory;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.entity.projectile.EntityArrow.PickupStatus;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
+import net.minecraft.entity.projectile.PersistentProjectileEntity.PickupPermission;
 import net.minecraft.item.ItemStack;
 
 import buildcraft.api.core.IStackFilter;
 import buildcraft.api.inventory.IItemTransactor.IItemExtractable;
 
-import buildcraft.lib.misc.EntityUtil;
 import buildcraft.lib.misc.StackUtil;
 
 public class TransactorEntityArrow implements IItemExtractable {
 
-    private final EntityArrow entity;
+    private final PersistentProjectileEntity entity;
 
-    public TransactorEntityArrow(EntityArrow entity) {
+    public TransactorEntityArrow(PersistentProjectileEntity entity) {
         this.entity = entity;
     }
 
     @Nonnull
     @Override
     public ItemStack extract(IStackFilter filter, int min, int max, boolean simulate) {
-        if (entity.isRemoved() || entity.pickupStatus != PickupStatus.ALLOWED || min > 1 || max < 1 || max < min) {
+        if (entity.isRemoved() || entity.pickupType != PickupPermission.ALLOWED || min > 1 || max < 1 || max < min) {
             return StackUtil.EMPTY;
         }
 
-        ItemStack stack = EntityUtil.getArrowStack(entity);
+        ItemStack stack = entity.asItemStack().copy();
+        if (stack.isEmpty() || !filter.matches(stack)) return ItemStack.EMPTY;
         if (!simulate) {
             entity.discard();
         }

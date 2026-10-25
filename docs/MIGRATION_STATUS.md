@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 75 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 59 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **125 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **132 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **33 world tests passed** after 125 regression tests.
+- Headless Fabric GameTest: **38 world tests passed** after 132 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -80,6 +80,31 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Registered the native Brigadier `/buildcraft` command tree: installed version and
+  remake credit, a link to this repository's real commit history, and operator-only
+  data-registry reload with error reporting. Native client resource access now supplies
+  roaming config overrides, fixes their invalid namespace and invalidates caches on
+  resource reload. The client-world supplier is now actually installed.
+- Replaced the empty OreDictionary-backed list handler/cache with live item-tag matching.
+  Material, form and exact category match across `c:iron_ingots`, `forge:ingots/iron`
+  and vanilla ore tags. Broad form/gameplay tags cannot invent a material match. Three
+  tests exercise real registry tag binding, reloads and generated examples. List handlers
+  are now installed by the Fabric initializer; tool-class and fluid-list handlers still
+  need their own functional migration. List tooltip text uses the native client callback.
+- Debug requests/responses are immutable Fabric packets with bounded line counts/lengths,
+  dimension and position correlation, and strict framing. Server queries enforce nearby,
+  loaded, editable targets and tile access; four codec tests and two world tests pass.
+  Client F3 polling, stale-text clearing, native debug-HUD hooks and optional render-update
+  tracing are wired. Full connected-client display and client mixin startup are not yet
+  verified, while full compilation remains blocked elsewhere.
+- Projectile recovery now handles native persistent projectiles, honors item filters and
+  pickup permissions, and calls the actual virtual pickup-stack method through a shared
+  access widener. Three real-world tests cover tipped/spectral arrows, trident damage,
+  enchantments/names, simulation, denial and repeated extraction. The obsolete EntityArrow
+  shim is removed. This tests the extraction service; obsidian pipe collection still needs
+  transport integration verification.
+- Corrected quarry frame cleanup, architect entity queries, exact-NBT statement loading,
+  gate packet-side comparison and pipe texture-builder chaining against the native API.
 - Restored the nine original cold combustion fuels and solid coolant values. Combustion
   now accounts for fractional droplets, fuel work, MJ and residue across ticks and saves;
   blocked residue outputs roll back fuel consumption. Cooling respects redstone cooldown,

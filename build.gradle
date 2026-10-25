@@ -56,6 +56,7 @@ java {
 // Fabric Loom configuration
 // ---------------------------------------------------------------------------
 loom {
+    accessWidenerPath = file('src/main/resources/buildcraft.accesswidener')
     // Do NOT call splitEnvironmentSourceSets() here.
     // The Forge codebase uses @SideOnly inline on shared classes rather than
     // separate client/common source sets.  Splitting would break compilation

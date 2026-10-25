@@ -230,7 +230,7 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
             (isAction ? s.action : s.trigger).readFromBuffer(buffer);
             return;
         }
-        if (side == NetSide.CLIENT) {
+        if (side == EnvType.CLIENT) {
             if (id == NET_ID_RESOLVE) {
                 readBoolArray(buffer, triggerOn);
                 readBoolArray(buffer, actionOn);

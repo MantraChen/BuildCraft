@@ -1,31 +1,17 @@
 package buildcraft.lib.command;
 
-import net.minecraft.command.ICommandSender;
-
-import com.mojang.brigadier.Command;
-import net.minecraft.command.CommandException;
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
-public class CommandChangelog extends CommandBase {
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public String getName() {
-        return "changelog";
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public String getUsage(ICommandSender sender) {
-        return "command.buildcraft.buildcraft.changelog.help";
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public int getRequiredPermissionLevel() {
-        return 0;
-    }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        sender.sendMessage(Text.literal("TODO: Implement this!"));
+public final class CommandChangelog {
+    private CommandChangelog() {}
+    public static int execute(CommandContext<ServerCommandSource> ctx) {
+        String url = "https://github.com/MantraChen/BuildCraft-Fabric/commits/main/";
+        ctx.getSource().sendFeedback(() -> Text.literal(url).formatted(Formatting.AQUA, Formatting.UNDERLINE)
+            .styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))), false);
+        return 1;
     }
 }

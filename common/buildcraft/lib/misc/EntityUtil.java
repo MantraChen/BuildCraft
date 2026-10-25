@@ -82,11 +82,6 @@ public class EntityUtil {
 
     @Nonnull
     public static ItemStack getArrowStack(PersistentProjectileEntity arrow) {
-        // FIXME: Replace this with an invocation of arrow.getArrowStack
-        // (but its protected so we can't)
-        if (arrow instanceof SpectralArrowEntity) {
-            return new ItemStack(Items.SPECTRAL_ARROW);
-        }
-        return new ItemStack(Items.ARROW);
+        return arrow.asItemStack().copy();
     }
 }
