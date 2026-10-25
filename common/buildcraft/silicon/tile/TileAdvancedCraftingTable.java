@@ -1,71 +1,77 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native laser-powered crafting. Remake by FelixMantra.
  */
 package buildcraft.silicon.tile;
 
 import java.io.IOException;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.*;
 import buildcraft.api.core.EnumPipePart;
 import buildcraft.api.mj.MjAPI;
-
+import buildcraft.lib.misc.data.IdAllocator;
 import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
+import buildcraft.lib.tile.craft.*;
+import buildcraft.lib.tile.item.*;
 import buildcraft.lib.tile.item.ItemHandlerManager.EnumAccess;
-import buildcraft.lib.tile.item.ItemHandlerSimple;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-/**
- * STUB(R.Chen): IAutoCraft removed; WorkbenchCrafting not in libLeaf — crafting logic deferred
- * until WorkbenchCrafting is migrated. inv fields kept for UI/serialisation compatibility.
- */
-public class TileAdvancedCraftingTable extends TileLaserTableBase {
-    private static final long POWER_REQ = 500 * MjAPI.MJ;
+/** Nine ghost inputs, fifteen material slots and nine outputs; exactly 500 MJ per craft. */
+public final class TileAdvancedCraftingTable extends TileLaserTableBase implements IAutoCraft {
+    public static final IdAllocator IDS=TileBC_Neptune.IDS.makeChild("advancedCraftingTable");
+    public static final long POWER_REQUIRED=500*MjAPI.MJ;
+    public final ItemHandlerSimple invBlueprint,invMaterials,invResults;
+    private final WorkbenchCrafting crafting;
+    public ItemStack resultClient=ItemStack.EMPTY;
+    private long previewRevision=-1;
 
-    public final ItemHandlerSimple invBlueprint;
-    public final ItemHandlerSimple invMaterials;
-    public final ItemHandlerSimple invResults;
-
-    // STUB(R.Chen): resultClient kept for future GUI migration.
-    public ItemStack resultClient = ItemStack.EMPTY;
-
-    public TileAdvancedCraftingTable(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
-        invBlueprint = itemManager.addInvHandler("blueprint", 3 * 3, EnumAccess.PHANTOM);
-        invMaterials = itemManager.addInvHandler("materials", 5 * 3, EnumAccess.INSERT);
-        invResults = itemManager.addInvHandler("result", 3 * 3, EnumAccess.EXTRACT);
-        // STUB(R.Chen): WorkbenchCrafting not in libLeaf — crafting not wired.
+    public TileAdvancedCraftingTable(BlockEntityType<?> type,BlockPos pos,BlockState state) {
+        super(type,pos,state);
+        invBlueprint=itemManager.addInvHandler("blueprint",9,EnumAccess.PHANTOM);
+        invBlueprint.setLimitedInsertor(1);
+        invMaterials=itemManager.addInvHandler("materials",15,EnumAccess.INSERT,EnumPipePart.VALUES);
+        invResults=itemManager.addInvHandler("result",9,EnumAccess.EXTRACT,EnumPipePart.VALUES);
+        crafting=new WorkbenchCrafting(3,3,this,invBlueprint,invMaterials,invResults);
     }
-
-    @Override
-    public long getTarget() {
-        // STUB(R.Chen): crafting.canCraft() check deferred.
-        return 0L;
+    @Override public IdAllocator getIdAllocator(){return IDS;}
+    @Override protected void onSlotChange(Object handler,int slot,ItemStack before,ItemStack after) {
+        super.onSlotChange(handler,slot,before,after);
+        if(crafting!=null && handler==invBlueprint && !ItemStack.areEqual(before,after))crafting.markBlueprintDirty();
     }
-
-    @Override
-    public void tick() {
+    @Override public long getTarget() {
+        if(world==null)return 0;
+        return world.isClient || crafting.canCraft()?POWER_REQUIRED:0;
+    }
+    @Override public void tick() {
         super.tick();
-        // STUB(R.Chen): WorkbenchCrafting.tick() and craft() deferred.
+        if(!isStorageAvailable() || world.isClient)return;
+        crafting.tick();
+        if(power>=POWER_REQUIRED && crafting.craft()){power-=POWER_REQUIRED;markDirty();}
+        if(previewRevision!=crafting.getRevision()) {
+            previewRevision=crafting.getRevision();sendNetworkGuiUpdate(NET_GUI_DATA);
+        }
     }
-
-    @Override
-    public void readPayload(int id, PacketBufferBC buffer, TileBC_Neptune.NetSide side, Object ctx) throws IOException {
-        super.readPayload(id, buffer, side, ctx);
-        // STUB(R.Chen): NET_GUI_DATA resultClient reading deferred.
+    public ItemStack getRecipePreview(){return world!=null && world.isClient?resultClient.copy():crafting.getResult();}
+    @Override public ItemStack getCurrentRecipeOutput(){return getRecipePreview();}
+    @Override public ItemHandlerSimple getInvBlueprint(){return invBlueprint;}
+    @Override public boolean onActivated(PlayerEntity player,Hand hand,Direction face,float x,float y,float z) {
+        if(!canInteractWith(player) || player.getStackInHand(hand).getItem() instanceof buildcraft.api.tools.IToolWrench)return false;
+        if(!world.isClient)buildcraft.silicon.BCSiliconScreens.openAdvanced(player,this);
+        return true;
     }
-
-    @Override
-    public void writePayload(int id, PacketBufferBC buffer, TileBC_Neptune.NetSide side) {
-        super.writePayload(id, buffer, side);
-        // STUB(R.Chen): NET_GUI_DATA crafting result payload deferred.
+    @Override public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);power=Math.min(POWER_REQUIRED,power);crafting.markBlueprintDirty();previewRevision=-1;
+    }
+    @Override public void writePayload(int id,PacketBufferBC buffer,NetSide side) {
+        super.writePayload(id,buffer,side);
+        if(side==NetSide.SERVER && id==NET_GUI_DATA)buffer.writeItemStack(getRecipePreview());
+    }
+    @Override public void readPayload(int id,PacketBufferBC buffer,NetSide side,Object context) throws IOException {
+        super.readPayload(id,buffer,side,context);
+        if(side==NetSide.CLIENT && id==NET_GUI_DATA)resultClient=buffer.readItemStack();
     }
 }

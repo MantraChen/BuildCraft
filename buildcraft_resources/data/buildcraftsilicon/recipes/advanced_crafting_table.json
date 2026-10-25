@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["OtO", "OcO", "OrO"],
+  "key": {
+    "O": {"item": "minecraft:obsidian"},
+    "t": {"item": "minecraft:crafting_table"},
+    "c": {"item": "minecraft:chest"},
+    "r": {"fabric:type": "fabric:nbt", "base": {"item": "buildcraftsilicon:redstone_chipset"}, "nbt": {"chipset": "red"}, "strict": false}
+  },
+  "result": {"item": "buildcraftsilicon:advanced_crafting_table"}
+}

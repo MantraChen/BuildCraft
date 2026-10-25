@@ -13,6 +13,8 @@ import net.minecraft.util.math.Direction;
 public final class BCSiliconClient {
     public static final GateModel MODEL = new GateModel();
     public static void register() {
+        net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiAdvancedCraftingTable>register(BCSiliconScreens.ADVANCED,
+            (handler,inventory,title)->new buildcraft.silicon.gui.GuiAdvancedCraftingTable((buildcraft.silicon.container.ContainerAdvancedCraftingTable)handler,inventory,title));
         net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiAssemblyTable>register(BCSiliconScreens.ASSEMBLY,
             (handler,inventory,title)->new buildcraft.silicon.gui.GuiAssemblyTable((buildcraft.silicon.container.ContainerAssemblyTable)handler,inventory,title));
         net.minecraft.client.render.block.entity.BlockEntityRendererFactories.register(buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.silicon.tile.TileLaser.class),buildcraft.silicon.client.render.RenderLaser::new);

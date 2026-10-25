@@ -29,6 +29,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -OilGeneration
 # Also verify laser assembly, real recipe clicks, saved MJ and engine-driven production:
 ./scripts/full-smoke.ps1 -Assembly
+# Also verify advanced crafting templates, searched recipes and laser-powered work:
+./scripts/full-smoke.ps1 -AdvancedCrafting
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -121,7 +123,22 @@ requires exactly one red chipset, eight blue wires and an iron AND gate, along
 with stopped beams, saved missing-input selections and the owner advancement.
 Screenshots include partial work, live lasers, queued recipes and the output barrel.
 
-The 239 server tests currently verify:
+The advanced-crafting client uses `verification/advanced-crafting-client-run/`. It
+edits ghost slots with native clicks, verifies the preview cannot be taken, saves
+250 MJ of paid work and reopens the world. An engine, wooden/stone MJ pipes and a
+laser produce sixteen sticks; native recipe search selects a chest and consumes
+eight more planks. It checks output shift-clicks, beam stop, stale storage rejection
+and removal without dropping ghost materials. Screenshots cover partial work,
+laser production, recipe search and completed output.
+
+The 255 server tests currently verify:
+
+- Sixteen advanced-crafting tests cover the original 500 MJ cost and lack of passive
+  crafting, nine-slot output backpressure, sided transactional permissions, saved
+  work across pattern/reload changes, exact-NBT dynamic repairs, cake/overflow
+  remainders, recipe replacement/removal, protected ghosts/previews, atomic pattern
+  packets, survival unlocks/distance checks, real laser supply, wooden extraction,
+  exact removal, native NBT-aware machine crafting and bounded saved energy.
 
 - Twenty-one assembly tests cover all 45 native recipes and packet synchronization,
   counted/overlapping/exact-NBT ingredients, original costs and variants, round-robin

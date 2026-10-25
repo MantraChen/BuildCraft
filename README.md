@@ -56,8 +56,12 @@ assembly screen queues recipes, keeps selections while ingredients are missing a
 preserves paid work; products prefer pipes, then inventories, then drop nearby.
 Basic gates, iron upgrades and AND/OR conversion also work in a normal crafting table.
 Run `./scripts/full-smoke.ps1 -Assembly` for the native screen, world restart and live
-engine/pipe/laser production fixture. Other pluggables and the advanced/integration
-tables still need restoration.
+engine/pipe/laser production fixture. The advanced crafting table now uses a protected
+3×3 template, fifteen material slots and nine output slots, consuming exactly 500 MJ
+of laser energy per craft. Native recipe search respects survival recipe unlocks;
+blocked output pauses work, and saved energy survives pattern changes and reloads.
+Run `./scripts/full-smoke.ps1 -AdvancedCrafting` for its connected-client fixture.
+Other pluggables and the integration table still need restoration.
 Fluid pipes now expose native transactional storage, retain exact droplets/NBT through
 save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
 clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.

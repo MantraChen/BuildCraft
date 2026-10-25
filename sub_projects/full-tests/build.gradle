@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        advancedCraftingClientSmoke {
+            client()
+            runDir '../../verification/advanced-crafting-client-run'
+            vmArg '-Dbuildcraft.advancedCraftingClientSmoke=true'
+        }
         assemblyClientSmoke {
             client()
             runDir '../../verification/assembly-client-run'

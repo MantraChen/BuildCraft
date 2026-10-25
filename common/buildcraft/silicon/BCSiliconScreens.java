@@ -16,6 +16,11 @@ import buildcraft.transport.tile.TilePipeHolder;
 
 public final class BCSiliconScreens {
     private BCSiliconScreens() {}
+    public static final ScreenHandlerType<buildcraft.silicon.container.ContainerAdvancedCraftingTable> ADVANCED=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
+        var pos=data.readBlockPos();
+        if(!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.silicon.tile.TileAdvancedCraftingTable tile))throw new IllegalStateException("Missing advanced crafting table at "+pos);
+        return new buildcraft.silicon.container.ContainerAdvancedCraftingTable(inventory.player,syncId,tile);
+    });
     public static final ScreenHandlerType<buildcraft.silicon.container.ContainerAssemblyTable> ASSEMBLY=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
         var pos=data.readBlockPos();
         if(!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.silicon.tile.TileAssemblyTable tile))throw new IllegalStateException("Missing assembly table at "+pos);
@@ -31,6 +36,7 @@ public final class BCSiliconScreens {
         return screen;
     });
     public static void register() {
+        Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftsilicon","advanced_crafting_table"),ADVANCED);
         Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftsilicon","assembly_table"),ASSEMBLY);
         Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftsilicon","gate"),GATE);
     }
@@ -41,6 +47,16 @@ public final class BCSiliconScreens {
             public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf data){data.writeBlockPos(tile.getPos());}
             public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user) {
                 return tile.canInteractWith(user)?new buildcraft.silicon.container.ContainerAssemblyTable(user,syncId,tile):null;
+            }
+        });
+    }
+    public static void openAdvanced(PlayerEntity player,buildcraft.silicon.tile.TileAdvancedCraftingTable tile) {
+        if(!(player instanceof ServerPlayerEntity) || !tile.canInteractWith(player))return;
+        player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+            public Text getDisplayName(){return tile.getCachedState().getBlock().getName();}
+            public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf data){data.writeBlockPos(tile.getPos());}
+            public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user) {
+                return tile.canInteractWith(user)?new buildcraft.silicon.container.ContainerAdvancedCraftingTable(user,syncId,tile):null;
             }
         });
     }

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **239 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **255 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -727,8 +727,8 @@ features explicitly as work proceeds.
   Searchable recipe selection produces exactly eight logs → 32 planks → 64 sticks;
   owner advancement and removal preserve only the real output. Screenshots are in
   `verification/autocraft-client-run/screenshots/`.
-- The unregistered experimental fluid workbench and silicon advanced crafting table
-  still require their separate integrations; this milestone restores the item machine.
+- The unregistered experimental fluid workbench still requires separate integration.
+  Silicon's laser-powered advanced crafting table is restored in the milestone below.
 
 ### Native oil distillation
 
@@ -873,9 +873,41 @@ features explicitly as work proceeds.
   `verification/assembly-client-run/screenshots/`, including the original table GUI,
   visible laser production, queued recipes and actual output barrel. The fixture
   exits cleanly with zero failures.
-- Advanced/integration/charging tables, remaining silicon pluggables and legacy
+- Integration/charging tables, remaining silicon pluggables and legacy
   assembly-script/guide integration are still pending. Native data packs are the
   supported recipe source for the restored assembly table.
+
+### Native advanced crafting table
+
+- Restored the original nine-slot phantom template, fifteen material slots and nine
+  outputs using native `WorkbenchCrafting` transactions. Every craft costs exactly
+  500 MJ from lasers; there is no passive crafting or direct MJ input. Missing
+  ingredients or insufficient output space reject work without partially consuming
+  materials, producing output or wasting the stored balance. Template changes keep
+  generic paid laser work, and NBT loading preserves it before world attachment.
+- All faces accept materials and expose only real outputs for extraction. Templates
+  remain private and never drop. Vanilla dynamic recipes use exact item/NBT samples;
+  recipe remainders return to materials, with committed overflow routed to adjacent
+  pipes/inventories. Runtime recipe replacement/removal uses the new recipe result.
+- The native screen retains the original layout, progress bar and output preview,
+  adds `Remake by FelixMantra` and supports searchable unlocked recipe selection.
+  Ghost edits keep the cursor stack; preview clicks, ghost extraction and malformed
+  bulk updates cannot manufacture items. Server checks validate distance and recipe
+  unlocks. Native recipe synchronization preserves the red-chipset NBT ingredient
+  in the table's survival recipe.
+- Sixteen additional packaged-mod tests bring the suite to **255 passing tests**,
+  covering energy/input/output boundaries, remainders, save/reload, dynamic recipes,
+  template packets, normal crafting, native laser and wooden-pipe operation, removal
+  and oversized saved balances.
+- A real client places the table, edits both ghost inputs with native clicks and
+  verifies neither template nor preview produces free items. A complete restart
+  retains 250 MJ and eight planks. An engine/MJ-pipe/laser chain crafts sixteen
+  sticks, then native recipe search fills a chest pattern and consumes another eight
+  planks for exactly one chest. Output shift-click, stopped beams, stale storage and
+  removal with no ghost drops all pass. The original screen, progress and recipe
+  browser were visually checked under
+  `verification/advanced-crafting-client-run/screenshots/`; the final client run
+  exits cleanly with zero failures.
 
 Remaining work includes remaining resource/model/recipe migration and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
