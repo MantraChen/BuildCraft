@@ -120,6 +120,7 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     protected final CapabilityHelper caps = new CapabilityHelper();
     protected final ItemHandlerManager itemManager = new ItemHandlerManager(this::onSlotChange);
     protected final TankManager tankManager = new TankManager();
+    private boolean contentsDropped;
 
     /** Handles all of the players that are currently using this tile (have a GUI open) */
     private final Set<PlayerEntity> usingPlayers = Sets.newIdentityHashSet();
@@ -274,9 +275,14 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     /** Called whenever the block is removed. Called by {@link #onExplode(Explosion)}, and the owning block's
      * onStateReplaced/onBreak hook. */
     public void onRemove() {
+        if (world == null || world.isClient || contentsDropped) return;
+        contentsDropped = true;
         DefaultedList<ItemStack> toDrop = DefaultedList.of();
-        addDrops(toDrop, 0);
-        InventoryUtil.dropAll(world, pos, toDrop);
+        boolean drop = world.getGameRules().getBoolean(net.minecraft.world.GameRules.DO_TILE_DROPS);
+        if (drop) addDrops(toDrop, 0);
+        itemManager.clearForRemoval();
+        tankManager.clearForRemoval();
+        if (drop) InventoryUtil.dropAll(world, pos, toDrop);
     }
 
     @Override
@@ -308,7 +314,13 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     /** Called whenever {@link #onRemove()} is called (by default). */
     public void addDrops(DefaultedList<ItemStack> toDrop, int fortune) {
         itemManager.addDrops(toDrop);
-        // Fluid contents have no item representation when a machine is broken.
+        tankManager.addDrops(toDrop);
+    }
+
+    /** Cached automation views must stop working when their owning block leaves the world. */
+    public final boolean isStorageAvailable() {
+        return !contentsDropped && !isRemoved() && world != null
+            && world.isChunkLoaded(pos) && world.getBlockEntity(pos) == this;
     }
 
     public void onPlacedBy(LivingEntity placer, ItemStack stack) {

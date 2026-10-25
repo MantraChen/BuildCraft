@@ -18,7 +18,8 @@
       "buildcraft.test.full.GateStorageGameTests",
       "buildcraft.test.full.WireGameTests",
       "buildcraft.test.full.FluidPipeGameTests",
-      "buildcraft.test.full.FluidRecoveryGameTests"
+      "buildcraft.test.full.FluidRecoveryGameTests",
+      "buildcraft.test.full.MachineRecoveryGameTests"
     ],
     "client": [
       "buildcraft.test.full.FullClientSmoke",

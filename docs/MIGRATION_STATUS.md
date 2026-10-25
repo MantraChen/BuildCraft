@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **79 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **86 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -121,6 +121,14 @@ features explicitly as work proceeds.
   player pickup/tank use, creative loot suppression, exact-NBT sample filters,
   all 374 upgrade/undo/dye combinations, sealant ingredient consumption and bucket
   remainders, and native recipe packet round trips.
+  Seven machine-recovery tests cover real survival/creative/explosion removal, exact
+  tank shards and combustion-engine fuel/coolant/residue after NBT reload, named solid
+  fuel, retained automation views, replacement isolation, repeated removal and the
+  `doTileDrops` rule. Twenty new native block loot tables restore machine/marker items
+  and preserve every engine/decoration subtype. Neighbor state changes and temporary
+  block-entity detachment retain contents without producing drops. This applies to
+  registered machine inventories/tanks; unfinished refinery/heat-exchanger storage
+  integration and optional development/configuration-only block loot remain pending.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.

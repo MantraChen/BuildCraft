@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "buildcraftcore:engine",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "buildcraftcore:engine",
+              "properties": [
+                "type"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

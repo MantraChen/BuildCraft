@@ -58,6 +58,10 @@ Sealant crafts from green dye/slime or a residue bucket. All 11 fluid pipe upgra
 and undo recipes preserve dye. Breaking a fluid pipe yields half-bucket shards that
 retain exact amounts/NBT and empty into native tanks; emptied shards disappear.
 Shard icons clip the actual animated fluid texture to their original shape.
+Machine removal now recovers registered tanks as fluid shards and clears dropped
+inventories once. Cached automation references stop working after removal. Native
+loot restores 20 additional block items, preserving all engine/decoration variants;
+creative removal keeps machine contents, while `doTileDrops=false` suppresses them.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

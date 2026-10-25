@@ -41,13 +41,15 @@ public class BCLibInitializer implements ModInitializer {
 
         net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerFallback(
             (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
-                ? tile.getItemStorage(side) : null);
+                && tile.isStorageAvailable() ? buildcraft.lib.tile.LiveTileStorage.of(tile.getItemStorage(side),
+                    net.fabricmc.fabric.api.transfer.v1.item.ItemVariant.blank(), tile::isStorageAvailable) : null);
         buildcraft.api.mj.MjAPI.CONNECTOR.registerFallback(
             (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
                 ? tile.getMjConnector(side) : null);
         net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.registerFallback(
             (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
-                && !tile.isRemoved() ? tile.getFluidStorage(side) : null);
+                && tile.isStorageAvailable() ? buildcraft.lib.tile.LiveTileStorage.of(tile.getFluidStorage(side),
+                    net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.blank(), tile::isStorageAvailable) : null);
         buildcraft.api.registry.BuildCraftRegistryManager.managerDataPacks = buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS;
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.SERVER_DATA)
             .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS);

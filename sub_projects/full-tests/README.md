@@ -33,7 +33,7 @@ It then renders lava, oil, gaseous fuel and water shards in the player's hand/ho
 checks receipt of the custom upgrade recipe and captures `screenshots/fluid-shards-smoke.png`
 inside the isolated interaction run directory before saving and exiting.
 
-The 79 server tests currently verify:
+The 86 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -157,6 +157,14 @@ The 79 server tests currently verify:
   actual crafting-result clicks (374 combinations), consuming the expected ingredients.
   Sealant recipes accept green dye, slime or a cold residue bucket and retain the empty
   bucket. Native recipe packet round trips preserve coloured crafting outputs.
+- Machine removal recovers exact tank shards and combustion-engine fuel, coolant and
+  residue after native NBT reload. Named Stirling fuel survives breaking. Retained item
+  and fluid storage views become empty and reject transfers after removal, including
+  after another tank is placed at the same position. Repeated removal cannot duplicate
+  drops. Creative removal preserves contents without a block item; `doTileDrops=false`
+  suppresses all removal loot. Native explosions recover fluid once. Actual survival
+  breaking checks all engine/decoration variants and 20 machine/marker block items.
+  Neighbor updates and temporary detachment preserve contents and rollback behavior.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,

@@ -92,6 +92,12 @@ public class ItemHandlerManager {
         }
     }
 
+    public void clearForRemoval() {
+        for (ItemHandlerSimple handler : handlersToDrop) {
+            for (int slot = 0; slot < handler.getSlots(); slot++) handler.setStackInSlot(slot, ItemStack.EMPTY);
+        }
+    }
+
     public NbtCompound serializeNBT() {
         NbtCompound nbt = new NbtCompound();
         handlers.forEach((name, handler) -> nbt.put(name, handler.serializeNBT()));

@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "buildcraftcore:decorated",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "buildcraftcore:decorated",
+              "properties": [
+                "decoration_type"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}
