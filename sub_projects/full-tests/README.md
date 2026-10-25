@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The 36 server tests currently verify:
+The 40 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -79,6 +79,12 @@ The 36 server tests currently verify:
   survive NBT loading. Sneaking reverses colour selection. Actual lapis-to-Daizuli
   transport separates matching/nonmatching colours, and iron-pipe wrench rotation
   redirects subsequent deliveries to the other connected output.
+- Wooden diamond pipes match whitelist/blacklist samples including NBT, allow all
+  items for an empty whitelist, and extract exactly one item per sufficiently powered
+  pulse. Simulated requests change neither inventory nor cursor. Ordered round robin
+  waits for missing items, skips empty filter slots and resumes after save/reload
+  without losing travelling stacks. Native mode buttons reject invalid IDs, distant
+  players and replaced pipes; payloads and malformed saved indexes are covered.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **36 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **40 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -86,6 +86,9 @@ features explicitly as work proceeds.
   Seven further tests cover native diamond filter editing, phantom-item isolation,
   filter persistence/drops, weighted routing, owner advancement, colour routing and
   wrench-controlled delivery/settings.
+  Four wooden-diamond tests cover exact-NBT whitelist/blacklist matching, one-item
+  MJ pulses, side-effect-free simulation, ordered round-robin starvation, native screen
+  controls, saved cursors/travelling items, payloads and malformed saved indexes.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -108,6 +111,10 @@ features explicitly as work proceeds.
   The diamond pipe shows its six coloured outputs and native filter screen. Editing
   an east-side filter to weight two leaves all seven real diamonds in the hotbar;
   closing/reopening, resource reload and saving/re-entering preserve that setting.
+  The wooden diamond screen also opens with its original textures. Whitelist,
+  blacklist and round-robin buttons synchronize, and the active-slot indicator follows
+  a ghost sample in the third slot. F3+T and saving/re-entering retain the round-robin
+  setting and sample while all seven real diamonds remain in the player's hotbar.
 - Packaged GPU client: **928 visible block states, 127 items and 158 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
@@ -156,7 +163,12 @@ features explicitly as work proceeds.
   expose the native filter screen, display six coloured direction textures and preserve
   weighted routing. Lapis and Daizuli wrench controls select item colours; iron-pipe
   rotation changes delivery direction. Power/RF limiter controls require a wrench.
-  Full fluid/power/RF transport, wooden-diamond/Emzuli/obsidian/stripes behavior
+  Wooden diamond item pipes reuse native MJ extraction, retain nine ghost samples
+  and implement whitelist, blacklist and ordered round-robin modes. Simulated queries
+  never advance the cursor; missing items wait at the current filter. Each pulse
+  extracts one item and returns unused MJ. Native mode buttons validate screen access,
+  and mode/cursor state persists and synchronizes through native screen properties.
+  Full fluid/power/RF transport, Emzuli/obsidian/stripes behavior
   and pluggable/gate gameplay still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.

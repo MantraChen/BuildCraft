@@ -1,4 +1,7 @@
 {
+  "gui.buildcrafttransport.filter.whitelist": "白名单：仅抽取匹配物品（留空允许全部）",
+  "gui.buildcrafttransport.filter.blacklist": "黑名单：排除匹配物品",
+  "gui.buildcrafttransport.filter.round_robin": "轮询：按顺序等待并抽取各筛选项",
   "item.buildcraft_pipe_wood_item.name": "木质管道",
   "item.buildcraft_pipe_cobblestone_item.name": "圆石管道",
   "item.buildcraft_pipe_stone_item.name": "石头管道",

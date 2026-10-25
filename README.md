@@ -40,7 +40,8 @@ tank placement, transactional MJ Dynamo output and chute collection, output, scr
 save data and crafting. It also verifies pipe placement, transactional item input,
 wooden MJ extraction, stone-pipe delivery and travelling-item save data.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
-changes are covered as well.
+changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
+ordered round-robin item extraction, with native ghost filters and persisted settings.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

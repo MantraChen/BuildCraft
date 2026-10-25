@@ -8,15 +8,13 @@
 
 package buildcraft.transport.container;
 
-import java.io.IOException;
-
 import net.minecraft.entity.player.PlayerEntity;
-
-import buildcraft.api.transport.pipe.IPipeHolder.PipeMessageReceiver;
+import net.minecraft.screen.PropertyDelegate;
+import buildcraft.api.transport.pipe.IFlowItems;
+import buildcraft.transport.BCTransportScreens;
 
 import buildcraft.lib.gui.ContainerPipe;
 import buildcraft.lib.gui.slot.SlotPhantom;
-import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.item.ItemHandlerSimple;
 
 import buildcraft.transport.pipe.behaviour.PipeBehaviourWoodDiamond;
@@ -24,14 +22,27 @@ import buildcraft.transport.pipe.behaviour.PipeBehaviourWoodDiamond.FilterMode;
 
 public class ContainerDiamondWoodPipe extends ContainerPipe {
 
-    private final PipeBehaviourWoodDiamond behaviour;
+    public final PipeBehaviourWoodDiamond behaviour;
     private final ItemHandlerSimple filterInv;
 
     public ContainerDiamondWoodPipe(PlayerEntity player, int syncId, PipeBehaviourWoodDiamond behaviour) {
-        super(player, syncId, behaviour.pipe.getHolder());
+        super(BCTransportScreens.DIAMOND_WOOD, player, syncId, behaviour.pipe.getHolder());
         this.behaviour = behaviour;
         this.filterInv = behaviour.filters;
-        behaviour.pipe.getHolder().onPlayerOpen(player);
+        if (!player.getWorld().isClient) behaviour.pipe.getHolder().onPlayerOpen(player);
+        addProperties(new PropertyDelegate() {
+            public int size() { return 3; }
+            public int get(int index) {
+                return switch (index) { case 0 -> behaviour.filterMode.ordinal(); case 1 -> behaviour.currentFilter; default -> behaviour.filterValid ? 1 : 0; };
+            }
+            public void set(int index, int value) {
+                switch (index) {
+                    case 0 -> behaviour.filterMode = FilterMode.get(value);
+                    case 1 -> behaviour.currentFilter = Math.floorMod(value, filterInv.getSlots());
+                    case 2 -> behaviour.filterValid = value != 0;
+                }
+            }
+        });
 
         addFullPlayerInventory(79);
 
@@ -46,16 +57,12 @@ public class ContainerDiamondWoodPipe extends ContainerPipe {
         behaviour.pipe.getHolder().onPlayerClose(player);
     }
 
-    public void sendNewFilterMode(FilterMode newFilterMode) {
-        this.sendMessage(NET_DATA, (buffer) -> buffer.writeEnumValue(newFilterMode));
-    }
-
-    @Override
-    public void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
-        super.readMessage(id, buffer, isClient, ctx);
-        if (!isClient) {
-            behaviour.filterMode = buffer.readEnumValue(FilterMode.class);
-            behaviour.pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
-        }
+    @Override public boolean onButtonClick(PlayerEntity player, int id) {
+        if (player.getWorld().isClient || !canUse(player) || id < 0 || id >= FilterMode.values().length) return false;
+        var mode = FilterMode.get(id);
+        if (mode == FilterMode.ROUND_ROBIN && !(behaviour.pipe.getFlow() instanceof IFlowItems)) return false;
+        behaviour.setFilterMode(mode);
+        sendContentUpdates();
+        return true;
     }
 }

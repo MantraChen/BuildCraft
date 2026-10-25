@@ -1,4 +1,7 @@
 {
+  "gui.buildcrafttransport.filter.whitelist": "Whitelist: extract matching items (empty allows all)",
+  "gui.buildcrafttransport.filter.blacklist": "Blacklist: exclude matching items",
+  "gui.buildcrafttransport.filter.round_robin": "Round robin: wait for each filter in order",
   "item.buildcraft_pipe_wood_item.name": "Wooden Transport Pipe",
   "item.buildcraft_pipe_cobblestone_item.name": "Cobblestone Transport Pipe",
   "item.buildcraft_pipe_stone_item.name": "Stone Transport Pipe",
