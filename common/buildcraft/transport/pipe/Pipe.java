@@ -267,12 +267,14 @@ public final class Pipe implements IPipe, IDebuggable {
         types.clear();
 
         for (Direction facing : Direction.values()) {
+            if (!holder.getPipeWorld().isChunkLoaded(holder.getPipePos().offset(facing))) continue;
             PipePluggable plug = getHolder().getPluggable(facing);
             if (plug != null && plug.isBlocking()) {
                 continue;
             }
             BlockEntity oTile = getHolder().getNeighbourTile(facing);
-            if (oTile == null && !(flow instanceof buildcraft.transport.pipe.flow.PipeFlowFluids)) {
+            if (oTile == null && !(flow instanceof buildcraft.transport.pipe.flow.PipeFlowFluids)
+                && !(flow instanceof buildcraft.transport.pipe.flow.PipeFlowPower)) {
                 continue;
             }
             IPipe oPipe = getHolder().getNeighbourPipe(facing);
@@ -314,7 +316,8 @@ public final class Pipe implements IPipe, IDebuggable {
                 boolean o = old.containsKey(face);
                 boolean n = connected.containsKey(face);
                 if (o != n) {
-                    IPipe oPipe = getHolder().getNeighbourPipe(face);
+                    IPipe oPipe = holder.getPipeWorld().isChunkLoaded(holder.getPipePos().offset(face))
+                        ? getHolder().getNeighbourPipe(face) : null;
                     if (oPipe != null) {
                         oPipe.markForUpdate();
                     }
@@ -375,6 +378,7 @@ public final class Pipe implements IPipe, IDebuggable {
 
     @Override
     public BlockEntity getConnectedTile(Direction side) {
+        if (side == null || holder.getPipeWorld() == null || !holder.getPipeWorld().isChunkLoaded(holder.getPipePos().offset(side))) return null;
         if (connected.containsKey(side)) {
             BlockEntity offset = getHolder().getNeighbourTile(side);
             if (offset == null && !getHolder().getPipeWorld().isClient) {
@@ -388,6 +392,7 @@ public final class Pipe implements IPipe, IDebuggable {
 
     @Override
     public IPipe getConnectedPipe(Direction side) {
+        if (side == null || holder.getPipeWorld() == null || !holder.getPipeWorld().isChunkLoaded(holder.getPipePos().offset(side))) return null;
         if (connected.containsKey(side) && getConnectedType(side) == ConnectedType.PIPE) {
             IPipe offset = getHolder().getNeighbourPipe(side);
             if (offset == null && !getHolder().getPipeWorld().isClient) {

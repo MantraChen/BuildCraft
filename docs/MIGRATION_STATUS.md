@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **86 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **97 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -129,6 +129,12 @@ features explicitly as work proceeds.
   block-entity detachment retain contents without producing drops. This applies to
   registered machine inventories/tanks; unfinished refinery/heat-exchanger storage
   integration and optional development/configuration-only block loot remain pending.
+  Eleven MJ tests restore all nine material rates, exact factory loss units, bounded
+  native input/simulation, delayed demand routing, sided providers without block
+  entities, NBT reconstruction, partial/full/replaced sinks, weighted branches,
+  actual gate stop/rate/resume, passive extraction, malformed snapshots and loss modes.
+  A real creative engine powers a chute through wooden/stone pipes. All 306 native
+  upgrade/undo/dye combinations preserve colours and consume exactly one ingredient.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -265,9 +271,16 @@ features explicitly as work proceeds.
   all 32 fluid variants have GPU coverage. A connected client receives the upgrade
   serializer/recipes and renders four distinct fluid shards in hand/hotbar; its saved
   screenshot confirms lava, oil, gaseous fuel and water remain visually distinct.
-  Machine tank contents still need their own
-  native break/recovery integration.
-  Full power/RF transport, obsidian/stripes behavior, gate/wire crafting
+  Registered machine tanks now recover through native fluid shards on removal.
+  Native MJ pipes preserve energy across save/reload, limit both input and output per
+  face/tick, and hold undelivered energy under backpressure or disabled gate limits.
+  Material throughput and optional loss modes use native configuration; the API's
+  resistance/absolute-loss argument swap is corrected. Nine glowstone upgrade/undo
+  recipe pairs preserve dye. Native rendering applies world matrices and clips moving
+  UVs at atlas boundaries; 768 GPU cases cover load, connection masks and scroll phases.
+  A connected client observes a real engine powering a chute, receives both pipe
+  animations and recipes, then verifies zero animation after the engine is switched off.
+  RF transport, obsidian/stripes behavior, gate/wire crafting
   and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.

@@ -193,6 +193,7 @@ public class BCTransportPipes {
         stripesItem = builder.idTex("stripes_item").flowItem().define();
 
         // Restore the original material rates in mB/t; the native flow converts these to droplets.
+        BCTransportConfig.configurePowerPipes();
         int rate = Math.max(1, Math.min(40, BCTransportConfig.baseFlowRate));
         for (var def : new PipeDefinition[]{cobbleFluid, woodFluid})
             PipeApi.fluidTransferData.put(def, new PipeApi.FluidTransferInfo(rate, 10));

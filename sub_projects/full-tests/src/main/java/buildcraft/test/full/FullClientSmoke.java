@@ -53,6 +53,7 @@ public final class FullClientSmoke implements ClientModInitializer {
             variants += checkFluidShards(client, failures);
             checkWireGeometry(failures);
             checkFluidPipeGeometry(failures);
+            checkPowerPipeGeometry(failures);
             var statements = new java.util.HashSet<>(buildcraft.api.statements.StatementManager.statements.values());
             int transportStatements = 0, coreStatements = 0;
             for (var statement : statements) if (statement.getClass().getPackageName().equals("buildcraft.transport.statements")
@@ -284,9 +285,29 @@ public final class FullClientSmoke implements ClientModInitializer {
         System.out.println("BUILDCRAFT FLUID PIPE RENDER: "+cases+" water/lava, connection and fill combinations");
     }
 
+
+    private static void checkPowerPipeGeometry(ArrayList<String> failures) {
+        int cases=0; var sprite=buildcraft.transport.BCTransportSprites.POWER_FLOW.getSprite();
+        var matrices=new net.minecraft.client.util.math.MatrixStack(); matrices.translate(2,3,4);
+        for (int mask=0;mask<64;mask++) for(double amount:new double[]{0,.1,.5,1}) for(double offset:new double[]{0,7.9,15.9}) {
+            double[] power=new double[6],offsets=new double[6]; boolean[] connected=new boolean[6];
+            java.util.Arrays.fill(power,amount);java.util.Arrays.fill(offsets,offset);
+            for(var side:Direction.values()) connected[side.ordinal()]=(mask & 1<<side.ordinal())!=0;
+            var probe=new FluidVertices(sprite,240,240);
+            buildcraft.transport.client.render.PipeFlowRendererPower.renderSections(power,connected,offsets,
+                new net.minecraft.util.math.Vec3d(offset,offset,offset),matrices,probe,0);
+            int minimum=amount==0?0:(6+5*Integer.bitCount(mask))*4;
+            if (!probe.valid || probe.vertices<minimum || probe.vertices%4!=0 || amount==0 && probe.vertices!=0)
+                failures.add("MJ power geometry/UV/light failure: mask="+mask+" amount="+amount+" offset="+offset+" vertices="+probe.vertices);
+            cases++;
+        }
+        System.out.println("BUILDCRAFT MJ PIPE RENDER: "+cases+" load/connection/scroll combinations");
+    }
+
     private static final class FluidVertices implements net.minecraft.client.render.VertexConsumer {
-        final net.minecraft.client.texture.Sprite sprite; final int blockLight; boolean valid=true; int vertices;
-        FluidVertices(net.minecraft.client.texture.Sprite sprite,int blockLight) { this.sprite=sprite; this.blockLight=blockLight; }
+        final net.minecraft.client.texture.Sprite sprite; final int blockLight,skyLight; boolean valid=true; int vertices;
+        FluidVertices(net.minecraft.client.texture.Sprite sprite,int blockLight) { this(sprite,blockLight,0); }
+        FluidVertices(net.minecraft.client.texture.Sprite sprite,int blockLight,int skyLight) { this.sprite=sprite; this.blockLight=blockLight;this.skyLight=skyLight; }
         public net.minecraft.client.render.VertexConsumer vertex(double x,double y,double z) {
             valid &= Double.isFinite(x+y+z) && x>=1.9999 && x<=3.0001 && y>=2.9999 && y<=4.0001 && z>=3.9999 && z<=5.0001; return this;
         }
@@ -295,7 +316,7 @@ public final class FullClientSmoke implements ClientModInitializer {
             valid &= Float.isFinite(u+v) && u>=sprite.getMinU()-1e-6 && u<=sprite.getMaxU()+1e-6 && v>=sprite.getMinV()-1e-6 && v<=sprite.getMaxV()+1e-6; return this;
         }
         public net.minecraft.client.render.VertexConsumer overlay(int u,int v) { return this; }
-        public net.minecraft.client.render.VertexConsumer light(int u,int v) { valid &= u==blockLight && v==0; return this; }
+        public net.minecraft.client.render.VertexConsumer light(int u,int v) { valid &= u==blockLight && v==skyLight; return this; }
         public net.minecraft.client.render.VertexConsumer normal(float x,float y,float z) { valid &= Float.isFinite(x+y+z); return this; }
         public void next() { vertices++; }
         public void fixedColor(int r,int g,int b,int a) {}

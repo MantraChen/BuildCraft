@@ -1,0 +1,41 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcrafttransport:pipe_wood_power"
+    },
+    "title": {
+      "translate": "advancements.buildcrafttransport.conducting_mj.title"
+    },
+    "description": {
+      "translate": "advancements.buildcrafttransport.conducting_mj.description"
+    }
+  },
+  "parent": "buildcrafttransport:pipe_dream",
+  "criteria": {
+    "has_glowstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:glowstone_dust"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "buildcrafttransport:pipe_wood_power",
+      "buildcrafttransport:pipe_cobblestone_power",
+      "buildcrafttransport:pipe_stone_power",
+      "buildcrafttransport:pipe_sandstone_power",
+      "buildcrafttransport:pipe_quartz_power",
+      "buildcrafttransport:pipe_iron_power",
+      "buildcrafttransport:pipe_gold_power",
+      "buildcrafttransport:pipe_diamond_power",
+      "buildcrafttransport:pipe_diamond_wood_power"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_quartz_power"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_quartz_item"
+  }
+}

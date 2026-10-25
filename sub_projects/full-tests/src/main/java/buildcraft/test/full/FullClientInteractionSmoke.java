@@ -32,6 +32,8 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
     private TilePipeHolder clientTile;
     private boolean sawFluid;
     private int shardFrames;
+    private final boolean[] powerSeen = new boolean[2];
+    private int powerFrames;
     private net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant testFluid;
 
     @Override public void onInitializeClient() {
@@ -40,6 +42,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.END.register(context -> {
             var client=MinecraftClient.getInstance();
             if(stage==11 && client.player!=null && client.player.getMainHandStack().isOf(buildcraft.core.BCCoreItems.fragileFluidShard)) shardFrames++;
+            if(stage==13 && powerSeen[0] && powerSeen[1]) powerFrames++;
         });
     }
 
@@ -58,7 +61,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                 registries -> registries.get(RegistryKeys.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createDimensionsRegistryHolder());
             return;
         }
-        if (stage == 12) return;
+        if (stage == 15) return;
         if (System.nanoTime() > deadline) throw new IllegalStateException("Attachment client smoke timed out at stage " + stage);
         if (client.world == null || client.player == null || client.interactionManager == null || client.getServer() == null) return;
         ticks++;
@@ -194,7 +197,57 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
             net.minecraft.client.util.ScreenshotRecorder.saveScreenshot(client.runDirectory,"fluid-shards-smoke.png",client.getFramebuffer(),
                 message -> System.out.println("BUILDCRAFT RECOVERY SCREENSHOT: "+message.getString()));
             System.out.println("BUILDCRAFT FULL CLIENT RECOVERY: four fluid shards rendered in world/hotbar; native recipe sync; failures=0");
-            stage = 12;
+            advance();
+        } else if(stage==12) {
+            var playerId=client.player.getUuid();
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();
+                for(int x=-1;x<=2;x++)world.setBlockState(POS.east(x),net.minecraft.block.Blocks.AIR.getDefaultState());
+                world.setBlockState(POS.east(2),buildcraft.factory.BCFactoryBlocks.chute.getDefaultState()
+                    .with(buildcraft.factory.BCFactoryBlocks.chute.getFacingProperty(),Direction.NORTH));
+                for(int x=0;x<2;x++) {
+                    world.setBlockState(POS.east(x),BCTransportBlocks.pipeHolder.getDefaultState());
+                    ((TilePipeHolder)world.getBlockEntity(POS.east(x))).onPlacedBy(null,new ItemStack(x==0?BCTransportItems.pipePowerWood:BCTransportItems.pipePowerStone));
+                }
+                world.setBlockState(POS.west().down(),net.minecraft.block.Blocks.REDSTONE_BLOCK.getDefaultState());
+                world.setBlockState(POS.west(),buildcraft.core.BCCoreBlocks.engine.getDefaultState()
+                    .with(buildcraft.api.properties.BuildCraftProperties.ENGINE_TYPE,buildcraft.api.enums.EnumEngineType.CREATIVE));
+                var pos=POS.east(2);
+                var entity=new net.minecraft.entity.ItemEntity(world,pos.getX()+.5,pos.getY()+.5,pos.getZ()-.2,new ItemStack(net.minecraft.item.Items.DIAMOND,3));
+                entity.setNoGravity(true); entity.setVelocity(Vec3d.ZERO);world.spawnEntity(entity);
+                var player=client.getServer().getPlayerManager().getPlayer(playerId);
+                player.getInventory().setStack(0,ItemStack.EMPTY);player.getInventory().markDirty();player.currentScreenHandler.sendContentUpdates();
+                aim(player,Vec3d.ofCenter(POS));
+            });
+            advance();
+        } else if(stage==13 && ready()) {
+            for(int i=0;i<2;i++) if(client.world.getBlockEntity(POS.east(i)) instanceof TilePipeHolder tile
+                && tile.getPipe()!=null && tile.getPipe().flow instanceof buildcraft.transport.pipe.flow.PipeFlowPower flow) {
+                for(var side:Direction.values()) if(flow.getSection(side).displayPower>0) {
+                    require(flow.getSection(side).displayPower<=buildcraft.api.mj.MjAPI.MJ,"MJ render load exceeded native bounds"); powerSeen[i]=true;
+                }
+            }
+            if(ticks<200)return;
+            require(powerSeen[0] && powerSeen[1] && powerFrames>=10,"Native MJ flow never rendered on both pipes");
+            require(client.getNetworkHandler().getRecipeManager().get(new net.minecraft.util.Identifier("buildcrafttransport:pipe_gold_power"))
+                .orElse(null) instanceof buildcraft.transport.recipe.PipeUpgradeRecipe,"Client lost MJ upgrade recipe sync");
+            net.minecraft.client.util.ScreenshotRecorder.saveScreenshot(client.runDirectory,"mj-pipes-smoke.png",client.getFramebuffer(),
+                message -> System.out.println("BUILDCRAFT MJ SCREENSHOT: "+message.getString()));
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();var chute=(buildcraft.factory.tile.TileChute)world.getBlockEntity(POS.east(2));
+                require(chute.inv.getStackInSlot(0).isOf(net.minecraft.item.Items.DIAMOND) && chute.inv.getStackInSlot(0).getCount()==3,"Integrated MJ machine did not perform work");
+                world.setBlockState(POS.west().down(),net.minecraft.block.Blocks.AIR.getDefaultState());
+            });
+            advance();
+        } else if(stage==14 && ready() && ticks>=200) {
+            for(int i=0;i<2;i++) {
+                var tile=(TilePipeHolder)client.world.getBlockEntity(POS.east(i));
+                var flow=(buildcraft.transport.pipe.flow.PipeFlowPower)tile.getPipe().flow;
+                for(var side:Direction.values()) require(flow.getSection(side).displayPower==0
+                    && flow.getSection(side).displayFlow==buildcraft.transport.pipe.flow.PipeFlowPower.EnumFlow.STATIONARY,"Stopped MJ pipe retained ghost energy animation");
+            }
+            System.out.println("BUILDCRAFT FULL CLIENT MJ: engine/wood/stone/chute work, native flow animation, recipe sync and stopped-flow clearing; failures=0");
+            stage = 15;
             client.world.disconnect();
             client.disconnect();
             client.scheduleStop();

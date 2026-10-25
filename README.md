@@ -62,6 +62,12 @@ Machine removal now recovers registered tanks as fluid shards and clears dropped
 inventories once. Cached automation references stop working after removal. Native
 loot restores 20 additional block items, preserving all engine/decoration variants;
 creative removal keeps machine contents, while `doTileDrops=false` suppresses them.
+All nine MJ pipe materials now transport native micro-MJ with bounded per-face input
+and output, delayed demand routing, backpressure and persistent buffers. Wooden inputs
+accept engines/passive providers; iron/diamond gate limits stop and resume delivery.
+MJ throughput and optional loss settings use the native configuration. Glowstone
+upgrades/undo preserve dye. The connected-client fixture powers a chute through two
+pipes and verifies animated energy, recipe sync and stopped-flow clearing.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

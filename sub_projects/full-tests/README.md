@@ -31,9 +31,12 @@ pipes between native tanks. It requires a renderable client fluid with the origi
 exact delivery on the integrated server and no remaining client fluid after emptying.
 It then renders lava, oil, gaseous fuel and water shards in the player's hand/hotbar,
 checks receipt of the custom upgrade recipe and captures `screenshots/fluid-shards-smoke.png`
-inside the isolated interaction run directory before saving and exiting.
+inside the isolated interaction run directory. It then runs a creative engine through
+wooden/stone MJ pipes into a chute, checks real machine work, native client animation
+and MJ recipe sync, and captures `screenshots/mj-pipes-smoke.png`. After switching the
+engine off, it verifies both pipe animations clear before saving and exiting.
 
-The 86 server tests currently verify:
+The 97 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -165,8 +168,18 @@ The 86 server tests currently verify:
   suppresses all removal loot. Native explosions recover fluid once. Actual survival
   breaking checks all engine/decoration variants and 20 machine/marker block items.
   Neighbor updates and temporary detachment preserve contents and rollback behavior.
+- Native MJ pipes preserve nine material rates and correct absolute/percentage loss
+  units. Bounded simulation, input overflow, removal, provider sidedness without block
+  entities, persistent incoming buffers, exact multi-pipe delivery, backpressure,
+  replacement sinks, weighted branches and real gate stop/limit/resume are covered.
+  Passive extraction simulates before committing and retains exact amounts. Malformed
+  saved energy is bounded; client packets validate atomically. All three configured
+  loss modes charge once per world tick. A native engine powers actual chute pickup.
+  Nine glowstone upgrade/undo pairs cover 306 dye/type combinations in native crafting.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
+MJ rendering checks 768 load, connection and scrolling-texture combinations, including
+matrix transforms, full-bright lighting and wrapped UVs staying inside the atlas sprite.
 After reaching the title screen, it checks all 928 registered visible block states,
 130 default item models and 232 explicit item/pipe/gate/wire/shard variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map

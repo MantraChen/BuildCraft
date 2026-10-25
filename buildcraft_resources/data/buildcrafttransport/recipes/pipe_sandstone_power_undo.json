@@ -1,0 +1,12 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_sandstone_power"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_sandstone_item"
+  }
+}

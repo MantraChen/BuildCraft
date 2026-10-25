@@ -1,4 +1,6 @@
 {
+  "advancements.buildcrafttransport.conducting_mj.title": "Conducting MJ",
+  "advancements.buildcrafttransport.conducting_mj.description": "Use glowstone to turn transport pipes into kinesis pipes",
   "item.pipeWaterproof.name": "Pipe Sealant",
   "advancements.buildcrafttransport.sealing_fluids.description": "Craft pipe sealant from green dye or a slimeball",
   "gui.buildcrafttransport.emzuli.title": "Extraction Presets",

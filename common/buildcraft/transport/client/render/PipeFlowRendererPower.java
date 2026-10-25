@@ -40,22 +40,15 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
     @Override
     public void render(PipeFlowPower flow, MatrixStack matrices, VertexConsumer vc,
             int light, float partialTicks) {
-        double centrePower = 0;
         double[] power = new double[6];
+        boolean[] connected = new boolean[6];
+        double[] offsets = new double[6];
         for (Direction side : Direction.values()) {
             Section s = flow.getSection(side);
             int i = side.ordinal();
             power[i] = s.displayPower / (double) MjAPI.MJ;
-            centrePower = Math.max(centrePower, power[i]);
-        }
-        if (centrePower <= 0) return;
-
-        for (Direction side : Direction.values()) {
-            if (!flow.pipe.isConnected(side)) continue;
-            int i = side.ordinal();
-            Section s = flow.getSection(side);
-            double offset = computeOffset(s.clientDisplayFlowLast, s.clientDisplayFlow, partialTicks);
-            renderSidePower(side, power[i], centrePower, offset, matrices, vc, light);
+            connected[i] = flow.pipe.isConnected(side);
+            offsets[i] = computeOffset(s.clientDisplayFlowLast, s.clientDisplayFlow, partialTicks);
         }
 
         Vec3d offsetLast = flow.clientDisplayFlowCentreLast;
@@ -63,7 +56,21 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
         double offsetX = computeOffset(offsetLast.x, offsetThis.x, partialTicks);
         double offsetY = computeOffset(offsetLast.y, offsetThis.y, partialTicks);
         double offsetZ = computeOffset(offsetLast.z, offsetThis.z, partialTicks);
-        renderCentrePower(centrePower, offsetX, offsetY, offsetZ, matrices, vc, light);
+        renderSections(power, connected, offsets, new Vec3d(offsetX, offsetY, offsetZ), matrices, vc, light);
+    }
+
+    /** Shared with GPU checks; texture repeats are clipped within their atlas sprite. */
+    public static void renderSections(double[] power, boolean[] connected, double[] offsets, Vec3d centerOffset,
+            MatrixStack matrices, VertexConsumer vc, int light) {
+        double center = 0;
+        for (double value : power) if (Double.isFinite(value)) center = Math.max(center, Math.min(1, value));
+        if (center <= 0) return;
+        for (Direction side : Direction.values()) if (connected[side.ordinal()]) {
+            double value = power[side.ordinal()];
+            if (Double.isFinite(value) && value > 0) renderSidePower(side, Math.min(1, value), center,
+                offsets[side.ordinal()], matrices, vc, light);
+        }
+        renderCentrePower(center, centerOffset.x, centerOffset.y, centerOffset.z, matrices, vc, light);
     }
 
     private static double computeOffset(double tick0, double tick1, float partialTicks) {
@@ -106,9 +113,7 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
             ModelUtil.mapBoxToUvs(box, face, uvs);
 
             MutableQuad quad = ModelUtil.createFace(face, centreF, radiusF, uvs);
-            quad.texFromSprite(sprite);
-            quad.lighti(15, 15);
-            quad.render(vc);
+            renderWrapped(quad, face, sprite, matrices, vc);
         }
     }
 
@@ -136,9 +141,38 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
             ModelUtil.mapBoxToUvs(box, face, uvs);
 
             MutableQuad quad = ModelUtil.createFace(face, centre, radiusP, uvs);
-            quad.texFromSprite(sprite);
-            quad.lighti(15, 15);
-            quad.render(vc);
+            renderWrapped(quad, face, sprite, matrices, vc);
+        }
+    }
+
+    private static void renderWrapped(MutableQuad quad, Direction face, Sprite sprite, MatrixStack matrices, VertexConsumer vc) {
+        var vertices = new buildcraft.lib.client.model.MutableVertex[]{quad.vertex_0, quad.vertex_1, quad.vertex_2, quad.vertex_3};
+        float minU=Float.POSITIVE_INFINITY,minV=Float.POSITIVE_INFINITY,maxU=Float.NEGATIVE_INFINITY,maxV=Float.NEGATIVE_INFINITY;
+        for (var v:vertices) { minU=Math.min(minU,v.tex_u);maxU=Math.max(maxU,v.tex_u);minV=Math.min(minV,v.tex_v);maxV=Math.max(maxV,v.tex_v); }
+        var origin=vertices[0]; var along=vertices[1]; var across=vertices[3];
+        double du1=along.tex_u-origin.tex_u,dv1=along.tex_v-origin.tex_v;
+        double du3=across.tex_u-origin.tex_u,dv3=across.tex_v-origin.tex_v;
+        double determinant=du1*dv3-du3*dv1;
+        if (Math.abs(determinant)<1e-15) return;
+        for (int tileU=(int)Math.floor(minU);tileU<Math.ceil(maxU);tileU++) {
+            for (int tileV=(int)Math.floor(minV);tileV<Math.ceil(maxV);tileV++) {
+                double u0=Math.max(minU,tileU),u1=Math.min(maxU,tileU+1);
+                double v0=Math.max(minV,tileV),v1=Math.min(maxV,tileV+1);
+                if (u1<=u0 || v1<=v0) continue;
+                for (var vertex:vertices) {
+                    double u=vertex.tex_u==minU?u0:u1,v=vertex.tex_v==minV?v0:v1;
+                    double a=((u-origin.tex_u)*dv3-(v-origin.tex_v)*du3)/determinant;
+                    double b=((v-origin.tex_v)*du1-(u-origin.tex_u)*dv1)/determinant;
+                    float x=(float)(origin.position_x+a*(along.position_x-origin.position_x)+b*(across.position_x-origin.position_x));
+                    float y=(float)(origin.position_y+a*(along.position_y-origin.position_y)+b*(across.position_y-origin.position_y));
+                    float z=(float)(origin.position_z+a*(along.position_z-origin.position_z)+b*(across.position_z-origin.position_z));
+                    vc.vertex(matrices.peek().getPositionMatrix(),x,y,z).color(255,255,255,255)
+                        .texture(sprite.getFrameU((u-tileU)*16),sprite.getFrameV((v-tileV)*16))
+                        .overlay(net.minecraft.client.render.OverlayTexture.DEFAULT_UV)
+                        .light(net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE)
+                        .normal(matrices.peek().getNormalMatrix(),face.getOffsetX(),face.getOffsetY(),face.getOffsetZ()).next();
+                }
+            }
         }
     }
 }

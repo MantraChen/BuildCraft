@@ -8,9 +8,6 @@
 
 package buildcraft.transport.pipe.behaviour;
 
-// STUB(R.Chen): PipeBehaviourWoodPower — Forge CapabilityEnergy/IEnergyStorage not available.
-// getTextureIndex always returns 0 (stub); restore in Phase 4E RF layer.
-
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.Direction;
 
@@ -34,7 +31,14 @@ public class PipeBehaviourWoodPower extends PipeBehaviour {
 
     @Override
     public int getTextureIndex(Direction face) {
-        // STUB(R.Chen): Forge CapabilityEnergy/MjAPI.CAP_RECEIVER not available — always returns 0.
-        return 0;
+        if (face == null || !pipe.isConnected(face) || pipe.getConnectedPipe(face) != null) return 0;
+        var world = pipe.getHolder().getPipeWorld(); var pos = pipe.getHolder().getPipePos().offset(face);
+        if (world == null || !world.isChunkLoaded(pos)) return 0;
+        if (pipe.getFlow() instanceof buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux) {
+            var storage = team.reborn.energy.api.EnergyStorage.SIDED.find(world, pos, face.getOpposite());
+            return storage != null && storage.supportsInsertion() ? 0 : 1;
+        }
+        var connector = buildcraft.api.mj.MjAPI.CONNECTOR.find(world, pos, face.getOpposite());
+        return connector instanceof buildcraft.api.mj.IMjReceiver receiver && receiver.canReceive() ? 0 : 1;
     }
 }
