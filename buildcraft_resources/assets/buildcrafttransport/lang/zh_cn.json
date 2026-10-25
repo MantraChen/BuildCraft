@@ -54,5 +54,6 @@
   "item.buildcraft_pipe_lapis_item.name": "青金石管道",
   "item.buildcraft_pipe_daizuli_item.name": "靛金刚管道",
   "item.buildcraft_pipe_emzuli_item.name": "靛翡翠管道",
-  "item.buildcraft_pipe_stripes_item.name": "条纹管道"
+  "item.buildcraft_pipe_stripes_item.name": "条纹管道",
+  "item.buildcrafttransport.wire": "%s 管道线缆"
 }

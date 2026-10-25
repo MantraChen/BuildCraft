@@ -22,6 +22,11 @@ loom {
             runDir '../../verification/full-client-run'
             vmArg '-Dbuildcraft.fullClientSmoke=true'
         }
+        fullClientInteractionSmoke {
+            client()
+            runDir '../../verification/full-client-interaction-run'
+            vmArg '-Dbuildcraft.fullClientInteractionSmoke=true'
+        }
         gameTest {
             server()
             runDir '../../verification/full-gametest-run'

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **55 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **61 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -102,6 +102,14 @@ features explicitly as work proceeds.
   Empty/full/contains/space and 25/50/75% thresholds use Fabric storage views, including
   furnace face restrictions and insertion-only/read-only fluid providers. Sample/NBT
   matching and aborted insertion probes leave inventory, tanks and sample buckets intact.
+  Six wire tests cover all 16 colours at eight corners, survival counts/drops, native
+  extension to an adjacent pipe and the restored connection advancement. Actual world
+  ticks propagate gate signals, retract power on a split, reconnect after repair and
+  reload, and remove stale emitters. Colours and disconnected pipe dyes remain isolated;
+  multiple emitters combine, and chunk lifecycle hooks rebuild derived networks.
+  Bounded, atomic wire snapshots include power state; malformed NBT/packets and server-side
+  injection are rejected. Native partial breaking drops only the selected wire/gate,
+  preserves the pipe, honours Fabric protection cancellation and suppresses creative drops.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -133,13 +141,25 @@ features explicitly as work proceeds.
   diamonds; left/right/middle paint controls select, reverse and clear colours. White
   and black settings on different presets, activation and the sample survive F3+T
   and saving/re-entering. This validates Emzuli's screen, not player gate configuration.
-  The new gate configuration screen has server/packet tests and packaged GPU geometry
-  checks, but its manual client interaction check remains pending: the Windows input
-  helper returned `foreground window did not report a process id` after client startup.
-- Packaged GPU client: **928 visible block states, 128 items and 183 item variants pass**
+  The native gate screen now opens in that saved world, displays condition/action icons,
+  and searches/selects actions. Changing a source gate from red wire output to redstone
+  output darkens the wire and switches off a distant lamp; restoring red wire output
+  lights both again. The condition selector shows the available localized conditions.
+  Manual wire breaking exposed a client-prediction disconnect missed by server tests:
+  vanilla removed the entire client block entity before attachment updates arrived.
+  The client now retains the pipe while waiting for the server's attachment edit.
+- Packaged client/server interaction test: a fresh flat world receives native client
+  attacks for a wire, gate and pipe centre. Both attachment removals retain the same
+  client block entity through server replies; the centre still removes the entire pipe
+  on both sides. The test passes and the integrated server saves/exits cleanly.
+  Run it with `./scripts/full-smoke.ps1 -Client -Interactions`.
+- Packaged GPU client: **928 visible block states, 129 items and 199 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen with all **30 core and 105 transport statements** resolving their icons and
   localized descriptions. Direction, colour, wire and limit icons use the original assets.
+  All 16 wire item variants select their authored textures. Wire rendering checks all
+  eight corners and 36 connection shapes in lit/unlit states for every colour (1,408
+  combinations), including atlas UV bounds, full-bright power state and matrix transforms.
   It exits cleanly. The latest run has no invalid resource paths, JSON-model
   parse errors or missing blockstate variants. Unavailable guide links, legacy fluid
   animation frames and atlas mipmap warnings remain. This is not complete playability
@@ -206,9 +226,12 @@ features explicitly as work proceeds.
   Edits use the existing bounded container channel (vanilla button packets only hold a
   signed byte), validate current gate identity/permissions and available statements,
   and mark the tile dirty. Malformed clay gate modifiers normalize to one basic slot.
-  Full fluid/power/RF transport, obsidian/stripes behavior
-  and remaining pluggable/wire gameplay still require integration. Gate crafting and
-  inventory/fluid gate statements remain unfinished. Registration of a pipe type
+  Native wires now retain 16 colours in items/tile NBT, derive loaded-only networks,
+  combine gate emitters and sync bounded per-tile power snapshots. Partial breaking
+  preserves the pipe and honours Fabric protection, with client prediction retaining
+  the existing block entity until the server confirms attachment changes.
+  Full fluid/power/RF transport, obsidian/stripes behavior, gate/wire crafting
+  and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
@@ -509,7 +532,7 @@ features explicitly as work proceeds.
   reload, GPU rendering and live guide input remain unverified. The Stirling engine
   screen has now been opened in the full client; other screens still need validation.
 
-Remaining work includes remaining resource/model/recipe migration, gate crafting and other pluggable/wire
+Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
 integration, full quarry operation, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is

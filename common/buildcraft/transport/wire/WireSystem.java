@@ -80,6 +80,7 @@ public final class WireSystem {
         if (pipe == null) {
             return false;
         }
+        if (holder.getPipeWorld() == null || !holder.getPipeWorld().isChunkLoaded(holder.getPipePos().offset(side))) return false;
         IPipe oPipe = holder.getNeighbourPipe(side);
         if (oPipe == null) {
             return false;
@@ -114,7 +115,7 @@ public final class WireSystem {
 
     public static List<WireElement> getConnectedElementsOfElement(World world, WireElement element) {
         if (element.type == WireElement.Type.WIRE_PART) {
-            BlockEntity tile = world.getBlockEntity(element.blockPos);
+            BlockEntity tile = world.isChunkLoaded(element.blockPos) ? world.getBlockEntity(element.blockPos) : null;
             if (tile instanceof IPipeHolder) {
                 IPipeHolder holder = (IPipeHolder) tile;
                 return getConnectedElementsOfElement(holder, element);
@@ -152,7 +153,7 @@ public final class WireSystem {
 
             if (!walked.contains(element)) {
                 if (!holdersCache.containsKey(element.blockPos)) {
-                    BlockEntity tile = wireSystems.getWorld().getBlockEntity(element.blockPos);
+                    BlockEntity tile = wireSystems.getLoadedHolder(element.blockPos) == null ? null : wireSystems.getLoadedHolder(element.blockPos).getPipeTile();
                     IPipeHolder holder = null;
                     if (tile instanceof IPipeHolder) {
                         holder = (IPipeHolder) tile;
@@ -169,8 +170,6 @@ public final class WireSystem {
                             }
                         }
                         if (tempColor != null && colorOfPart == tempColor) {
-                            DyeColor colorButFinal = tempColor; //damn you java
-                            wireSystems.getWireSystemsWithElement(element).stream().filter(wireSystem -> wireSystem != this && wireSystem.color == colorButFinal).forEach(wireSystems::removeWireSystem);
                             elementBuilder.add(element);
                             queue.addAll(getConnectedElementsOfElement(wireSystems.getWorld(), element));
                             Arrays.stream(Direction.values()).forEach(side -> queue.add(new WireElement(element.blockPos, side)));

@@ -9,5 +9,7 @@ public final class BCTransportInitializer implements ModInitializer {
         buildcraft.BuildCraftFabric.LOGGER.info("[BCTransport] Initializing common pipe registry");
         BCTransport.preInit();
         BCTransport.init();
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_WORLD_TICK.register(world ->
+            buildcraft.transport.wire.WorldSavedDataWireSystems.get(world).tick());
     }
 }

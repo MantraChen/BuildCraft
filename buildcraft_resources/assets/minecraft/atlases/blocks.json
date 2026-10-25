@@ -8,6 +8,7 @@
     { "type": "minecraft:directory", "source": "addons", "prefix": "addons/" },
     { "type": "minecraft:directory", "source": "triggers", "prefix": "triggers/" },
     { "type": "minecraft:directory", "source": "gates", "prefix": "gates/" },
+    { "type": "minecraft:directory", "source": "wires", "prefix": "wires/" },
     { "type": "buildcraftenergy:fluids" }
   ]
 }

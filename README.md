@@ -47,10 +47,14 @@ The 25 gate variants can be placed on all six faces and configured through a nat
 screen with searchable conditions/actions, parameters and AND/OR group connections.
 Gates control pipe direction, item paint and MJ/RF limits. Inventory and fluid conditions
 use sided Fabric storage, including non-consuming sample and capacity checks.
-Gate crafting and the remaining pluggables still need restoration.
+All 16 wire colours place on pipe corners, connect matching networks and carry gate
+signals. Breaking an attachment preserves the pipe and honours native break protection.
+Gate/wire crafting and the remaining pluggables still need restoration.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
+Add `-Interactions` to create an isolated flat world and exercise real client/server
+wire, gate and whole-pipe breaking, including vanilla prediction acknowledgements.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

@@ -11,6 +11,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1
 # Also start a real GPU client, inspect baked resources, and exit automatically:
 ./scripts/full-smoke.ps1 -Client
+# Also verify real client/server breaking and prediction in a fresh flat world:
+./scripts/full-smoke.ps1 -Client -Interactions
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -18,8 +20,14 @@ strips nested jars while remapping a development dependency, the script also ext
 the dependencies bundled in that exact artifact into `verification/full-test-libs/`.
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
+The optional interaction client creates its own world under
+`verification/full-client-interaction-run`, attacks a wire and gate through the native
+client interaction manager, verifies the same pipe block entity survives server replies,
+then verifies that targeting the pipe centre still removes the whole block on both sides.
+This covers a prediction bug that server-only tests cannot detect: vanilla previously
+predicted air for an attachment break, losing the pipe before its incremental update.
 
-The 55 server tests currently verify:
+The 61 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -111,10 +119,21 @@ The 55 server tests currently verify:
   storage, preserve contents during simulation and respect furnace faces, item NBT,
   water/lava samples and externally registered sided tanks. Insertion-only tanks remain
   observable; a read-only face retains real capacity instead of appearing full.
+- All 16 wire colours place on eight corners, consume one survival item, preserve NBT
+  and drop once with the pipe. Clicking an existing corner extends to the adjacent pipe;
+  occupied/distant targets are rejected and a valid connection awards its advancement.
+  Real world ticks carry gate signals over a three-pipe network, retract after a split,
+  and recover after rejoining and native tile reconstruction. Removing an emitter or
+  unloading its holder retracts power; multiple emitters combine without mixing colours.
+  Pipe dye boundaries disconnect/reconnect wires. Derived world graphs never resurrect
+  saved stale emitters. Ten-byte maximum tile snapshots include all eight corners and
+  power bits, reject duplicates/invalid parts atomically and cannot be applied server-side.
+  Native player breaking removes only the targeted wire/gate, respects Fabric protection
+  cancellation and drops nothing in creative mode.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
-128 default item models and 183 explicit item/pipe/gate variants. It rejects missing models,
+129 default item models and 199 explicit item/pipe/gate/wire variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map
 locations, decorated blocks, lists, snapshots and single-block schematics. It also
 checks that the chute, tank and gear/wrench crafting chain have translated names and
@@ -125,6 +144,9 @@ in the stitched block atlas. All 25 gates have nonempty textured geometry on six
 in both lit and unlit states (300 combinations), within native block bounds. It requires
 all 30 core and 105 transport statements to have valid atlas icons and localized
 descriptions, including direction, paint, wire and power-limit choices. It requires
+all 16 wire item textures to match their NBT colour. The actual wire renderer emits all
+eight corners and 36 connection shapes, lit/unlit, for every colour (1,408 combinations),
+with bounded atlas UVs, correct light and transformed coordinates. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

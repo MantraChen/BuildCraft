@@ -376,11 +376,32 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
                 return ActionResult.SUCCESS;
             }
         }
-        // STUB(R.Chen): the ItemWire placement branch is dropped here. It needs the unmigrated transport item
-        // layer (ItemWire + BCTransportItems.wire) and relied on stack.getDamage()→DyeColor, which the 1.13
-        // item flattening removed. Restore in Phase 4F (wire item carries its colour via the item/NBT). The Forge
-        // branch added a wire part via tile.getWireManager().addPart(...), scheduled a WIRES network update, and
-        // unlocked ADVANCEMENT_LOGIC_TRANSPORTATION when the new wire became connected.
+        if (item instanceof buildcraft.transport.item.ItemWire) {
+            EnumWirePart wirePart = getWirePartHit(trace);
+            TilePipeHolder attach = tile;
+            if (wirePart != null) {
+                var node = new buildcraft.api.transport.WireNode(pos, wirePart).offset(trace.getSide());
+                wirePart = node.part;
+                if (!node.pos.equals(pos)) attach = getPipe(world, node.pos);
+            } else wirePart = EnumWirePart.get(hitX > 0.5, hitY > 0.5, hitZ > 0.5);
+            if (attach == null || attach.getPipe() == null || !attach.canInteractWith(player)
+                    || attach.wireManager.getColorOfPart(wirePart) != null) return ActionResult.FAIL;
+            if (world.isClient) return ActionResult.SUCCESS;
+            var colour = buildcraft.transport.item.ItemWire.getColour(held);
+            if (!attach.wireManager.addPart(wirePart, colour)) return ActionResult.FAIL;
+            if (!player.getAbilities().creativeMode) held.decrement(1);
+            var node = new buildcraft.api.transport.WireNode(attach.getPos(), wirePart);
+            for (Direction dir : Direction.values()) {
+                var other = node.offset(dir);
+                var otherTile = getPipe(world, other.pos);
+                if (otherTile != null && otherTile.wireManager.getColorOfPart(other.part) == colour
+                    && (other.pos.equals(node.pos) || buildcraft.transport.wire.WireSystem.canWireConnect(attach, dir))) {
+                    buildcraft.lib.misc.AdvancementUtil.unlockAdvancement(player, new net.minecraft.util.Identifier("buildcrafttransport:logic_transportation"));
+                    break;
+                }
+            }
+            return ActionResult.SUCCESS;
+        }
 
         Pipe pipe = tile.getPipe();
         if (pipe == null) {
@@ -433,15 +454,42 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
                 pluggable.addDrops(toDrop, 0);
             }
         }
-        // STUB(R.Chen): wire drops (new ItemStack(BCTransportItems.wire, ...)) dropped — wire item layer unmigrated.
+        for (var colour : tile.wireManager.parts.values()) toDrop.add(buildcraft.transport.BCTransportItems.wire.stack(colour));
         Pipe pipe = tile.getPipe();
         if (pipe != null) {
             pipe.addDrops(toDrop, 0);
         }
         return toDrop;
-        // STUB(R.Chen): the Forge removedByPlayer sub-part removal (break only the wire/pluggable under the cursor
-        // and cancel the full-block break) needs the player's live raytrace at break time + the wire item layer;
-        // deferred to Phase 4F. The full-block break path drops everything above, which getDroppedStacks covers.
+    }
+
+    /** Called after vanilla and Fabric break protection checks, before the pipe itself is removed. */
+    public static boolean breakPart(World world, BlockPos pos, PlayerEntity player) {
+        var tile = getPipe(world, pos);
+        if (tile == null || world.isClient) return false;
+        if (!tile.canInteractWith(player)) return true;
+        var trace = tile.getCachedState().getBlock() instanceof BlockPipeHolder block ? block.rayTrace(world,pos,player) : null;
+        if (trace == null || trace.subHit <= 6) return false;
+        var drops = DefaultedList.<ItemStack>of();
+        var part = getWirePartHit(trace);
+        var between = getWireBetweenHit(trace);
+        if (trace.subHit <= 12) {
+            var side = getPartSideHit(trace);
+            var plug = tile.getPluggable(side);
+            if (plug == null) return false;
+            plug.addDrops(drops, 0); tile.replacePluggable(side, null);
+        } else if (part != null) {
+            var colour = tile.wireManager.removePart(part);
+            if (colour == null) return false;
+            drops.add(buildcraft.transport.BCTransportItems.wire.stack(colour));
+        } else if (between != null) {
+            for (int i=0; i<(between.to == null ? 2 : 1); i++) {
+                var colour = tile.wireManager.removePart(between.parts[i]);
+                if (colour != null) drops.add(buildcraft.transport.BCTransportItems.wire.stack(colour));
+            }
+        } else return false;
+        if (!player.getAbilities().creativeMode) for (var drop : drops) Block.dropStack(world,pos,drop);
+        tile.sendNetworkUpdate(buildcraft.lib.tile.TileBC_Neptune.NET_RENDER_DATA);
+        return true;
     }
 
     // Redstone

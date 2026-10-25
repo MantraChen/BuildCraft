@@ -54,5 +54,6 @@
   "item.buildcraft_pipe_lapis_item.name": "Lazuli Transport Pipe",
   "item.buildcraft_pipe_daizuli_item.name": "Daizuli Transport Pipe",
   "item.buildcraft_pipe_emzuli_item.name": "Emzuli Transport Pipe",
-  "item.buildcraft_pipe_stripes_item.name": "Stripes Transport Pipe"
+  "item.buildcraft_pipe_stripes_item.name": "Stripes Transport Pipe",
+  "item.buildcrafttransport.wire": "%s Pipe Wire"
 }

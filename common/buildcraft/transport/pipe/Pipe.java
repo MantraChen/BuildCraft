@@ -179,6 +179,7 @@ public final class Pipe implements IPipe, IDebuggable {
             }
 
             behaviour.readPayload(buffer, side, ctx);
+            holder.getWireManager().updateBetweens(false);
 
             PipeModelKey model = getModel();
             if (!model.equals(lastModel)) {
@@ -308,6 +309,7 @@ public final class Pipe implements IPipe, IDebuggable {
             }
         }
         if (!old.equals(connected)) {
+            buildcraft.transport.wire.WorldSavedDataWireSystems.get(holder.getPipeWorld()).markStructureChanged();
             for (Direction face : Direction.values()) {
                 boolean o = old.containsKey(face);
                 boolean n = connected.containsKey(face);

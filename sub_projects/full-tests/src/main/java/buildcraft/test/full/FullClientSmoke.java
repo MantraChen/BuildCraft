@@ -50,6 +50,7 @@ public final class FullClientSmoke implements ClientModInitializer {
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
             int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures) + checkGateGeometry(client, failures);
+            checkWireGeometry(failures);
             var statements = new java.util.HashSet<>(buildcraft.api.statements.StatementManager.statements.values());
             int transportStatements = 0, coreStatements = 0;
             for (var statement : statements) if (statement.getClass().getPackageName().equals("buildcraft.transport.statements")
@@ -139,6 +140,13 @@ public final class FullClientSmoke implements ClientModInitializer {
 
     private static int checkItemVariants(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
         int count = 0;
+        for (var colour : net.minecraft.util.DyeColor.values()) {
+            var stack = buildcraft.transport.BCTransportItems.wire.stack(colour);
+            String name = colour == net.minecraft.util.DyeColor.LIGHT_GRAY ? "silver" : colour.getName();
+            checkItemTexture(client, stack, "buildcrafttransport:items/wire/" + name, failures);
+            if (stack.getName().getString().contains("item.") || stack.getName().getString().contains("color.")) failures.add("Untranslated wire: " + colour);
+            count++;
+        }
         for (var type : buildcraft.api.items.IMapLocation.MapLocationType.values()) {
             var stack = new ItemStack(buildcraft.core.BCCoreItems.mapLocation);
             type.setToStack(stack);
@@ -182,6 +190,44 @@ public final class FullClientSmoke implements ClientModInitializer {
         checkQuads(model, null, label, failures);
         String actual = model.getParticleSprite().getContents().getId().toString();
         if (!actual.equals(expectedTexture)) failures.add(label + ": expected " + expectedTexture + ", got " + actual);
+    }
+
+    private static void checkWireGeometry(ArrayList<String> failures) {
+        var tile = buildcraft.transport.BCTransportBlocks.pipeHolderTile.instantiate(net.minecraft.util.math.BlockPos.ORIGIN,
+            buildcraft.transport.BCTransportBlocks.pipeHolder.getDefaultState());
+        var matrices = new net.minecraft.client.util.math.MatrixStack(); matrices.translate(2,3,4);
+        for (var colour : net.minecraft.util.DyeColor.values()) for (boolean on : new boolean[]{false,true}) {
+            var sprite = buildcraft.transport.client.render.PipeWireRenderer.getWireSprite(colour).getSprite();
+            if (sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add("Missing wire texture: " + colour);
+            for (var part : buildcraft.api.transport.EnumWirePart.VALUES) tile.wireManager.parts.put(part,colour);
+            for (var between : buildcraft.transport.wire.EnumWireBetween.VALUES) tile.wireManager.betweens.put(between,colour);
+            tile.wireManager.poweredClient.clear(); if (on) tile.wireManager.poweredClient.addAll(tile.wireManager.parts.keySet());
+            var probe = new WireVertices(sprite,on);
+            buildcraft.transport.client.render.PipeWireRenderer.renderWires(tile,matrices,probe,0);
+            if (probe.vertices != 768 || !probe.valid) failures.add("Wire geometry/UV/light/matrix failure: " + colour + " powered=" + on + " vertices=" + probe.vertices);
+        }
+        System.out.println("BUILDCRAFT WIRE RENDER: 16 colours, 8 corners + 36 connections, lit/unlit");
+    }
+
+    private static final class WireVertices implements net.minecraft.client.render.VertexConsumer {
+        final net.minecraft.client.texture.Sprite sprite; final boolean on; boolean valid = true; int vertices;
+        WireVertices(net.minecraft.client.texture.Sprite sprite,boolean on) { this.sprite=sprite; this.on=on; }
+        public net.minecraft.client.render.VertexConsumer vertex(double x,double y,double z) {
+            valid &= Double.isFinite(x) && Double.isFinite(y) && Double.isFinite(z) && x>=2 && x<=3 && y>=3 && y<=4 && z>=4 && z<=5; return this;
+        }
+        public net.minecraft.client.render.VertexConsumer color(int r,int g,int b,int a) { valid &= a==255; return this; }
+        public net.minecraft.client.render.VertexConsumer texture(float u,float v) {
+            valid &= Float.isFinite(u) && Float.isFinite(v) && u>=sprite.getMinU()-1e-6 && u<=sprite.getMaxU()+1e-6
+                && v>=sprite.getMinV()-1e-6 && v<=sprite.getMaxV()+1e-6;
+            float fraction=(v-sprite.getMinV())/(sprite.getMaxV()-sprite.getMinV());
+            valid &= on ? fraction>=0.9374 : fraction<=0.0626; return this;
+        }
+        public net.minecraft.client.render.VertexConsumer overlay(int u,int v) { return this; }
+        public net.minecraft.client.render.VertexConsumer light(int u,int v) { valid &= on ? u==240 && v==240 : u==0 && v==0; return this; }
+        public net.minecraft.client.render.VertexConsumer normal(float x,float y,float z) { valid &= Float.isFinite(x+y+z); return this; }
+        public void next() { vertices++; }
+        public void fixedColor(int r,int g,int b,int a) { }
+        public void unfixColor() { }
     }
     private static void check(BakedModel model, BakedModel missing, String label, ArrayList<String> failures) {
         if (model == missing) failures.add(label + ": missing model");

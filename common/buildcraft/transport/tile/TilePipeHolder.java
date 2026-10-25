@@ -288,6 +288,7 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
     @Override
     public void onChunkUnload() {
         super.onChunkUnload();
+        wireManager.invalidate();
         eventBus.fireEvent(new PipeEventTileState.ChunkUnload(this));
     }
 
@@ -309,6 +310,7 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
         if (pipe != null) {
             pipe.markForUpdate();
         }
+        wireManager.getWireSystems().markStructureChanged();
     }
 
     // Ticking (was ITickable.update())

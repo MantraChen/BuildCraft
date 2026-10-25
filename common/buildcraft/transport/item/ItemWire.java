@@ -8,12 +8,27 @@
 package buildcraft.transport.item;
 
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.DyeColor;
+import net.minecraft.text.Text;
 
-// STUB(R.Chen): ItemWire — was extends ItemBC_Neptune + setHasSubtypes(true).
-// DyeColor sub-items (wire colours) + model registration deferred to Phase 4F (lib.item layer).
+/** Native wire stacks preserve colour in inventories and drops. Remake by FelixMantra. */
 public class ItemWire extends Item {
 
     public ItemWire(String id) {
         super(new Settings());
+    }
+    public static DyeColor getColour(ItemStack stack) {
+        var nbt = stack.getNbt();
+        int id = nbt == null ? 0 : nbt.getInt("wire_colour");
+        return id >= 0 && id < 16 ? DyeColor.byId(id) : DyeColor.WHITE;
+    }
+    public ItemStack stack(DyeColor colour) {
+        var stack = new ItemStack(this);
+        stack.getOrCreateNbt().putInt("wire_colour", colour.getId());
+        return stack;
+    }
+    @Override public Text getName(ItemStack stack) {
+        return Text.translatable("item.buildcrafttransport.wire", Text.translatable("color." + getColour(stack).getName().replace('_','.')));
     }
 }

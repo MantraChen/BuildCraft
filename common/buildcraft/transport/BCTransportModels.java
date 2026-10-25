@@ -15,6 +15,23 @@ import net.fabricmc.api.Environment;
 public class BCTransportModels {
     public static void preInit() {} // STUB Phase 5
     public static void init() {
+        net.minecraft.client.item.ModelPredicateProviderRegistry.register(BCTransportItems.wire,
+            new net.minecraft.util.Identifier("buildcrafttransport:wire_colour"),
+            (stack, world, entity, seed) -> buildcraft.transport.item.ItemWire.getColour(stack).getId() / 16f);
+        net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
+            if (result instanceof net.minecraft.util.hit.BlockHitResult hit && hit.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK
+                && player.getWorld().getBlockEntity(hit.getBlockPos()) instanceof buildcraft.transport.tile.TilePipeHolder tile) {
+                var trace = BCTransportBlocks.pipeHolder.rayTrace(player.getWorld(), hit.getBlockPos(), player);
+                if (trace != null) {
+                    var part = buildcraft.transport.block.BlockPipeHolder.getWirePartHit(trace);
+                    var between = buildcraft.transport.block.BlockPipeHolder.getWireBetweenHit(trace);
+                    if (part == null && between != null) part = between.parts[0];
+                    if (part != null && tile.wireManager.getColorOfPart(part) != null)
+                        return BCTransportItems.wire.stack(tile.wireManager.getColorOfPart(part));
+                }
+            }
+            return net.minecraft.item.ItemStack.EMPTY;
+        });
         net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(plugin -> plugin.modifyModelAfterBake().register((model, context) -> {
             if (model == null || !(context.id() instanceof net.minecraft.client.util.ModelIdentifier id)) return model;
             var identifier = new net.minecraft.util.Identifier(id.getNamespace(), id.getPath());

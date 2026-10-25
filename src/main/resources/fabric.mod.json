@@ -21,7 +21,7 @@
 
   "environment": "*",
   "accessWidener": "buildcraft.accesswidener",
-  "mixins": ["buildcraft.client.mixins.json"],
+  "mixins": ["buildcraft.mixins.json", "buildcraft.client.mixins.json"],
 
   "entrypoints": {
     "main": [

@@ -49,7 +49,7 @@ public class PipeWireRenderer {
     static {
         for (DyeColor color : DyeColor.values()) {
             wireSprites.put(color,
-                SpriteHolderRegistry.getHolder("buildcrafttransport:wires/" + color.getName()));
+                SpriteHolderRegistry.getHolder("buildcrafttransport:wires/" + (color == DyeColor.LIGHT_GRAY ? "silver" : color.getName())));
         }
         for (EnumWirePart part : EnumWirePart.VALUES) {
             partQuads.put(part, buildPartQuads(part));
@@ -115,7 +115,7 @@ public class PipeWireRenderer {
             copy.vertex_3.texf(
                 (float) sprite.getInterpU(copy.vertex_3.tex_u),
                 (float) sprite.getInterpV(copy.vertex_3.tex_v + vOffset));
-            copy.render(vc);
+            copy.render(vc, matrices.peek(), light, net.minecraft.client.render.OverlayTexture.DEFAULT_UV);
         }
     }
 

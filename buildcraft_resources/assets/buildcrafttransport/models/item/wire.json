@@ -1,0 +1,101 @@
+{
+  "parent": "buildcrafttransport:item/wire/white",
+  "overrides": [
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0
+      },
+      "model": "buildcrafttransport:item/wire/white"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.0625
+      },
+      "model": "buildcrafttransport:item/wire/orange"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.125
+      },
+      "model": "buildcrafttransport:item/wire/magenta"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.1875
+      },
+      "model": "buildcrafttransport:item/wire/light_blue"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.25
+      },
+      "model": "buildcrafttransport:item/wire/yellow"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.3125
+      },
+      "model": "buildcrafttransport:item/wire/lime"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.375
+      },
+      "model": "buildcrafttransport:item/wire/pink"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.4375
+      },
+      "model": "buildcrafttransport:item/wire/gray"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.5
+      },
+      "model": "buildcrafttransport:item/wire/silver"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.5625
+      },
+      "model": "buildcrafttransport:item/wire/cyan"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.625
+      },
+      "model": "buildcrafttransport:item/wire/purple"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.6875
+      },
+      "model": "buildcrafttransport:item/wire/blue"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.75
+      },
+      "model": "buildcrafttransport:item/wire/brown"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.8125
+      },
+      "model": "buildcrafttransport:item/wire/green"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.875
+      },
+      "model": "buildcrafttransport:item/wire/red"
+    },
+    {
+      "predicate": {
+        "buildcrafttransport:wire_colour": 0.9375
+      },
+      "model": "buildcrafttransport:item/wire/black"
+    }
+  ]
+}

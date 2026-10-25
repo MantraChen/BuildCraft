@@ -430,20 +430,8 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
             }
         }
 
-        if (!previousBroadcasts.equals(wireBroadcasts)) {
-            IWireManager wires = getPipeHolder().getWireManager();
-            EnumSet<DyeColor> turnedOff = EnumSet.copyOf(previousBroadcasts);
-            turnedOff.removeAll(wireBroadcasts);
-            // FIXME: add call to "wires.stopEmittingColour(turnedOff)"
-
-            EnumSet<DyeColor> turnedOn = EnumSet.copyOf(wireBroadcasts);
-            turnedOn.removeAll(previousBroadcasts);
-            // FIXME: add call to "wires.emittingColour(turnedOn)"
-
-            if (FabricLoader.getInstance().isModLoaded("buildcrafttransport")
-                    && !getPipeHolder().getPipeWorld().isClient) {
-                WorldSavedDataWireSystems.get(getPipeHolder().getPipeWorld()).gatesChanged = true;
-            }
+        if (!previousBroadcasts.equals(wireBroadcasts) && !getPipeHolder().getPipeWorld().isClient) {
+            WorldSavedDataWireSystems.get(getPipeHolder().getPipeWorld()).gatesChanged = true;
         }
 
         if (isOn != prevIsOn) {

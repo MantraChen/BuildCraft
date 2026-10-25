@@ -12,7 +12,7 @@ import net.minecraft.item.Item;
 import buildcraft.transport.item.ItemPipeHolder;
 import buildcraft.transport.item.ItemWire;
 
-/** Native pipe items; wires and attachment items are restored separately. */
+/** Native transport items. */
 public class BCTransportItems {
 
     public static ItemPipeHolder pipeStructure;
@@ -39,6 +39,11 @@ public class BCTransportItems {
     public static ItemWire wire;
 
     public static void preInit() {
+        wire = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcrafttransport", "wire"), new ItemWire("wire"));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE).register(entries -> {
+            for (var colour : net.minecraft.util.DyeColor.values()) entries.add(wire.stack(colour));
+        });
         pipeStructure = makePipeItem(BCTransportPipes.structure);
         pipeItemWood = makePipeItem(BCTransportPipes.woodItem);
         pipeFluidWood = makePipeItem(BCTransportPipes.woodFluid);

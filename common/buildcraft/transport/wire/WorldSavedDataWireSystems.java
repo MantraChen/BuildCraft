@@ -1,197 +1,87 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.transport.wire;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-// Yarn 1.20.1 renames (mirrors WorldSavedDataVolumeBoxes):
-//   WorldSavedData         → PersistentState        NbtCompound → NbtCompound   NbtList → NbtList
-//   ServerPlayerEntity         → ServerPlayerEntity      BlockEntity     → BlockEntity   DyeColor → DyeColor
-//   world.getTileEntity    → world.getBlockEntity    world.isClient → world.isClient
-//   MapStorage.getOrLoadData → ServerWorld.getPersistentStateManager()
-//                              .getOrCreate(Function<NbtCompound,T>, Supplier<T>, String)
-//   NbtElement.COMPOUND_TYPE → NbtElement.COMPOUND_TYPE
-import net.minecraft.block.entity.BlockEntity;
+import java.util.*;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.World;
-
-import buildcraft.api.transport.EnumWirePart;
 import buildcraft.api.transport.IWireEmitter;
 import buildcraft.api.transport.pipe.IPipeHolder;
-import buildcraft.api.transport.pluggable.PipePluggable;
 
+/** Derived networks for loaded pipes. The authoritative wire parts live in tile NBT.
+ * Remake by FelixMantra: rebuild topology at world-tick boundaries and sync per watched tile. */
 public class WorldSavedDataWireSystems extends PersistentState {
     public static final String DATA_NAME = "buildcraft_wire_systems";
-    public World world;
+    private final World world;
     public final Map<WireSystem, Boolean> wireSystems = new HashMap<>();
+    private final Map<WireSystem.WireElement, List<WireSystem>> index = new HashMap<>();
+    private final Map<BlockPos, IPipeHolder> holders = new HashMap<>();
     public boolean gatesChanged = true;
-    public boolean structureChanged = true;
-    public final List<WireSystem> changedSystems = new ArrayList<>();
-    public final List<ServerPlayerEntity> changedPlayers = new ArrayList<>();
-    public final Map<WireSystem.WireElement, IWireEmitter> emittersCache = new HashMap<>();
+    private boolean structureChanged = true;
 
-    private final Map<WireSystem.WireElement, List<WireSystem>> elementsToWireSystemsIndex = new HashMap<>();
-
-    public WorldSavedDataWireSystems(World world) {
-        this.world = world;
-    }
-
+    public WorldSavedDataWireSystems(World world) { this.world = world; }
     public World getWorld() { return world; }
+    public void markStructureChanged() { structureChanged = true; gatesChanged = true; }
 
-    public void markStructureChanged() {
-        structureChanged = true;
-        gatesChanged = true;
-        emittersCache.clear();
+    public void register(IPipeHolder holder) {
+        if (holders.put(holder.getPipePos().toImmutable(), holder) != holder) markStructureChanged();
     }
-
+    public void unregister(IPipeHolder holder) {
+        if (holders.remove(holder.getPipePos(), holder)) markStructureChanged();
+    }
+    public IPipeHolder getLoadedHolder(BlockPos pos) {
+        var holder = holders.get(pos);
+        return holder != null && !holder.getPipeTile().isRemoved() && world.isChunkLoaded(pos)
+            && world.getBlockEntity(pos) == holder.getPipeTile() ? holder : null;
+    }
     public List<WireSystem> getWireSystemsWithElement(WireSystem.WireElement element) {
-        List<WireSystem> wireSystemsWithElement = this.elementsToWireSystemsIndex.get(element);
-        return wireSystemsWithElement != null ? new ArrayList<>(wireSystemsWithElement) : Collections.emptyList();
+        return new ArrayList<>(getWireSystemsWithElementAsReadOnlyList(element));
     }
-
     public List<WireSystem> getWireSystemsWithElementAsReadOnlyList(WireSystem.WireElement element) {
-        return this.elementsToWireSystemsIndex.getOrDefault(element, Collections.emptyList());
+        return index.getOrDefault(element, List.of());
     }
-
-    public void removeWireSystem(WireSystem wireSystem) {
-        wireSystems.remove(wireSystem);
-        wireSystem.elements.forEach(elementIn -> {
-            elementsToWireSystemsIndex.computeIfPresent(elementIn, (element, wireSystems) -> {
-                wireSystems.remove(wireSystem);
-                return wireSystems.isEmpty() ? null : wireSystems;
-            });
-        });
-        markStructureChanged();
-    }
-
-    public void addWireSystem(WireSystem wireSystem, boolean powered) {
-        if (this.wireSystems.put(wireSystem, powered) == null) {
-            wireSystem.elements.forEach(systemElement -> {
-                List<WireSystem> wireSystemsWithElement = this.elementsToWireSystemsIndex.computeIfAbsent(systemElement, unused -> new ArrayList<>());
-                if (wireSystemsWithElement.contains(wireSystem)) {
-                    throw new IllegalStateException();
-                }
-                wireSystemsWithElement.add(wireSystem);
-            });
-        }
-    }
-
-    public void buildAndAddWireSystem(WireSystem.WireElement element) {
-        WireSystem wireSystem = new WireSystem(this, element);
-        if(!wireSystem.isEmpty()) {
-            this.addWireSystem(wireSystem, false);
-            wireSystems.put(wireSystem, wireSystem.update(this));
-        }
-        markStructureChanged();
-    }
-
-    public void rebuildWireSystemsAround(IPipeHolder holder) {
-        Arrays.stream(EnumWirePart.values())
-                .flatMap(part -> WireSystem.getConnectedElementsOfElement(world, new WireSystem.WireElement(holder.getPipePos(), part)).stream())
-                .distinct()
-                .forEach(this::buildAndAddWireSystem);
-    }
-
-    public IWireEmitter getEmitter(WireSystem.WireElement element) {
-        if (element.type == WireSystem.WireElement.Type.EMITTER_SIDE) {
-            if (!emittersCache.containsKey(element)) {
-                BlockEntity tile = world.getBlockEntity(element.blockPos);
-                if (tile instanceof IPipeHolder) {
-                    IPipeHolder holder = (IPipeHolder) tile;
-                    PipePluggable plug = holder.getPluggable(element.emitterSide);
-                    if(plug instanceof IWireEmitter) {
-                        emittersCache.put(element, (IWireEmitter) plug);
-                    }
-                }
-                if (!emittersCache.containsKey(element)) {
-                    throw new IllegalStateException("Tried to get a wire element when none existed! THIS IS A BUG " + element);
-                }
-            }
-            return emittersCache.get(element);
-        }
-        return null;
-    }
+    public void rebuildWireSystemsAround(IPipeHolder holder) { markStructureChanged(); }
 
     public boolean isEmitterEmitting(WireSystem.WireElement element, DyeColor color) {
-        BlockEntity tile = world.getBlockEntity(element.blockPos);
-        if(tile instanceof IPipeHolder) {
-            IPipeHolder holder = (IPipeHolder) tile;
-            if (holder.getPluggable(element.emitterSide) instanceof IWireEmitter) {
-                return getEmitter(element).isEmitting(color);
-            }
-        }
-        return false;
+        var holder = getLoadedHolder(element.blockPos);
+        return holder != null && holder.getPluggable(element.emitterSide) instanceof IWireEmitter emitter
+            && emitter.isEmitting(color);
     }
 
     public void tick() {
-        if(gatesChanged) {
-            wireSystems.replaceAll((wireSystem, oldPowered) -> {
-                boolean newPowered = wireSystem.update(this);
-                if (oldPowered != newPowered) {
-                    changedSystems.add(wireSystem);
+        if (holders.entrySet().removeIf(e -> getLoadedHolder(e.getKey()) == null)) markStructureChanged();
+        if (structureChanged) {
+            wireSystems.clear(); index.clear();
+            for (var holder : holders.values()) {
+                var manager = (WireManager) holder.getWireManager();
+                for (var part : manager.parts.keySet()) {
+                    var element = new WireSystem.WireElement(holder.getPipePos(), part);
+                    if (index.containsKey(element)) continue;
+                    var system = new WireSystem(this, element);
+                    if (system.isEmpty()) continue;
+                    wireSystems.put(system, false);
+                    for (var member : system.elements) index.computeIfAbsent(member, ignored -> new ArrayList<>()).add(system);
                 }
-                return newPowered;
-            });
+                manager.updateBetweens(true);
+            }
+            structureChanged = false;
+            gatesChanged = true;
         }
-        // STUB(R.Chen): per-player wire sync deferred to Phase 5 with the BC networking layer. The original
-        // loop walked world.getPlayers(ServerPlayerEntity.class, ...) and pushed MessageWireSystems /
-        // MessageWireSystemsPowered through MessageManager.sendTo(); neither message is migrated yet.
-        if(structureChanged || !changedSystems.isEmpty()) {
-            markDirty();
+        if (gatesChanged) {
+            wireSystems.replaceAll((system, old) -> system.update(this));
+            gatesChanged = false;
+            for (var holder : holders.values()) ((WireManager)holder.getWireManager()).syncPower();
         }
-        structureChanged = false;
-        changedSystems.clear();
-        changedPlayers.clear();
     }
 
-    @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        NbtList entriesList = new NbtList();
-        wireSystems.forEach((wireSystem, powered) -> {
-            NbtCompound entry = new NbtCompound();
-            entry.put("wireSystem", wireSystem.writeToNBT());
-            entry.putBoolean("powered", powered);
-            entriesList.add(entry);
-        });
-        nbt.put("entries", entriesList);
-        return nbt;
-    }
-
-    public static WorldSavedDataWireSystems fromNbt(NbtCompound nbt, World world) {
-        WorldSavedDataWireSystems instance = new WorldSavedDataWireSystems(world);
-        NbtList entriesList = nbt.getList("entries", NbtElement.COMPOUND_TYPE);
-        for(int i = 0; i < entriesList.size(); i++) {
-            NbtCompound entry = entriesList.getCompound(i);
-            instance.addWireSystem(new WireSystem(entry.getCompound("wireSystem")), entry.getBoolean("powered"));
-        }
-        return instance;
-    }
-
+    // Old world-level graph snapshots may contain unloaded or removed emitters. Never revive them.
+    @Override public NbtCompound writeNbt(NbtCompound nbt) { return nbt; }
+    public static WorldSavedDataWireSystems fromNbt(NbtCompound nbt, World world) { return new WorldSavedDataWireSystems(world); }
     public static WorldSavedDataWireSystems get(World world) {
-        if(world.isClient) {
-            throw new UnsupportedOperationException("Attempted to get WorldSavedDataWireSystems on the client!");
-        }
-        ServerWorld serverWorld = (ServerWorld) world;
-        return serverWorld.getPersistentStateManager().getOrCreate(
-            nbt -> WorldSavedDataWireSystems.fromNbt(nbt, world),
-            () -> new WorldSavedDataWireSystems(world),
-            DATA_NAME
-        );
+        if (!(world instanceof ServerWorld server)) throw new IllegalArgumentException("Wire systems require a server world");
+        return server.getPersistentStateManager().getOrCreate(nbt -> fromNbt(nbt, world), () -> new WorldSavedDataWireSystems(world), DATA_NAME);
     }
 }

@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client)
+param([switch]$Client, [switch]$Interactions)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -51,5 +51,15 @@ if ($Client) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $clientOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFullClientSmoke --console=plain
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+if ($Interactions) {
+    $interactionRun = Join-Path $verification 'full-client-interaction-run'
+    New-Item -ItemType Directory -Path $interactionRun -Force | Out-Null
+    $interactionOptions = Join-Path $interactionRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $interactionOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $interactionOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFullClientInteractionSmoke --console=plain
 }
 exit $LASTEXITCODE
