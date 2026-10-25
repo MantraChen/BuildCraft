@@ -61,7 +61,34 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
         int index = index(pos);
         return BlueprintMaterials.place(tile.getResourceStorage(), tile.getTankManager(),
             info.toPlaceRequiredItems[index], info.toPlaceRequiredFluids[index],
-            () -> canPlace(pos) && isReadyToPlace(pos) && schematic(pos).build(workWorld(), pos));
+            () -> {
+                if (!(workWorld() instanceof net.minecraft.server.world.ServerWorld world)
+                    || !canPlace(pos) || !isReadyToPlace(pos)) return false;
+                var player=buildcraft.lib.misc.FakePlayerProvider.INSTANCE.getFakePlayer(world,workOwner(),workOrigin());
+                if (!world.canPlayerModifyAt(player,pos)) return false;
+                var before=world.getBlockState(pos);
+                var held=player.getMainHandStack();
+                var required=info.toPlaceRequiredItems[index];
+                var hand=required==null || required.isEmpty()?ItemStack.EMPTY:required.get(0).copy();
+                if (!hand.isEmpty()) hand.setCount(1);
+                player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,hand);
+                try {
+                    var hit=new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofBottomCenter(pos),
+                        net.minecraft.util.math.Direction.UP,pos,false);
+                    var result=net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(player,world,net.minecraft.util.Hand.MAIN_HAND,hit);
+                    if (result==net.minecraft.util.ActionResult.FAIL) return false;
+                    if (getBuildingInfo()!=info || !world.isChunkLoaded(pos) || !world.canPlayerModifyAt(player,pos)) return false;
+                    if (result.isAccepted()) return schematic(pos).isBuilt(world,pos);
+                    return world.getBlockState(pos)==before && canPlace(pos) && isReadyToPlace(pos) && schematic(pos).build(world,pos);
+                } finally {player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,held);}
+            });
+    }
+    @Override public ItemStack previewItem(BlockPos pos) {
+        var info=getBuildingInfo();
+        if (info==null || !info.box.contains(pos)) return ItemStack.EMPTY;
+        var required=info.toPlaceRequiredItems[index(pos)];
+        return required==null?ItemStack.EMPTY:required.stream().filter(stack -> !stack.isEmpty())
+            .findFirst().map(stack -> new ItemStack(stack.getItem())).orElse(ItemStack.EMPTY);
     }
     @Override protected boolean additionalWorkFinished() {
         // Entity reconstruction is not ported yet: never silently report a partial blueprint as finished.

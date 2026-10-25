@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **431 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **460 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -370,7 +370,8 @@ features explicitly as work proceeds.
   queue/battery NBT. Selecting another plan refunds queued credit before the next save.
   Native screen registration, tank interaction widgets, material display, excavation
   control, snapshot block-state changes and the working-volume outline are connected.
-  These machine/UI/path integrations are not yet validated in a full BuildCraft world.
+  The later native architect and builder milestones below validate these machine,
+  UI and path integrations in the packaged mod and a complete client world.
   Entity reconstruction remains unimplemented, and blueprints containing entities are
   deliberately not reported as finished after only their blocks have been built.
 - Snapshot items now encode blueprint/template and used/blank kinds in NBT, retain
@@ -1450,3 +1451,51 @@ Remake by FelixMantra.
   with exact item consumption and distance-based MJ cost. Four reviewed screenshots
   cover the architect UI, scan area, builder UI and reconstructed block states.
   Existing guide recipe and texture-animation/mipmap warnings remain.
+
+### Native builder paths, transactional power and work rendering
+
+- Builders adopt an ordered path only after checking every connected marker's
+  load state, world border and native owner break permission. Reversing paths,
+  closing loops and connecting a new marker to an existing endpoint preserve
+  order. Paths remain bounded to 256 markers and 65,536 expanded positions.
+  Invalid saved paths stay disabled even after another save/reload.
+- Path and volume marker connections now use the native world's persistent state
+  manager. The reader bounds lists and rejects missing or overlapping connections.
+  The native marker connector's two advancements are restored in data resources;
+  finishing a builder path grants the paving advancement through the actual server.
+- The builder and filler share capacity-bounded, transactional MJ reception.
+  Simulation, nested rollback and stale handles preserve energy. Cancelled paid
+  work refunds remain stored even above the input capacity. Builders pause during
+  open item/fluid transactions and expose their snapshot/material slots to native
+  sided insertion and extraction.
+- Blueprint placement checks the native use-block protection event with the machine
+  owner's fake player before spending its reserved item/fluid inputs. Denied work
+  returns its MJ and resumes when allowed. Plan type must match the snapshot item.
+- Native status packets carry bounded path progress, tank contents and material
+  counts. Work packets show at most sixteen paid jobs, using the original robot,
+  material movement, mining beams and directional path lasers. The builder screen
+  displays path progress; bilingual operating help and the item/screen credit retain
+  “Remake by FelixMantra”.
+- Sixteen additional packaged-mod tests cover MJ rollback/capacity/refunds, paid
+  reloads, native item/fluid automation, protection, bent/reversed/looped paths,
+  exact material/energy costs, persistent marker files, malformed saved paths and
+  messages, work previews and the native GUI envelope. Elevated test fixtures
+  explicitly clear their targets so repeated runs do not reuse prior placed blocks.
+- Entity reconstruction, library/replacer screens and the remaining migration
+  backlog are still unfinished. This milestone continues the existing implementation.
+- The final packaged server passes all 460 required tests in
+  `verification/builder-full-client-6.log`. The same jar passes the native client
+  with `failures=0` and a clean one-minute exit. The client uses actual connector,
+  reversal, block-placement and inventory packets, reconnects the complete world
+  twice, resumes the second path cell with exactly 5 MJ paid, and finishes through
+  a creative engine plus wooden/stone power pipes. Replacing the blueprint with
+  a clearing template returns exactly one obsidian and five cobblestone.
+- The client test also caught and fixed tank status decoding: PacketBufferBC packs
+  booleans into earlier bytes, so a raw subsection loses its bit cursor. Validated
+  fluid fields are now re-encoded before updating client caches. Mixed water/lava/
+  empty tanks synchronize and survive restart. Six screenshots capture markers,
+  path progress, paid work, completed construction, mining and the final inventory;
+  the GUI, work and loot screenshots were reviewed. Existing guide-recipe and
+  texture-animation/mipmap warnings remain outside this milestone.
+- Shared construction regression also passes: 148 unit tests and 69 subsystem world
+  tests in `verification/builder-shared-tests.log`.

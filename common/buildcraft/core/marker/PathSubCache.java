@@ -22,8 +22,10 @@ import buildcraft.core.client.BuildCraftLaserManager;
 public class PathSubCache extends MarkerSubCache<PathConnection> {
     public PathSubCache(World world) {
         super(world, MarkerCache.CACHES.indexOf(PathCache.INSTANCE));
-        // STUB(R.Chen): Forge MapStorage / getPerWorldStorage → Fabric PersistentStateManager port deferred — Phase 10
-        PathSavedData data = new PathSavedData();
+        PathSavedData data = world instanceof net.minecraft.server.world.ServerWorld server
+            ? server.getPersistentStateManager().getOrCreate(nbt -> {
+                var saved=new PathSavedData(); saved.readFromNBT(nbt); return saved;
+            }, PathSavedData::new, PathSavedData.NAME) : new PathSavedData();
         data.loadInto(this);
     }
 
@@ -35,7 +37,7 @@ public class PathSubCache extends MarkerSubCache<PathConnection> {
             if (conTo == null) {
                 return PathConnection.tryCreateConnection(this, from, to);
             } else {
-                return conTo.addMarker(from, to);
+                return conTo.addMarker(to, from);
             }
         } else {
             if (conTo == null) {
@@ -54,7 +56,7 @@ public class PathSubCache extends MarkerSubCache<PathConnection> {
             if (conTo == null) {
                 return true;
             } else {
-                return conTo.canAddMarker(from, to);
+                return conTo.canAddMarker(to, from);
             }
         } else {
             if (conTo == null) {

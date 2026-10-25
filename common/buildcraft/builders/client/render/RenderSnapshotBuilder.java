@@ -27,6 +27,7 @@ public class RenderSnapshotBuilder {
 
     public static <T extends ITileForSnapshotBuilder> void render(T tile, double x, double y, double z,
             float partialTicks, MatrixStack matrices, VertexConsumerProvider vcp, int light) {
+        if (tile.getBuilder()==null) return;
         var work = tile.getBuilder().clientWork();
         if (work.isEmpty()) return;
         Vec3d origin = Vec3d.of(tile.getBuilderPos());

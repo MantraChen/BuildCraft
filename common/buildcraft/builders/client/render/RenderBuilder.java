@@ -11,12 +11,19 @@ public class RenderBuilder implements BlockEntityRenderer<TileBuilder> {
     @Override public void render(TileBuilder tile, float delta, MatrixStack matrices, VertexConsumerProvider vertices,
             int light, int overlay) {
         var box = tile.getBox();
-        if (!box.isInitialized()) return;
         var origin = tile.getPos();
-        WorldRenderer.drawBox(matrices, vertices.getBuffer(RenderLayer.getLines()),
-            box.min().getX()-origin.getX(), box.min().getY()-origin.getY(), box.min().getZ()-origin.getZ(),
-            box.max().getX()+1-origin.getX(), box.max().getY()+1-origin.getY(), box.max().getZ()+1-origin.getZ(),
-            .3f, .7f, 1f, 1f);
+        var relative=net.minecraft.util.math.Vec3d.of(origin);
+        if (box.isInitialized()) buildcraft.lib.client.render.laser.LaserBoxRenderer.render(box,
+            buildcraft.core.client.BuildCraftLaserManager.STRIPES_WRITE,true,matrices,vertices,relative,overlay);
+        for (int i=1;i<tile.path.size();i++) {
+            var from=net.minecraft.util.math.Vec3d.ofCenter(tile.path.get(i-1));
+            var to=net.minecraft.util.math.Vec3d.ofCenter(tile.path.get(i));
+            var inset=to.subtract(from).normalize().multiply(.1);
+            var laser=new buildcraft.lib.client.render.laser.LaserData_BC8(
+                buildcraft.core.client.BuildCraftLaserManager.STRIPES_WRITE_DIRECTION,from.add(inset),to.subtract(inset),1/16.1);
+            buildcraft.lib.client.render.laser.LaserRenderer_BC8.render(laser,matrices,vertices,relative,overlay);
+        }
+        RenderSnapshotBuilder.render(tile,0,0,0,delta,matrices,vertices,light);
     }
     @Override public boolean rendersOutsideBoundingBox(TileBuilder tile) { return true; }
     @Override public int getRenderDistance() { return 256; }

@@ -77,4 +77,10 @@ public class BlockBuilder extends BlockBCTile_Neptune implements IBlockWithFacin
         BlockEntity tile = world.getBlockEntity(pos);
         return !(tile instanceof TileBuilder) || ((TileBuilder) tile).getBuilder() == null;
     }
+    @Override public void appendTooltip(net.minecraft.item.ItemStack stack,BlockView world,
+            List<net.minecraft.text.Text> tooltip,net.minecraft.client.item.TooltipContext context) {
+        super.appendTooltip(stack,world,tooltip,context);
+        tooltip.add(net.minecraft.text.Text.translatable("block.buildcraftbuilders.builder.tip"));
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
+    }
 }

@@ -5,5 +5,9 @@
   "command.buildcraft.reload.failure": "BuildCraft registry reload failed. See the server log.",
   "item.buildcraftcore.gear_wood": "Wooden Gear",
   "item.buildcraftcore.gear_stone": "Stone Gear",
-  "item.buildcraftcore.wrench": "Wrench"
+  "item.buildcraftcore.wrench": "Wrench",
+  "advancements.buildcraftcore.markers.title": "Mark the Area",
+  "advancements.buildcraftcore.markers.description": "Connect area markers with a marker connector.",
+  "advancements.buildcraftcore.path_markers.title": "Follow the Path",
+  "advancements.buildcraftcore.path_markers.description": "Connect path markers with a marker connector."
 }

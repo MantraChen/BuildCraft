@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -309,5 +309,17 @@ if ($Architect) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $architectOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runArchitectClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Builder) {
+    $builderRun = Join-Path $verification 'builder-client-run'
+    $builderConfig = Join-Path $builderRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $builderConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $builderConfig 'main.cfg') -Force
+    $builderOptions = Join-Path $builderRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $builderOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $builderOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runBuilderClientSmoke --console=plain
 }
 exit $LASTEXITCODE

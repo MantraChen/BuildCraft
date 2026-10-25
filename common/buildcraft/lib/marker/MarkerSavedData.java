@@ -34,21 +34,24 @@ public abstract class MarkerSavedData<S extends MarkerSubCache<C>, C extends Mar
         markerPositions.clear();
         markerConnections.clear();
 
-        NbtList positionList = (NbtList) nbt.get("positions");
-        for (int i = 0; i < positionList.size(); i++) {
-            markerPositions.add(NBTUtilBC.readBlockPos(positionList.get(i)));
+        NbtList positions=nbt.get("positions") instanceof NbtList list?list:new NbtList();
+        var known=new java.util.HashSet<BlockPos>();
+        for (int i=0;i<Math.min(1_048_576,positions.size());i++) {
+            var position=NBTUtilBC.readBlockPos(positions.get(i));
+            if (position!=null && known.add(position)) markerPositions.add(position);
         }
-
-        NbtList connectionList = (NbtList) nbt.get("connections");
-        for (int i = 0; i < connectionList.size(); i++) {
-            positionList = (NbtList) connectionList.get(i);
-            List<BlockPos> inner = new ArrayList<>();
-            markerConnections.add(inner);
-            for (int j = 0; j < positionList.size(); j++) {
-                inner.add(NBTUtilBC.readBlockPos(positionList.get(j)));
+        NbtList connections=nbt.getList("connections",net.minecraft.nbt.NbtElement.LIST_TYPE);
+        var claimed=new java.util.HashSet<BlockPos>();
+        for (int i=0;i<Math.min(32767,connections.size());i++) {
+            if (!(connections.get(i) instanceof NbtList entries) || entries.size()<2 || entries.size()>32767) continue;
+            List<BlockPos> inner=new ArrayList<>();boolean valid=true;
+            for (var entry:entries) {
+                var position=NBTUtilBC.readBlockPos(entry);
+                if (position==null || !known.contains(position) || claimed.contains(position)) {valid=false;break;}
+                inner.add(position);
             }
+            if (valid && new java.util.HashSet<>(inner).size()>=2) {markerConnections.add(inner);claimed.addAll(inner);}
         }
-
         if (DEBUG_FULL) {
             BCLog.logger.info("[lib.marker.full] Reading from NBT (" + mapName + ")");
             BCLog.logger.info("[lib.marker.full]  - Positions:");

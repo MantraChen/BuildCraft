@@ -24,5 +24,9 @@
   "gui.buildcraftbuilders.scan_status.5": "Scan complete — collect the result",
   "block.buildcraftbuilders.architect.tip": "Place beside connected markers; insert a blueprint or template to scan.",
   "advancements.buildcraftbuilders.architect.title": "An Eye for Design",
-  "advancements.buildcraftbuilders.architect.description": "Capture a building with an Architect Table. Remake by FelixMantra"
+  "advancements.buildcraftbuilders.architect.description": "Capture a building with an Architect Table. Remake by FelixMantra",
+  "gui.buildcraftbuilders.path_progress": "Path: %s / %s",
+  "block.buildcraftbuilders.builder.tip": "Insert a recorded blueprint/template; supply materials, fluids and MJ. Connected path markers repeat the plan.",
+  "advancements.buildcraftbuilders.paving_the_way.title": "Paving the Way",
+  "advancements.buildcraftbuilders.paving_the_way.description": "Finish a construction path with a Builder. Remake by FelixMantra"
 }

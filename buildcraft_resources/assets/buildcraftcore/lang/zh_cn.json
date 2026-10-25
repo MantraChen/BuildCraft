@@ -6,5 +6,9 @@
   "command.buildcraft.reload.failure": "BuildCraft 注册表重新加载失败。详情请查看服务器日志。",
   "item.buildcraftcore.gear_wood": "木齿轮",
   "item.buildcraftcore.gear_stone": "石齿轮",
-  "item.buildcraftcore.wrench": "扳手"
+  "item.buildcraftcore.wrench": "扳手",
+  "advancements.buildcraftcore.markers.title": "标记区域",
+  "advancements.buildcraftcore.markers.description": "用标记连接器连接区域标记。",
+  "advancements.buildcraftcore.path_markers.title": "沿着路径",
+  "advancements.buildcraftcore.path_markers.description": "用标记连接器连接路径标记。"
 }

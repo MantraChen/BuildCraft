@@ -103,6 +103,7 @@ public class PathConnection extends MarkerConnection<PathConnection> {
         boolean contains = positions.contains(toAdd);
         if (positions.getFirst().equals(from)) {
             if (positions.getLast().equals(toAdd)) {
+                if (positions.size()<3) return false;
                 loop = true;
             } else if (!contains) {
                 positions.addFirst(toAdd);
@@ -113,7 +114,9 @@ public class PathConnection extends MarkerConnection<PathConnection> {
             return true;
         } else if (positions.getLast().equals(from)) {
             if (positions.getFirst().equals(toAdd)) {
+                if (positions.size()<3) return false;
                 loop = true;
+                subCache.refreshConnection(this);
                 return true;
             } else if (!contains) {
                 positions.addLast(toAdd);
@@ -134,13 +137,13 @@ public class PathConnection extends MarkerConnection<PathConnection> {
         boolean contains = positions.contains(toAdd);
         if (positions.getFirst().equals(from)) {
             if (contains) {
-                return positions.getLast().equals(toAdd);
+                return positions.size()>2 && positions.getLast().equals(toAdd);
             } else {
                 return true;
             }
         } else if (positions.getLast().equals(from)) {
             if (contains) {
-                return positions.getLast().equals(toAdd);
+                return positions.size()>2 && positions.getFirst().equals(toAdd);
             } else {
                 return true;
             }

@@ -69,6 +69,13 @@ Take the result to a builder and supply its materials and MJ. Input survives fai
 saves; unloading the area pauses scanning, while a world restart begins a fresh scan.
 Use `./scripts/full-smoke.ps1 -Architect` for capture, naming, output transfer,
 saved-world restart and reconstruction through the actual builder screen.
+Builders can also follow connected path markers: connect them with the marker
+connector, and right-click a marker to reverse the direction if needed. Place the
+builder beside the starting marker, with its working face toward the path. The builder
+consumes the markers after checking protection and rebuilds the plan at each path
+position. The screen shows path progress; materials, MJ and paid work survive reloads.
+Use `./scripts/full-smoke.ps1 -Builder` for native path interactions, persistent
+marker connections, two world restarts, engine supply and exact build/mining results.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

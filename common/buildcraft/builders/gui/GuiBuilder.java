@@ -49,6 +49,8 @@ public class GuiBuilder extends GuiBC8<ContainerBuilder> {
         context.drawText(textRenderer, playerInventoryTitle, x+8, y+128, 0x404040, false);
         context.drawText(textRenderer, Text.translatable("gui.buildcraftbuilders.materials"), x+179, y+6, 0x404040, false);
         context.drawText(textRenderer, "Remake by FelixMantra", x+8, y+223, 0x606060, false);
+        if (container.tile.getPathCount()>1) context.drawText(textRenderer,
+            Text.translatable("gui.buildcraftbuilders.path_progress",container.tile.getPathIndex()+1,container.tile.getPathCount()),x+8,y+18,0x404040,false);
         var materials = container.tile.getRemainingMaterials();
         for (int i = 0; i < materials.size(); i++) {
             var material = materials.get(i);

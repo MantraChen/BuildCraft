@@ -24,5 +24,9 @@
   "gui.buildcraftbuilders.scan_status.5": "扫描完成，请取出成品",
   "block.buildcraftbuilders.architect.tip": "放在已连接的区域标记旁，放入蓝图或模板扫描建筑。",
   "advancements.buildcraftbuilders.architect.title": "设计之眼",
-  "advancements.buildcraftbuilders.architect.description": "使用建筑师工作台记录建筑。Remake by FelixMantra"
+  "advancements.buildcraftbuilders.architect.description": "使用建筑师工作台记录建筑。Remake by FelixMantra",
+  "gui.buildcraftbuilders.path_progress": "路径：%s / %s",
+  "block.buildcraftbuilders.builder.tip": "放入已记录的蓝图或模板，供应材料、流体与 MJ。连接路径标记可沿路径重复建造。",
+  "advancements.buildcraftbuilders.paving_the_way.title": "开辟道路",
+  "advancements.buildcraftbuilders.paving_the_way.description": "使用建造机完成一条建造路径。Remake by FelixMantra"
 }

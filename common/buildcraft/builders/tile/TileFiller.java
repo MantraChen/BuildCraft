@@ -63,39 +63,7 @@ public class TileFiller extends TileBC_Neptune
         (slot, stack) -> stack.getItem() instanceof BlockItem, EnumAccess.INSERT, EnumPipePart.VALUES);
     private final IItemTransactor resources = new StorageItemTransactor(invResources.asStorage(true, true));
     private final MjBattery battery = new MjBattery(16000 * MjAPI.MJ);
-    private final SnapshotParticipant<NbtCompound> energySnapshots = new SnapshotParticipant<>() {
-        @Override protected NbtCompound createSnapshot() { return battery.writeToNbt(); }
-        @Override protected void readSnapshot(NbtCompound value) { battery.readFromNbt(value); }
-        @Override protected void onFinalCommit() { markDirty(); }
-    };
-    private final FillerReceiver receiver = new FillerReceiver();
-    private final class FillerReceiver implements IMjReceiver, IMjReadable, TransactionalMjReceiver {
-        private boolean live() { return isStorageAvailable() && !world.isClient; }
-        @Override public boolean canConnect(IMjConnector other) { return live(); }
-        @Override public long getStored() { return battery.getStored(); }
-        @Override public long getCapacity() { return battery.getCapacity(); }
-        @Override public long getPowerRequested() { return live() ? Math.max(0, getCapacity()-getStored()) : 0; }
-        @Override public long receivePower(long power, boolean simulate) {
-            if (power <= 0 || !live()) return power;
-            long accepted = Math.min(power, getPowerRequested());
-            if (!simulate && accepted > 0) {
-                var transaction = Transaction.getCurrentUnsafe();
-                if (transaction != null) energySnapshots.updateSnapshots(transaction);
-                battery.addPower(accepted, false);
-                if (transaction == null) markDirty();
-            }
-            return power - accepted;
-        }
-        @Override public long receivePower(long power, TransactionContext transaction) {
-            if (power <= 0 || !live()) return power;
-            long accepted = Math.min(power, getPowerRequested());
-            if (accepted > 0) {
-                energySnapshots.updateSnapshots(transaction);
-                battery.addPower(accepted, false);
-            }
-            return power - accepted;
-        }
-    }
+    private final buildcraft.lib.mj.BoundedTileMjReceiver receiver = new buildcraft.lib.mj.BoundedTileMjReceiver(this,battery);
     private boolean canExcavate = true;
     public boolean inverted;
     private boolean finished;
