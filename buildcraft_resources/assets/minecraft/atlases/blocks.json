@@ -6,6 +6,8 @@
     { "type": "minecraft:directory", "source": "lasers", "prefix": "lasers/" },
     { "type": "minecraft:directory", "source": "pipes", "prefix": "pipes/" },
     { "type": "minecraft:directory", "source": "addons", "prefix": "addons/" },
+    { "type": "minecraft:directory", "source": "filler", "prefix": "filler/" },
+    { "type": "minecraft:single", "resource": "buildcraftbuilders:robot" },
     { "type": "minecraft:directory", "source": "triggers", "prefix": "triggers/" },
     { "type": "minecraft:directory", "source": "gates", "prefix": "gates/" },
     { "type": "minecraft:directory", "source": "plugs", "prefix": "plugs/" },

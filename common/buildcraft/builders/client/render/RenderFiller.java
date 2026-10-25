@@ -9,19 +9,16 @@ import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 
-/** Native outline for the selected working volume. */
+/** Remake by FelixMantra: native working volume, robot, beams and material previews. */
 public class RenderFiller implements BlockEntityRenderer<TileFiller> {
     public RenderFiller(BlockEntityRendererFactory.Context context) { }
     @Override public void render(TileFiller tile, float delta, MatrixStack matrices, VertexConsumerProvider vertices,
         int light, int overlay) {
         if (!tile.hasBox()) return;
-        var box = tile.getBox();
-        var origin = tile.getPos();
-        var lines = vertices.getBuffer(RenderLayer.getLines());
-        WorldRenderer.drawBox(matrices, lines,
-            box.min().getX()-origin.getX(), box.min().getY()-origin.getY(), box.min().getZ()-origin.getZ(),
-            box.max().getX()+1-origin.getX(), box.max().getY()+1-origin.getY(), box.max().getZ()+1-origin.getZ(),
-            1f, .75f, .1f, 1f);
+        if (tile.markerBox) buildcraft.lib.client.render.laser.LaserBoxRenderer.render(tile.box,
+            buildcraft.core.client.BuildCraftLaserManager.STRIPES_WRITE,true,matrices,vertices,
+            net.minecraft.util.math.Vec3d.of(tile.getPos()),overlay);
+        RenderSnapshotBuilder.render(tile,0,0,0,delta,matrices,vertices,light);
     }
     @Override public boolean rendersOutsideBoundingBox(TileFiller tile) { return true; }
     @Override public int getRenderDistance() { return 256; }

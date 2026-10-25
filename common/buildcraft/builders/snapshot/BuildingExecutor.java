@@ -33,6 +33,10 @@ public abstract class BuildingExecutor {
     private static final byte UNKNOWN = 0, CORRECT = 1, BREAK = 2, PLACE = 3, BLOCKED = 4;
     private byte[] states = new byte[0];
     private final Map<Integer, Work> tasks = new LinkedHashMap<>();
+    public record WorkView(BlockPos pos, boolean breaking, long power, long target, ItemStack item) {}
+    public ItemStack previewItem(BlockPos pos) { return ItemStack.EMPTY; }
+    private final List<WorkView> visibleWork = new ArrayList<>();
+    public final List<WorkView> visibleWork() { return List.copyOf(visibleWork); }
     private int cursor, unknown, blocked;
     public int leftToBreak, leftToPlace;
 
@@ -70,6 +74,7 @@ public abstract class BuildingExecutor {
     public final void cancelAllTasks() {
         for (Work task : tasks.values()) refundPower(task);
         tasks.clear();
+        visibleWork.clear();
     }
 
     /** No cached material verdicts: adding resources takes effect on the next tick. */
@@ -81,6 +86,7 @@ public abstract class BuildingExecutor {
     }
 
     public final boolean tick() {
+        visibleWork.clear();
         if (!(workWorld() instanceof ServerWorld world) || states.length == 0) return false;
         for (int i = 0; i < Math.min(CHECKS_PER_TICK, states.length); i++) {
             check(cursor);
@@ -117,6 +123,8 @@ public abstract class BuildingExecutor {
             task.power += received;
             budget -= received;
             if (received > 0) workChanged();
+            if (task.power > 0) visibleWork.add(new WorkView(task.pos, task.breaking, task.power, target,
+                task.breaking ? ItemStack.EMPTY : previewItem(task.pos)));
             if (task.power < target) continue;
             boolean completed;
             if (task.breaking) {
@@ -237,7 +245,9 @@ public abstract class BuildingExecutor {
             if (!pos.equals(workPosition(index))) continue;
             Work task = new Work(pos, entry.getBoolean("breaking"), 0);
             // Never probe an unloaded chunk during NBT loading.
-            long maximum = task.breaking ? 16 * MjAPI.MJ
+            // Breaking now uses native hardness costs, not the historical fixed 16 MJ.
+            // Keep paid work without probing unloaded chunks; live revalidation refunds any excess.
+            long maximum = task.breaking ? 1_000_000L * MjAPI.MJ
                 : Math.max(MjAPI.MJ, (long) (Math.sqrt(pos.getSquaredDistance(workOrigin())) * 10 * MjAPI.MJ));
             task.power = Math.min(Math.max(0, entry.getLong("power")), maximum);
             tasks.put(index, task);

@@ -43,6 +43,7 @@ public class ContainerFiller extends ContainerBCTile<TileFiller> implements ICon
         tile.onStatementChange();
     }
     @Override public void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object context) throws IOException {
+        if (!isClient && !canUse(player)) return;
         super.readMessage(id, buffer, isClient, context);
         IContainerFilling.super.readMessage(id, buffer, isClient, context);
     }

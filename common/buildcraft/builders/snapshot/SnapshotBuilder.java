@@ -17,6 +17,17 @@ import buildcraft.api.mj.MjBattery;
 
 public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> extends BuildingExecutor {
     protected final T tile;
+    public record RenderWork(BlockPos pos, boolean breaking, float progress, ItemStack item) {}
+    private List<RenderWork> clientWork = List.of();
+    private long clientWorkTime;
+    public final List<RenderWork> clientWork() {
+        return tile.getWorldBC() != null && tile.getWorldBC().getTime()-clientWorkTime <= 10 ? clientWork : List.of();
+    }
+    public final void receiveRenderWork(List<RenderWork> work) {
+        clientWork = List.copyOf(work);
+        clientWorkTime = tile.getWorldBC() == null ? 0 : tile.getWorldBC().getTime();
+    }
+    public ItemStack previewItem(BlockPos pos) { return ItemStack.EMPTY; }
 
     public SnapshotBuilder(T tile) { this.tile = tile; }
 

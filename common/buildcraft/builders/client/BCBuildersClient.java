@@ -25,6 +25,7 @@ public final class BCBuildersClient {
     private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        buildcraft.builders.BCBuildersSprites.fmlPreInit();
         if (buildcraft.builders.BCBuildersBlocks.frame != null)
             net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
                 buildcraft.builders.BCBuildersBlocks.frame, net.minecraft.client.render.RenderLayer.getCutout());

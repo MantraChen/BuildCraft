@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **410 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **431 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -389,14 +389,15 @@ features explicitly as work proceeds.
   locks, pattern/inversion state, tick control and NBT. Added its native screen handler,
   shape/parameter/inversion/excavation controls, aligned material slots, translated labels,
   remake footer and native region outline. Locked settings packets cannot change inversion;
-  incoming settings are fully decoded and normalized before applying them. Full client,
-  actual filler block/marker integration and its screen still await whole-mod validation.
+  incoming settings are fully decoded and normalized before applying them. Full-mod
+  filler integration is covered in the later native filler milestone below.
 - Fixed recursive template/blueprint serialization, false-valued XZ/XY fill operations,
   snapshot dimension/facing/palette validation, repeated blueprint entity reads, missing
   filler facing/hash, and statement parameter-zero/max-count handling. Five snapshot
   tests exercise the actual serialization, hashing, copying, rotation and malformed inputs.
   Build volumes are currently bounded to 1,048,576 positions. Entity reconstruction
-  remains unfinished. Filler/builder work animation is not yet restored (region outlines only).
+  remains unfinished. Filler work visuals are restored below; builder work animation
+  still requires integration and validation.
 - Registered the native Brigadier `/buildcraft` command tree: installed version and
   remake credit, a link to this repository's real commit history, and operator-only
   data-registry reload with error reporting. Native client resource access now supplies
@@ -1212,6 +1213,7 @@ Remake by FelixMantra.
   counting volume, retaining the original exact drop assertions on reused worlds.
   Existing guide recipe and texture-animation/mipmap warnings are unchanged.
 
+
 ### Native flood gate
 
 - Replaced the empty flood-gate tick with a native two-bucket tank and connected
@@ -1346,3 +1348,56 @@ Remake by FelixMantra.
   exact returned pipe/catalyst counts, wrench packets and the native barrel UI.
   Seven reviewed screenshots are in `verification/stripes-client-run/screenshots/`.
   Existing guide recipe and texture-animation/mipmap warnings are unchanged.
+
+### Native filler construction
+
+- Restored the survival recipe from `BuildCraftBuilders.java` at historical commit
+  `fd4959d1f7e8ede210557714dc98da715ac0b7f3`: black dye, volume marker, yellow dye,
+  crafting table, two gold gears and a chest. A native recipe advancement unlocks it.
+  The item includes English/Chinese operating instructions and “Remake by FelixMantra”.
+- Connected volume markers select the machine's region. Disconnected markers are
+  rejected; loaded marker identities and native break permissions are checked before
+  the complete connection is consumed. Linked planner volumes retain their locks and
+  saved work. Removing a planner cancels/refunds its work rather than using a stale plan.
+- The native MJ input has a 16,000 MJ capacity, supports simulation and nested
+  transactions, and becomes unavailable when its block entity is replaced or removed.
+  Work never executes inside an open transfer transaction. Refunding previously paid
+  tasks can temporarily exceed the input capacity; this credit is preserved across
+  saves and prevents additional input until the buffer has room again.
+- Fixed a shared executor reload bug that capped paid breaking work at the historical
+  16 MJ cost despite native block hardness requiring more. Continuous unchanged gate
+  actions now renew the settings lock without cancelling paid tasks every tick.
+  Native placement invokes Fabric's use callback before consuming the material.
+- The screen uses native slots and shape/parameter/inversion/excavation controls;
+  stale screens and gate-locked changes are rejected. Status/work packets decode into
+  temporary values, validate counts and progress, and only then replace client state.
+  At most sixteen actual paid jobs drive the restored robot, mining beams and moving
+  material previews. Paused/idle work clears, and old client work expires.
+- Twenty-one packaged-mod tests cover all nineteen registered patterns, shell/frame counts,
+  inversion, stair parameters, exact materials/loot, block protection, OFF/ON/LOOP,
+  native item pipe supply, marker adoption, planner lifecycle, transactional MJ,
+  partial work reload, recipes, GUI restrictions and malformed render packets.
+  All 431 required GameTests pass in `verification/filler-full-6.log`.
+- The first connected GUI check caught a packet boundary error: the base GUI packet
+  embeds render data before owner/delta fields. Validation now allows that enclosing
+  structure while retaining strict boundaries on standalone status/work messages.
+  A regression round-trips the complete GUI envelope, including the owner profile.
+- The dedicated-server planner test exposed an unguarded client renderer override;
+  it now carries the same client-only annotation as the base method. Planner editing
+  UI, builder work visuals and other unfinished machines remain separate migration
+  work. Disabled historical horizon/flatten patterns have not been advertised as restored.
+- The connected client finishes with `failures=0` and a clean shutdown in 54 seconds
+  in `verification/filler-client-7.log`. It opens the real screen, cycles patterns,
+  quick-moves nine materials, reloads resources, exits/reopens the world with 5 MJ
+  of paid placement, fills the volume through an engine and native power pipes,
+  and clears a fixture containing eight stone blocks and one obsidian block into
+  exactly eight cobblestone and one obsidian. Six screenshots cover the screen,
+  volume, material preview, robot/beam and resulting inventory.
+- Resource reload exposed missing robot/pattern atlas entries; both are now included.
+  The screen footer is visible at the default window size. The artifact used by the
+  passing client differs from the 431-test server artifact only in the block atlas
+  definition and client-only `GuiFiller.class`; all common/server classes are identical.
+  Existing guide recipe and texture-animation/mipmap warnings remain.
+- Shared construction regressions also pass in `verification/filler-shared-regressions.log`:
+  148 initialization/unit tests and 69 real-world GameTests, including template and
+  blueprint executors, material/MJ conservation, ownership and unloaded chunks.

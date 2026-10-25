@@ -28,6 +28,12 @@ public enum TemplateHandlerDefault implements ITemplateHandler {
             || !world.isInBuildLimit(pos) || !world.getWorldBorder().contains(pos) || !world.isChunkLoaded(pos)
             || !world.isAir(pos) || !world.canPlayerModifyAt(player, pos)) return false;
         BlockHitResult hit = new BlockHitResult(Vec3d.ofBottomCenter(pos), Direction.UP, pos, false);
+        var before = world.getBlockState(pos);
+        var permission = net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker()
+            .interact(player, world, Hand.MAIN_HAND, hit);
+        if (permission == ActionResult.FAIL) return false;
+        if (permission.isAccepted()) return !world.isAir(pos);
+        if (world.getBlockState(pos) != before || !world.canPlayerModifyAt(player, pos)) return false;
         ActionResult result = stack.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit));
         return result.isAccepted() && !world.isAir(pos);
     }

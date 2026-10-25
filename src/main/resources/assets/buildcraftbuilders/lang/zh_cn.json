@@ -1,4 +1,5 @@
 {
+  "block.buildcraftbuilders.filler.tip": "放在已连接地标的角点旁，输入方块材料和 MJ 能量。",
   "gui.buildcraftbuilders.filler": "填充机",
   "gui.buildcraftbuilders.builder": "建造机",
   "gui.buildcraftbuilders.materials": "所需材料",

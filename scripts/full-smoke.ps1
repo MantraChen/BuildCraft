@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -285,5 +285,17 @@ if ($Stripes) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $stripesOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runStripesClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Filler) {
+    $fillerRun = Join-Path $verification 'filler-client-run'
+    $fillerConfig = Join-Path $fillerRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $fillerConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $fillerConfig 'main.cfg') -Force
+    $fillerOptions = Join-Path $fillerRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $fillerOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $fillerOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFillerClientSmoke --console=plain
 }
 exit $LASTEXITCODE

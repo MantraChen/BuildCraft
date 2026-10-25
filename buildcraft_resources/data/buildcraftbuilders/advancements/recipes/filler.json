@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_marker": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": ["buildcraftcore:marker_volume"]}]}},
+    "has_recipe": {"trigger": "minecraft:recipe_unlocked", "conditions": {"recipe": "buildcraftbuilders:filler"}}
+  },
+  "requirements": [["has_marker", "has_recipe"]],
+  "rewards": {"recipes": ["buildcraftbuilders:filler"]}
+}

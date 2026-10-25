@@ -55,6 +55,13 @@ Ownership, travelling items, wires and plugs survive relocation. Wrenches and
 gates select the working face, shown by the original gold direction rod.
 Use `./scripts/full-smoke.ps1 -Stripes` for native placement, paid mining across a
 world restart, engine supply, tool use, extension/retraction and returned items.
+Fillers now use native volume markers, block-material inventories and MJ pipes.
+Choose a shape in the filler screen; Shift cycles in reverse, and the four parameter
+buttons change the shape options. Inversion and excavation can be toggled separately.
+The original dye/marker/workbench/gold-gear/chest recipe is available in survival.
+Paid construction survives saves, and continuous gate actions preserve progress.
+Use `./scripts/full-smoke.ps1 -Filler` to verify its screen, work visuals, full world
+restart, engine-powered filling and native mined-item inventory.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

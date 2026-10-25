@@ -79,4 +79,11 @@ public class BlockFiller extends BlockBCTile_Neptune implements IBlockWithFacing
     public boolean canBeRotated(World world, BlockPos pos, BlockState state) {
         return false;
     }
+
+    @Override public void appendTooltip(net.minecraft.item.ItemStack stack, BlockView world,
+            List<net.minecraft.text.Text> tooltip, net.minecraft.client.item.TooltipContext context) {
+        super.appendTooltip(stack, world, tooltip, context);
+        tooltip.add(net.minecraft.text.Text.translatable("block.buildcraftbuilders.filler.tip"));
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
+    }
 }

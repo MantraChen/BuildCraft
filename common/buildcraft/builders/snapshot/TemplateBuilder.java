@@ -53,6 +53,11 @@ public class TemplateBuilder extends SnapshotBuilder<ITileForTemplateBuilder> {
         return !tile.getInvResources().extract(stack -> stack.getItem() instanceof net.minecraft.item.BlockItem, 1, 1, true).isEmpty();
     }
 
+    @Override public ItemStack previewItem(BlockPos pos) {
+        ItemStack stack = tile.getInvResources().extract(value -> value.getItem() instanceof net.minecraft.item.BlockItem, 1, 1, true);
+        return stack.isEmpty() ? ItemStack.EMPTY : new ItemStack(stack.getItem());
+    }
+
     protected List<ItemStack> getToPlaceItems(BlockPos blockPos) {
         ItemStack stack = tile.getInvResources().extract(value -> value.getItem() instanceof net.minecraft.item.BlockItem, 1, 1, false);
         return stack.isEmpty() ? null : Collections.singletonList(stack);

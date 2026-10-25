@@ -89,7 +89,7 @@ public class GuiFiller extends GuiBC8<ContainerFiller> {
     @Override public void drawElementForegrounds(DrawContext context, float delta) {
         context.drawText(textRenderer, title, x+8, y+6, 0x404040, false);
         context.drawText(textRenderer, playerInventoryTitle, x+8, y+142, 0x404040, false);
-        context.drawText(textRenderer, "Remake by FelixMantra", x+8, y+231, 0x606060, false);
+        context.drawText(textRenderer, "Remake by FelixMantra", x+8, y+230, 0x606060, false);
         super.drawElementForegrounds(context, delta);
     }
 }

@@ -62,6 +62,7 @@ public class AddonFillerPlanner extends Addon implements ISingleAddon, IFillerSt
     }
 
     @Override
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
     public IFastAddonRenderer<AddonFillerPlanner> getRenderer() {
         return new AddonDefaultRenderer<AddonFillerPlanner>(BCBuildersSprites.FILLER_PLANNER.getSprite())
             .then(new AddonRendererFillerPlanner());

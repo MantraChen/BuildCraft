@@ -1,4 +1,5 @@
 {
+  "block.buildcraftbuilders.filler.tip": "Place beside a connected marker corner; supply blocks and MJ.",
   "gui.buildcraftbuilders.filler": "Filler",
   "gui.buildcraftbuilders.builder": "Builder",
   "gui.buildcraftbuilders.materials": "Materials",
