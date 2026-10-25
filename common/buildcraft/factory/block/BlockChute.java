@@ -66,13 +66,46 @@ public class BlockChute extends BlockBCTile_Neptune implements IBlockWithFacing 
         properties.addAll(CONNECTED_MAP.values());
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public BlockState getActualState(BlockState state, BlockView world, BlockPos pos) {
+    private BlockState withConnections(BlockState state, BlockView world, BlockPos pos) {
         for (Direction side : Direction.values()) {
             state = state.with(CONNECTED_MAP.get(side), side != state.get(getFacingProperty())
                 && TileChute.hasInventoryAtPosition(world, pos.offset(side), side));
         }
         return state;
+    }
+
+    @Override public BlockState getPlacementState(net.minecraft.item.ItemPlacementContext context) {
+        return withConnections(super.getPlacementState(context), context.getWorld(), context.getBlockPos());
+    }
+
+    @Override public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        super.onBlockAdded(state, world, pos, oldState, notify);
+        if (!world.isClient) world.setBlockState(pos, withConnections(state, world, pos), net.minecraft.block.Block.NOTIFY_LISTENERS);
+    }
+
+    @Override public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighbor,
+            net.minecraft.world.WorldAccess world, BlockPos pos, BlockPos neighborPos) {
+        return world.isClient() ? state : withConnections(state, world, pos);
+    }
+
+    @Override public net.minecraft.util.ActionResult attemptRotation(World world, BlockPos pos, BlockState state, Direction side) {
+        if (!world.isClient) {
+            Direction facing = buildcraft.lib.misc.RotationUtil.rotateAll(state.get(getFacingProperty()));
+            world.setBlockState(pos, withConnections(state.with(getFacingProperty(), facing), world, pos));
+        }
+        return net.minecraft.util.ActionResult.SUCCESS;
+    }
+
+    @Override public BlockState rotate(BlockState state, net.minecraft.util.BlockRotation rotation) {
+        BlockState rotated = super.rotate(state, rotation);
+        for (Direction side : Direction.values()) rotated = rotated.with(CONNECTED_MAP.get(rotation.rotate(side)), state.get(CONNECTED_MAP.get(side)));
+        return rotated;
+    }
+
+    @Override public BlockState mirror(BlockState state, net.minecraft.util.BlockMirror mirror) {
+        BlockState mirrored = super.mirror(state, mirror);
+        for (Direction side : Direction.values()) mirrored = mirrored.with(CONNECTED_MAP.get(mirror.apply(side)), state.get(CONNECTED_MAP.get(side)));
+        return mirrored;
     }
 
     // IBlockWithFacing

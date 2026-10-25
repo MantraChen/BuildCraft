@@ -69,12 +69,14 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **6 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **10 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
   native states so they do not block their own skylight. Both marker kinds attach to all
   six supporting faces, and decorative variants survive picking, saving and placing.
+  Frame/quarry/chute native connections, partial frame collision, wrench rotation,
+  structure rotation/mirroring and block-entity preservation also pass.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -110,8 +112,11 @@ features explicitly as work proceeds.
   schematic/snapshot item variants using values within the required 0–1 range.
 - Markers now have native facing, support checks, narrow selection shapes and cutout
   rendering. Decorated blocks preserve their type in native `BlockStateTag` item data.
-  Multipart resource coverage does not yet restore frame/chute/quarry neighbor-state
-  updates; those still need native integration.
+- Frame/chute/quarry connections now follow native placement and neighbor updates.
+  Quarries/chutes query sided Fabric item storage, including providers without block
+  entities. Frame collision follows its connected arms; frame/chute rotation and
+  mirroring preserve those arms. Chute rotation refreshes connections without replacing
+  its inventory. Actual chute pickup/transfer and complete quarry mining remain open.
 - Restored the missing common transport entrypoint and native pipe-holder block/entity
   registration. Pipe pluggable render methods are client-only, including their API base
   declaration, so dedicated servers can load the common pipe definitions. Full pipe

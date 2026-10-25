@@ -43,7 +43,9 @@ public class BCBuildersBlocks {
         library = HELPER.addBlockAndItem("block.library", () -> new BlockElectronicLibrary(MaterialBC.IRON, "block.library"));
         replacer = HELPER.addBlockAndItem("block.replacer", () -> new BlockReplacer(MaterialBC.IRON, "block.replacer"));
 
-        frame = HELPER.addBlockAndItem("block.frame", () -> new BlockFrame(MaterialBC.IRON, "block.frame"));
+        frame = HELPER.addBlockAndItem("block.frame", () -> new BlockFrame(AbstractBlock.Settings.create()
+            .mapColor(net.minecraft.block.MapColor.IRON_GRAY).nonOpaque().dropsNothing()
+            .strength(0.5f).sounds(net.minecraft.sound.BlockSoundGroup.METAL), "block.frame"));
         quarry = HELPER.addBlockAndItem("block.quarry", () -> new BlockQuarry(MaterialBC.IRON, "block.quarry"));
     }
 

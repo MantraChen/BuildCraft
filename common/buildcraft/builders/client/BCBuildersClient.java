@@ -25,6 +25,9 @@ public final class BCBuildersClient {
     private static net.minecraft.client.world.ClientWorld previousWorld;
     private BCBuildersClient() {}
     public static void register() {
+        if (buildcraft.builders.BCBuildersBlocks.frame != null)
+            net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+                buildcraft.builders.BCBuildersBlocks.frame, net.minecraft.client.render.RenderLayer.getCutout());
         if (BCBuildersItems.schematicSingle != null) ModelPredicateProviderRegistry.register(
             BCBuildersItems.schematicSingle, new Identifier("buildcraftbuilders", "schematic_used"),
             (stack, world, entity, seed) -> stack.getDamage() == buildcraft.builders.item.ItemSchematicSingle.DAMAGE_USED

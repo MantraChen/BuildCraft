@@ -24,8 +24,6 @@ import buildcraft.api.mj.MjCapabilityHelper;
 import buildcraft.api.tiles.IDebuggable;
 
 import buildcraft.lib.block.BlockBCBase_Neptune;
-import buildcraft.lib.inventory.ItemTransactorHelper;
-import buildcraft.lib.inventory.NoSpaceTransactor;
 import buildcraft.lib.mj.MjBatteryReceiver;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.item.ItemHandlerManager.EnumAccess;
@@ -63,8 +61,8 @@ public class TileChute extends TileBC_Neptune implements buildcraft.lib.tile.Tic
     }
 
     public static boolean hasInventoryAtPosition(BlockView world, BlockPos pos, Direction side) {
-        return ItemTransactorHelper.getTransactor(world.getBlockEntity(pos), side.getOpposite())
-            != NoSpaceTransactor.INSTANCE;
+        return world instanceof net.minecraft.world.World level && level.isChunkLoaded(pos)
+            && net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.find(level, pos, side.getOpposite()) != null;
     }
 
     /** STUB(R.Chen): BoundingBoxUtil.extrudeFace + TransactorEntityItem not yet in libLeaf.

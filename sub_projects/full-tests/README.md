@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The six server tests currently verify:
+The ten server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -33,6 +33,13 @@ The six server tests currently verify:
   when the supporting block is removed.
 - All six decorative block variants retain their kind and light level through
   pick-block, item NBT serialization and placement.
+- Frames connect to neighboring frames/quarries, disconnect after removal and use
+  partial collision shapes matching each arm.
+- Quarries map local connector faces to all four horizontal orientations and use
+  sided native item storage, including a test provider without a block entity.
+- Chutes detect neighboring inventories, exclude their mouth and refresh connections
+  after wrench rotation/removal without replacing the existing block entity.
+- Native structure rotation and mirroring preserve frame/chute connection directions.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,

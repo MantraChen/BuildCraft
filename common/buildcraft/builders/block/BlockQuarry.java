@@ -32,7 +32,6 @@ import buildcraft.api.properties.BuildCraftProperties;
 import buildcraft.lib.block.BlockBCTile_Neptune;
 import buildcraft.lib.block.IBlockWithFacing;
 import buildcraft.lib.misc.AdvancementUtil;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.lib.tile.TileBC_Neptune;
 
 import buildcraft.builders.BCBuildersBlocks;
@@ -57,17 +56,32 @@ public class BlockQuarry extends BlockBCTile_Neptune implements IBlockWithFacing
             facing = Direction.fromHorizontal(
                 side.getHorizontal() + 2 + state.get(getFacingProperty()).getHorizontal());
         }
-        BlockEntity tile = world.getBlockEntity(pos.offset(facing));
-        return tile != null && CapUtil.hasCapability(tile, CapUtil.CAP_ITEMS, facing.getOpposite());
+        BlockPos neighbor = pos.offset(facing);
+        return world instanceof World level && level.isChunkLoaded(neighbor)
+            && net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.find(level, neighbor, facing.getOpposite()) != null;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public BlockState getActualState(BlockState state, BlockView world, BlockPos pos) {
+    private BlockState withConnections(BlockState state, BlockView world, BlockPos pos) {
         for (Direction face : Direction.values()) {
             state =
                 state.with(BuildCraftProperties.CONNECTED_MAP.get(face), isConnected(world, pos, state, face));
         }
         return state;
+    }
+
+    @Override public BlockState getPlacementState(net.minecraft.item.ItemPlacementContext context) {
+        return withConnections(super.getPlacementState(context), context.getWorld(), context.getBlockPos());
+    }
+
+    @Override public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        super.onBlockAdded(state, world, pos, oldState, notify);
+        if (!world.isClient) world.setBlockState(pos, withConnections(state, world, pos), net.minecraft.block.Block.NOTIFY_LISTENERS);
+    }
+
+    @Override public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighbor,
+            net.minecraft.world.WorldAccess world, BlockPos pos, BlockPos neighborPos) {
+        // Inventory lookups are authoritative on the server; clients consume the synced state.
+        return world.isClient() ? state : withConnections(state, world, pos);
     }
 
     @Override
