@@ -50,6 +50,21 @@ public final class FullClientSmoke implements ClientModInitializer {
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
             int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures) + checkGateGeometry(client, failures);
+            var statements = new java.util.HashSet<>(buildcraft.api.statements.StatementManager.statements.values());
+            int transportStatements = 0, coreStatements = 0;
+            for (var statement : statements) if (statement.getClass().getPackageName().equals("buildcraft.transport.statements")
+                    || statement.getClass().getPackageName().equals("buildcraft.core.statements")) {
+                if (statement.getClass().getPackageName().equals("buildcraft.transport.statements")) transportStatements++;
+                else coreStatements++;
+                var icon = statement.getSprite();
+                if (!(icon instanceof buildcraft.lib.client.sprite.SpriteHolderRegistry.SpriteHolder holder)
+                        || holder.getSprite().getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add("Missing statement icon: " + statement.getUniqueTag());
+                String description = statement.getDescription();
+                if (description == null || description.isBlank() || description.startsWith("gate.") || description.contains("Bad Format") || description.matches(".*%[sd].*"))
+                    failures.add("Untranslated statement: " + statement.getUniqueTag() + " = " + description);
+            }
+            if (transportStatements != 105) failures.add("Expected 105 unique transport statements, found " + transportStatements);
+            System.out.println("BUILDCRAFT GATE STATEMENTS: " + coreStatements + " core, " + transportStatements + " transport");
             for (var slot : buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli.SlotIndex.VALUES) {
                 var sprite = buildcraft.transport.BCTransportSprites.ACTION_EXTRACTION_PRESET.get(slot).getSprite();
                 if (sprite == null || sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add(slot + ": missing gate extraction preset sprite");

@@ -5,7 +5,7 @@
   "name": "BuildCraft complete mod startup tests",
   "environment": "*",
   "entrypoints": {
-    "fabric-gametest": ["buildcraft.test.full.FullModGameTests", "buildcraft.test.full.ConnectedBlockGameTests", "buildcraft.test.full.ChuteGameTests", "buildcraft.test.full.PipeGameTests", "buildcraft.test.full.PipeFilterGameTests", "buildcraft.test.full.WoodDiamondGameTests", "buildcraft.test.full.EmzuliGameTests", "buildcraft.test.full.GateGameTests"],
+    "fabric-gametest": ["buildcraft.test.full.FullModGameTests", "buildcraft.test.full.ConnectedBlockGameTests", "buildcraft.test.full.ChuteGameTests", "buildcraft.test.full.PipeGameTests", "buildcraft.test.full.PipeFilterGameTests", "buildcraft.test.full.WoodDiamondGameTests", "buildcraft.test.full.EmzuliGameTests", "buildcraft.test.full.GateGameTests", "buildcraft.test.full.PipeGateActionGameTests", "buildcraft.test.full.GateStorageGameTests"],
     "client": ["buildcraft.test.full.FullClientSmoke"]
   },
   "depends": { "buildcraft": "*", "fabric-api": "*", "minecraft": "1.20.1", "java": ">=17" }

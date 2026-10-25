@@ -8,13 +8,10 @@ package buildcraft.core.statements;
 
 import java.util.Locale;
 
+
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.Direction;
 
-import buildcraft.lib.compat.FluidStackBC;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
@@ -25,7 +22,6 @@ import buildcraft.api.statements.ITriggerExternal;
 import buildcraft.api.statements.StatementParameterItemStack;
 
 import buildcraft.lib.client.sprite.SpriteHolderRegistry.SpriteHolder;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.lib.misc.LocaleUtil;
 
 import buildcraft.core.BCCoreSprites;
@@ -59,66 +55,20 @@ public class TriggerFluidContainer extends BCStatement implements ITriggerExtern
     }
 
     @Override
-    public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer statementContainer, IStatementParameter[] parameters) {
-        IFluidHandler handler = CapUtil.getCapability(tile, CapUtil.CAP_FLUIDS, side.getOpposite());
-
-        if (handler != null) {
-            FluidStackBC searchedFluid = null;
-
-            if (parameters != null && parameters.length >= 1 && parameters[0] != null && !parameters[0].getItemStack().isEmpty()) {
-                searchedFluid = FluidUtil.getFluidContained(parameters[0].getItemStack());
-            }
-
-            if (searchedFluid != null) {
-                searchedFluid.amount = 1;
-            }
-
-            IFluidTankProperties[] liquids = handler.getTankProperties();
-            if (liquids == null || liquids.length == 0) {
-                return false;
-            }
-
-            switch (state) {
-                case EMPTY:
-                    FluidStackBC drained = handler.drain(1, false);
-                    return drained == null || drained.amount <= 0;
-                case CONTAINS:
-                    for (IFluidTankProperties c : liquids) {
-                        if (c == null) continue;
-                        FluidStackBC fluid = c.getContents();
-                        if (fluid != null && fluid.amount > 0 && (searchedFluid == null || searchedFluid.isFluidEqual(fluid))) {
-                            return true;
-                        }
-                    }
-                    return false;
-                case SPACE:
-                    if (searchedFluid == null) {
-                        for (IFluidTankProperties c : liquids) {
-                            if (c == null) continue;
-                            FluidStackBC fluid = c.getContents();
-                            if ((fluid == null || fluid.amount < c.getCapacity())) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                    return handler.fill(searchedFluid, false) > 0;
-                case FULL:
-                    if (searchedFluid == null) {
-                        for (IFluidTankProperties c : liquids) {
-                            if (c == null) continue;
-                            FluidStackBC fluid = c.getContents();
-                            if ((fluid == null || fluid.amount < c.getCapacity())) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                    return handler.fill(searchedFluid, false) <= 0;
-            }
+    public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer container, IStatementParameter[] parameters) {
+        var storage = StorageTriggerUtil.fluids(tile, side);
+        if (!StorageTriggerUtil.hasViews(storage)) return false;
+        var sample = StorageTriggerUtil.fluidSample(parameters);
+        boolean found = false;
+        for (var view : storage.nonEmptyViews()) {
+            if (sample == null || sample.equals(view.getResource())) { found = true; break; }
         }
-
-        return false;
+        return switch (state) {
+            case EMPTY -> !found;
+            case CONTAINS -> found;
+            case SPACE -> StorageTriggerUtil.hasSpace(storage, sample);
+            case FULL -> !StorageTriggerUtil.hasSpace(storage, sample);
+        };
     }
 
     @Override

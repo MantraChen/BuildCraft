@@ -99,7 +99,7 @@ public class TriggerParameterSignal implements IStatementParameter {
     @Override
     public String getDescription() {
         return colour == null ? null
-            : "gate.trigger.pipe.wire." + (active ? "active" : "inactive") + "." + colour.getName();
+            : buildcraft.lib.misc.LocaleUtil.localize("gate.trigger.pipe.wire." + (active ? "active" : "inactive"), buildcraft.lib.misc.LocaleUtil.localizeColour(colour));
     }
 
     @Override

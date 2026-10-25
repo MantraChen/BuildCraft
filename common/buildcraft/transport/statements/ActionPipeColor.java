@@ -32,7 +32,7 @@ public class ActionPipeColor extends BCStatement implements IActionInternal {
 
     @Override
     public String getDescription() {
-        return "gate.action.pipe.item.color." + color.getName();
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.action.pipe.item.color", buildcraft.lib.misc.LocaleUtil.localizeColour(color));
     }
 
     @Override
@@ -46,6 +46,6 @@ public class ActionPipeColor extends BCStatement implements IActionInternal {
     @Override
     @Environment(EnvType.CLIENT)
     public ISprite getSprite() {
-        return null; // STUB(R.Chen): Phase 5 — BCTransportSprites.ACTION_PIPE_COLOUR.
+        return buildcraft.transport.BCTransportSprites.ACTION_PIPE_COLOUR[color.getId()];
     }
 }

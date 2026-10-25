@@ -61,7 +61,11 @@ public class PipeBehaviourLimiter extends PipeBehaviour {
     @Override
     public void readPayload(PacketByteBuf buffer, EnvType side, Object ctx) throws IOException {
         super.readPayload(buffer, side, ctx);
-        limitShift = buffer.readUnsignedByte();
+        if (side == EnvType.CLIENT) {
+            int shift = buffer.readUnsignedByte();
+            if (shift > MAX_SHIFT) throw new IOException("Invalid pipe power limit: " + shift);
+            limitShift = shift;
+        }
     }
 
     @Override
@@ -129,6 +133,17 @@ public class PipeBehaviourLimiter extends PipeBehaviour {
             ((IFlowPowerLike) pipe.getFlow()).reconfigure();
             pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
         }
+    }
+
+    @PipeEventHandler
+    public void onActionActivate(buildcraft.api.transport.pipe.PipeEventActionActivate event) {
+        if (pipe.getHolder().getPipeWorld().isClient
+                || !(event.action instanceof buildcraft.transport.statements.ActionPowerLimit action)
+                || action.pipe != pipe.getDefinition() || action.limitShift < 0 || action.limitShift > MAX_SHIFT
+                || action.limitShift == limitShift) return;
+        limitShift = action.limitShift;
+        pipe.getHolder().getPipeTile().markDirty();
+        requestReconfigure();
     }
 
     @Override

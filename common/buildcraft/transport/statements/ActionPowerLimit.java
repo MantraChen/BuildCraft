@@ -43,13 +43,16 @@ public abstract class ActionPowerLimit extends BCStatement implements IActionInt
 
     @Override
     public String getDescription() {
-        return "gate.action.pipe." + (isRf() ? "rf" : "power") + "_limit.shift" + limitShift;
+        long maximum = limitShift == PipeBehaviourLimiter.MAX_SHIFT ? 0 : isRf()
+            ? buildcraft.api.transport.pipe.PipeApi.getRfTransferInfo(pipe).transferPerTick >> limitShift
+            : (buildcraft.api.transport.pipe.PipeApi.getPowerTransferInfo(pipe).transferPerTick >> limitShift) / buildcraft.api.mj.MjAPI.MJ;
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.action.pipe." + (isRf() ? "rf" : "power") + "_limit", maximum);
     }
 
     @Override
     @Environment(EnvType.CLIENT)
     public ISprite getSprite() {
-        return null; // STUB(R.Chen): Phase 5 — BCTransportSprites.POWER_LIMIT[limitShift].
+        return (isRf() ? buildcraft.transport.BCTransportSprites.POWER_LIMIT_RF : buildcraft.transport.BCTransportSprites.POWER_LIMIT)[limitShift];
     }
 
     @Override

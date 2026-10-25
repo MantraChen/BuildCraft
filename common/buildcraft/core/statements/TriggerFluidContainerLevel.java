@@ -7,14 +7,11 @@
 package buildcraft.core.statements;
 
 import java.util.Locale;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.Direction;
 
-import buildcraft.lib.compat.FluidStackBC;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 import buildcraft.api.statements.IStatement;
 import buildcraft.api.statements.IStatementContainer;
@@ -23,7 +20,6 @@ import buildcraft.api.statements.ITriggerExternal;
 import buildcraft.api.statements.StatementParameterItemStack;
 
 import buildcraft.lib.client.sprite.SpriteHolderRegistry.SpriteHolder;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.lib.misc.LocaleUtil;
 import buildcraft.lib.misc.StringUtilBC;
 
@@ -57,40 +53,21 @@ public class TriggerFluidContainerLevel extends BCStatement implements ITriggerE
     }
 
     @Override
-    public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer statementContainer, IStatementParameter[] parameters) {
-        IFluidHandler handler = CapUtil.getCapability(tile, CapUtil.CAP_FLUIDS, side.getOpposite());
-        if (handler == null) {
-            return false;
-        }
-        FluidStackBC searchedFluid = null;
-
-        if (parameters != null && parameters.length >= 1 && parameters[0] != null && !parameters[0].getItemStack() .isEmpty()) {
-            searchedFluid = FluidUtil.getFluidContained(parameters[0].getItemStack());
-            if (searchedFluid != null) {
-                searchedFluid.amount = 1;
+    public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer container, IStatementParameter[] parameters) {
+        var storage = StorageTriggerUtil.fluids(tile, side);
+        if (!StorageTriggerUtil.hasViews(storage)) return false;
+        var sample = StorageTriggerUtil.fluidSample(parameters);
+        double amount = 0, capacity = 0;
+        for (var view : storage) {
+            if (sample == null || sample.equals(view.getResource())) {
+                amount += view.getAmount();
+                capacity += view.getCapacity();
             }
         }
-
-        IFluidTankProperties[] tankPropertiesArray = handler.getTankProperties();
-        if (tankPropertiesArray == null || tankPropertiesArray.length == 0) {
-            return false;
+        if (sample != null) {
+            capacity = Math.max(capacity, amount + StorageUtil.simulateInsert(storage, sample, Long.MAX_VALUE, null));
         }
-
-        for (IFluidTankProperties tankProperties : tankPropertiesArray) {
-            if (tankProperties == null) {
-                continue;
-            }
-            FluidStackBC fluid = tankProperties.getContents();
-            if (fluid == null) {
-                return searchedFluid == null || handler.fill(searchedFluid, false) > 0;
-            }
-
-            if (searchedFluid == null || searchedFluid.isFluidEqual(fluid)) {
-                float percentage = fluid.amount / (float) tankProperties.getCapacity();
-                return percentage < type.level;
-            }
-        }
-        return false;
+        return capacity > 0 && amount / capacity < type.level;
     }
 
     @Override

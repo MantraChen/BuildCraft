@@ -36,7 +36,7 @@ public class ActionPipeDirection extends BCStatement implements IActionInternal 
 
     @Override
     public String getDescription() {
-        return "gate.action.pipe.direction." + direction.name().toLowerCase(Locale.ROOT);
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.action.pipe.direction", buildcraft.lib.misc.LocaleUtil.localizeFacing(direction));
     }
 
     @Override

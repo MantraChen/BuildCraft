@@ -36,7 +36,7 @@ public class ActionPipeSignal extends BCStatement implements IActionInternal {
 
     @Override
     public String getDescription() {
-        return "gate.action.pipe.wire." + colour.getName();
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.action.pipe.wire", buildcraft.lib.misc.LocaleUtil.localizeColour(colour));
     }
 
     @Override

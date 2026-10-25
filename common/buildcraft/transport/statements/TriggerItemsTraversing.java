@@ -32,7 +32,7 @@ public class TriggerItemsTraversing extends BCStatement implements ITriggerInter
 
     @Override
     public String getDescription() {
-        return "gate.trigger.pipe.containsItems";
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.trigger.pipe.containsItems");
     }
 
     @Override

@@ -7,6 +7,8 @@
 package buildcraft.core.statements;
 
 import java.util.Locale;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.*;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.entity.BlockEntity;
@@ -14,9 +16,7 @@ import net.minecraft.util.math.Direction;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraftforge.items.IItemHandler;
 
-import buildcraft.api.inventory.IItemHandlerFiltered;
 import buildcraft.api.items.IList;
 import buildcraft.api.statements.IStatement;
 import buildcraft.api.statements.IStatementContainer;
@@ -25,10 +25,7 @@ import buildcraft.api.statements.ITriggerExternal;
 import buildcraft.api.statements.StatementParameterItemStack;
 
 import buildcraft.lib.client.sprite.SpriteHolderRegistry.SpriteHolder;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.lib.misc.LocaleUtil;
-import buildcraft.lib.misc.ObjectUtilBC;
-import buildcraft.lib.misc.StackUtil;
 import buildcraft.lib.misc.StringUtilBC;
 
 import buildcraft.core.BCCoreSprites;
@@ -63,55 +60,26 @@ public class TriggerInventoryLevel extends BCStatement implements ITriggerExtern
     @Override
     public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer container,
         IStatementParameter[] parameters) {
-        IItemHandler itemHandler = CapUtil.getCapability(tile, CapUtil.CAP_ITEMS, side.getOpposite());
-        if (itemHandler == null) {
-            return false;
-        }
-        IItemHandlerFiltered filters = ObjectUtilBC.castOrNull(itemHandler, IItemHandlerFiltered.class);
-        StatementParameterItemStack param = getParam(0, parameters, new StatementParameterItemStack());
-        ItemStack searchStack = param.getItemStack();
-
-        int itemSpace = 0;
-        int foundItems = 0;
-        for (int slot = 0; slot < itemHandler.getSlots(); slot++) {
-            ItemStack stackInSlot = itemHandler.getStackInSlot(slot);
-            if (stackInSlot.isEmpty()) {
-                if (searchStack.isEmpty()) {
-                    itemSpace += itemHandler.getSlotLimit(slot);
-                } else {
-                    if (searchStack.getItem() instanceof IList) {
-                        // Unfortunately lists are too generic to work properly
-                        // without a simple filtered inventory.
-                        ItemStack filter = filters == null ? ItemStack.EMPTY : filters.getFilter(slot);
-                        if (StackUtil.matchesStackOrList(searchStack, filter)) {
-                            itemSpace += Math.min(filter.getMaxCount(), itemHandler.getSlotLimit(slot));
-                        }
-                    } else {
-                        ItemStack stack = searchStack.copy();
-                        int count = Math.min(itemHandler.getSlotLimit(slot), searchStack.getMaxCount());
-                        stack.setCount(count);
-                        ItemStack leftOver = itemHandler.insertItem(slot, stack, true);
-                        if (leftOver.isEmpty()) {
-                            itemSpace += count;
-                        } else {
-                            itemSpace += count - leftOver.getCount();
-                        }
-                    }
-                }
-            } else {
-                if (searchStack.isEmpty() || StackUtil.matchesStackOrList(searchStack, stackInSlot)) {
-                    itemSpace += Math.min(stackInSlot.getMaxCount(), itemHandler.getSlotLimit(slot));
-                    foundItems += stackInSlot.getCount();
-                }
+        var storage = StorageTriggerUtil.items(tile, side);
+        if (!StorageTriggerUtil.hasViews(storage)) return false;
+        ItemStack sample = StorageTriggerUtil.sample(parameters);
+        double amount = 0, capacity = 0;
+        for (var view : storage) {
+            if (sample.isEmpty() || StorageTriggerUtil.matches(sample, view.getResource())) {
+                amount += view.getAmount();
+                capacity += view.getCapacity();
+            } else if (view.isResourceBlank() && !(sample.getItem() instanceof IList)
+                    && view instanceof Storage<?> slot) {
+                @SuppressWarnings("unchecked") Storage<ItemVariant> itemSlot = (Storage<ItemVariant>) slot;
+                capacity += StorageUtil.simulateInsert(itemSlot, ItemVariant.of(sample), sample.getMaxCount(), null);
             }
         }
-
-        if (itemSpace > 0) {
-            float percentage = foundItems / (float) itemSpace;
-            return percentage < type.level;
+        // Non-slotted mod storages can expose views without insertion operations on each view.
+        // A real sample lets us measure their available space without assuming a slot layout.
+        if (!sample.isEmpty() && !(sample.getItem() instanceof IList) && !(storage instanceof SlottedStorage<?>)) {
+            capacity = Math.max(capacity, amount + StorageUtil.simulateInsert(storage, ItemVariant.of(sample), Long.MAX_VALUE, null));
         }
-
-        return false;
+        return capacity > 0 && amount / capacity < type.level;
     }
 
     @Override

@@ -7,12 +7,12 @@
 package buildcraft.core.statements;
 
 import java.util.Locale;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.Direction;
 
-import net.minecraftforge.items.IItemHandler;
 
 import buildcraft.api.items.IList;
 import buildcraft.api.statements.IStatement;
@@ -22,9 +22,7 @@ import buildcraft.api.statements.ITriggerExternal;
 import buildcraft.api.statements.StatementParameterItemStack;
 
 import buildcraft.lib.client.sprite.SpriteHolderRegistry.SpriteHolder;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.lib.misc.LocaleUtil;
-import buildcraft.lib.misc.StackUtil;
 
 import buildcraft.core.BCCoreSprites;
 import buildcraft.core.BCCoreStatements;
@@ -35,6 +33,7 @@ public class TriggerInventory extends BCStatement implements ITriggerExternal {
     public TriggerInventory(State state) {
         super(
             "buildcraft:inventory." + state.name().toLowerCase(Locale.ROOT),
+            "buildcraft.inventory." + state.name().toLowerCase(Locale.ROOT),
             "buildcraft.getInventory()." + state.name().toLowerCase(Locale.ROOT)
         );
         this.state = state;
@@ -52,56 +51,39 @@ public class TriggerInventory extends BCStatement implements ITriggerExternal {
 
     @Override
     public String getDescription() {
-        return LocaleUtil.localize("gate.trigger.getInventory()." + state.name().toLowerCase(Locale.ROOT));
+        return LocaleUtil.localize("gate.trigger.inventory." + state.name().toLowerCase(Locale.ROOT));
     }
 
     @Override
     public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer container, IStatementParameter[] parameters) {
-        ItemStack searchedStack = StackUtil.EMPTY;
-
-        if (parameters != null && parameters.length >= 1 && parameters[0] != null) {
-            searchedStack = parameters[0].getItemStack();
+        var storage = StorageTriggerUtil.items(tile, side);
+        if (!StorageTriggerUtil.hasViews(storage)) return false;
+        ItemStack sample = StorageTriggerUtil.sample(parameters);
+        boolean found = false;
+        for (var view : storage.nonEmptyViews()) {
+            if (StorageTriggerUtil.matches(sample, view.getResource())) { found = true; break; }
         }
-
-        IItemHandler handler = CapUtil.getCapability(tile, CapUtil.CAP_ITEMS, side.getOpposite());
-
-        if (handler != null) {
-            boolean hasSlots = false;
-            boolean foundItems = false;
-            boolean foundSpace = false;
-
-            for (int i = 0; i < handler.getSlots(); i++) {
-                hasSlots = true;
-                ItemStack stack = handler.getStackInSlot(i);
-
-                // TODO: Replace some of this with
-                foundItems |= !stack.isEmpty() && (searchedStack.isEmpty() || StackUtil.canStacksOrListsMerge(stack, searchedStack));
-
-                foundSpace |= (stack.isEmpty() || (StackUtil.canStacksOrListsMerge(stack, searchedStack) && stack.getCount() < stack.getMaxCount()))//
-                    && (searchedStack.isEmpty() || searchedStack.getItem() instanceof IList || handler.insertItem(i, searchedStack, true).isEmpty());
-                // On the test above, we deactivate item list as inventories
-                // typically don't check for lists possibility. This is a
-                // heuristic which is more desirable than expensive computation
-                // of list components or possibility of extension
+        if (state == State.EMPTY) return !found;
+        if (state == State.CONTAINS) return found;
+        boolean space;
+        if (!sample.isEmpty() && sample.getItem() instanceof IList) {
+            // Lists describe predicates, not insertable resources. Test known matching resources;
+            // empty slots retain the legacy capacity heuristic for an unspecified list member.
+            space = false;
+            for (var view : storage) {
+                if (view.isResourceBlank() && view.getCapacity() > 0 && storage.supportsInsertion()
+                    || !view.isResourceBlank() && StorageTriggerUtil.matches(sample, view.getResource())
+                    && StorageTriggerUtil.hasSpace(storage, view.getResource())) { space = true; break; }
             }
-
-            if (!hasSlots) {
-                return false;
-            }
-
-            switch (state) {
-                case EMPTY:
-                    return !foundItems;
-                case CONTAINS:
-                    return foundItems;
-                case SPACE:
-                    return foundSpace;
-                default:
-                    return !foundSpace;
-            }
+        } else {
+            space = StorageTriggerUtil.hasSpace(storage, sample.isEmpty() ? null : ItemVariant.of(sample));
         }
-
-        return false;
+        return switch (state) {
+            case EMPTY -> !found;
+            case CONTAINS -> found;
+            case SPACE -> space;
+            case FULL -> !space;
+        };
     }
 
     @Override

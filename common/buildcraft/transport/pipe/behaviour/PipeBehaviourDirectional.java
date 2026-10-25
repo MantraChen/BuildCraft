@@ -129,6 +129,14 @@ public abstract class PipeBehaviourDirectional extends PipeBehaviour {
 
     @PipeEventHandler
     public void addActions(PipeEventStatement.AddActionInternal event) {
-        // STUB(R.Chen): statement layer deferred to Phase 4E — BCTransportStatements.ACTION_PIPE_DIRECTION not registered yet.
+        for (Direction face : Direction.values()) if (canFaceDirection(face))
+            event.actions.add(buildcraft.transport.BCTransportStatements.ACTION_PIPE_DIRECTION[face.ordinal()]);
+    }
+
+    @PipeEventHandler
+    public void onActionActivate(buildcraft.api.transport.pipe.PipeEventActionActivate event) {
+        if (!pipe.getHolder().getPipeWorld().isClient
+                && event.action instanceof buildcraft.transport.statements.ActionPipeDirection action
+                && canFaceDirection(action.direction)) setCurrentDir(action.direction);
     }
 }

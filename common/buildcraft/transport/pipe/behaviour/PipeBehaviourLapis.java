@@ -81,9 +81,7 @@ public class PipeBehaviourLapis extends PipeBehaviour {
         var wrench = (buildcraft.api.tools.IToolWrench) stack.getItem();
         if (!wrench.canWrench(player, hand, stack, trace)) return false;
         if (!player.getWorld().isClient) {
-            colour = DyeColor.byId((colour.getId() + (player.isSneaking() ? 15 : 1)) & 15);
-            player.getWorld().markDirty(pipe.getHolder().getPipePos());
-            pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
+            setColour(DyeColor.byId((colour.getId() + (player.isSneaking() ? 15 : 1)) & 15));
             wrench.wrenchUsed(player, hand, stack, trace);
         }
         return true;
@@ -96,6 +94,19 @@ public class PipeBehaviourLapis extends PipeBehaviour {
 
     @PipeEventHandler
     public static void addActions(PipeEventStatement.AddActionInternal event) {
-        // STUB(R.Chen): statement layer deferred to Phase 4E — BCTransportStatements.ACTION_PIPE_COLOUR not registered yet.
+        java.util.Collections.addAll(event.actions, buildcraft.transport.BCTransportStatements.ACTION_PIPE_COLOUR);
+    }
+
+    @PipeEventHandler
+    public void onActionActivated(buildcraft.api.transport.pipe.PipeEventActionActivate event) {
+        if (!pipe.getHolder().getPipeWorld().isClient && event.action instanceof buildcraft.transport.statements.ActionPipeColor action)
+            setColour(action.color);
+    }
+
+    private void setColour(DyeColor colour) {
+        if (this.colour == colour) return;
+        this.colour = colour;
+        pipe.getHolder().getPipeTile().markDirty();
+        pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
     }
 }

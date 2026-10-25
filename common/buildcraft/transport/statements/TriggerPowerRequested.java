@@ -46,7 +46,7 @@ public class TriggerPowerRequested extends BCStatement implements ITriggerIntern
 
     @Override
     public String getDescription() {
-        return "gate.trigger.pipe.requestsEnergy";
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.trigger.pipe.requestsEnergy");
     }
 
     @Nullable

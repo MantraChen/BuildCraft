@@ -56,7 +56,7 @@ public class TriggerPipeSignal extends BCStatement implements ITriggerInternal {
 
     @Override
     public String getDescription() {
-        return "gate.trigger.pipe.wire." + (active ? "active" : "inactive") + "." + colour.getName();
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.trigger.pipe.wire." + (active ? "active" : "inactive"), buildcraft.lib.misc.LocaleUtil.localizeColour(colour));
     }
 
     @Override

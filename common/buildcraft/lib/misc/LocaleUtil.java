@@ -66,8 +66,8 @@ public class LocaleUtil {
     }
 
     // STUB(R.Chen): colour/facing/fluid/RF localizers — return placeholder strings until I18n is ported.
-    public static String localizeColour(DyeColor colour) { return colour.getName(); }
-    public static String localizeFacing(Direction dir) { return dir.getName(); }
+    public static String localizeColour(DyeColor colour) { return localize("color." + colour.getName().replace('_', '.')); }
+    public static String localizeFacing(Direction dir) { return localize("direction." + dir.getName()); }
     public static String localizeFluidStaticAmount(int amount, int capacity) { return amount + "/" + capacity + " mB"; }
     public static String localizeFluidStaticAmount(long amount, int capacity) { return amount + "/" + capacity + " mB"; }
     public static String localizeFluidStaticAmount(Tank tank) {

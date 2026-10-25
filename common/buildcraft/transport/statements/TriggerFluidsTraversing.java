@@ -29,7 +29,7 @@ public class TriggerFluidsTraversing extends BCStatement implements ITriggerInte
 
     @Override
     public String getDescription() {
-        return "gate.trigger.pipe.containsFluids";
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.trigger.pipe.containsFluids");
     }
 
     @Override

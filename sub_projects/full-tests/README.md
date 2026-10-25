@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The 47 server tests currently verify:
+The 55 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -100,6 +100,17 @@ The 47 server tests currently verify:
   consuming samples, side-only redstone outputs retract after clearing the action,
   and distant/replaced-gate screens cannot edit settings. Opening payloads preserve
   candidates, parameters and activation state.
+- Gate actions repaint Lapis/Daizuli traffic and change the selected output; real items
+  reach the expected barrels before and after pipe reconstruction. Iron gates offer
+  connected outputs and reject stale choices after a neighbor disappears. All four
+  MJ/RF limiter pipe types accept seven limits, reconfigure flow and persist/sync them.
+  Item conditions copy an NBT-sensitive sample without consuming it and drive redstone
+  as matching traffic enters; mismatches deactivate it and clearing the sample matches all.
+- Gates open beside native barrels and tanks without Forge capability initialization.
+  Inventory/fluid empty/full/contains/space and 25/50/75% thresholds read actual Fabric
+  storage, preserve contents during simulation and respect furnace faces, item NBT,
+  water/lava samples and externally registered sided tanks. Insertion-only tanks remain
+  observable; a read-only face retains real capacity instead of appearing full.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
@@ -112,6 +123,8 @@ geometry, valid textures and vertices within block bounds, both plain and with r
 dye. Pipe item names are localized, and all four gate extraction-preset sprites exist
 in the stitched block atlas. All 25 gates have nonempty textured geometry on six faces
 in both lit and unlit states (300 combinations), within native block bounds. It requires
+all 30 core and 105 transport statements to have valid atlas icons and localized
+descriptions, including direction, paint, wire and power-limit choices. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

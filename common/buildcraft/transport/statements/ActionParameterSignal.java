@@ -104,7 +104,7 @@ public class ActionParameterSignal implements IStatementParameter {
 
     @Override
     public String getDescription() {
-        return colour == null ? null : "gate.action.pipe.wire." + colour.getName();
+        return colour == null ? null : buildcraft.lib.misc.LocaleUtil.localize("gate.action.pipe.wire", buildcraft.lib.misc.LocaleUtil.localizeColour(colour));
     }
 
     @Override

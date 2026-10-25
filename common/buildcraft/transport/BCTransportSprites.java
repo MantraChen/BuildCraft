@@ -32,13 +32,13 @@ public class BCTransportSprites {
     public static final SpriteHolder PIPE_COLOUR_BORDER_OUTER = getHolder("pipes/colour_border_outer");
     public static final SpriteHolder PIPE_COLOUR_BORDER_INNER = getHolder("pipes/colour_border_inner");
 
-    public static final SpriteHolder TRIGGER_POWER_REQUESTED   = getHolder("triggers/trigger_power_requested");
-    public static final SpriteHolder TRIGGER_ITEMS_TRAVERSING  = getHolder("triggers/trigger_items_traversing");
-    public static final SpriteHolder TRIGGER_FLUIDS_TRAVERSING = getHolder("triggers/trigger_fluids_traversing");
+    public static final SpriteHolder TRIGGER_POWER_REQUESTED   = getHolder("triggers/trigger_pipecontents_requestsenergy");
+    public static final SpriteHolder TRIGGER_ITEMS_TRAVERSING  = getHolder("triggers/trigger_pipecontents_containsitems");
+    public static final SpriteHolder TRIGGER_FLUIDS_TRAVERSING = getHolder("triggers/trigger_pipecontents_containsfluids");
 
     public static final SpriteHolder POWER_FLOW          = getHolder("pipes/power_flow");
     public static final SpriteHolder POWER_FLOW_OVERLOAD = getHolder("pipes/power_flow_overload");
-    public static final SpriteHolder POWER_FLOW_RF       = getHolder("pipes/power_flow_rf");
+    public static final SpriteHolder POWER_FLOW_RF       = getHolder("pipes/rf_flow");
 
     public static final SpriteHolder[] ACTION_PIPE_COLOUR;
     public static final SpriteHolder[] POWER_LIMIT;
@@ -51,17 +51,18 @@ public class BCTransportSprites {
 
     static {
         ACTION_PIPE_COLOUR = new SpriteHolder[DyeColor.values().length];
-        POWER_LIMIT    = new SpriteHolder[8];
-        POWER_LIMIT_RF = new SpriteHolder[8];
+        POWER_LIMIT    = new SpriteHolder[7];
+        POWER_LIMIT_RF = new SpriteHolder[7];
         for (DyeColor c : DyeColor.values()) {
-            String name = c.getName();
-            ACTION_PIPE_COLOUR[c.getId()] = getHolder("actions/action_pipe_colour_" + name);
-            PIPE_SIGNAL_ON.put(c,  getHolder("triggers/pipe_signal_on_"  + name));
-            PIPE_SIGNAL_OFF.put(c, getHolder("triggers/pipe_signal_off_" + name));
+            String name = c == DyeColor.LIGHT_GRAY ? "silver" : c.getName();
+            ACTION_PIPE_COLOUR[c.getId()] = SpriteHolderRegistry.getHolder("buildcraftcore:items/paintbrush/" + name);
+            PIPE_SIGNAL_ON.put(c,  getHolder("triggers/trigger_pipesignal_" + name + "_active"));
+            PIPE_SIGNAL_OFF.put(c, getHolder("triggers/trigger_pipesignal_" + name + "_inactive"));
         }
-        for (int i = 0; i < 8; i++) {
-            POWER_LIMIT[i]    = getHolder("triggers/trigger_power_limit_"    + i);
-            POWER_LIMIT_RF[i] = getHolder("triggers/trigger_power_limit_rf_" + i);
+        int[] originalIcons = {256, 128, 64, 16, 8, 2, 0};
+        for (int i = 0; i < originalIcons.length; i++) {
+            POWER_LIMIT[i]    = getHolder("triggers/trigger_limiter_m" + originalIcons[i]);
+            POWER_LIMIT_RF[i] = getHolder("triggers/trigger_rf_limiter_m" + originalIcons[i]);
         }
         ACTION_EXTRACTION_PRESET = new EnumMap<>(SlotIndex.class);
         for (SlotIndex slot : SlotIndex.values()) {
@@ -70,7 +71,7 @@ public class BCTransportSprites {
         }
         for (Direction face : Direction.values()) {
             ACTION_PIPE_DIRECTION.put(face,
-                getHolder("actions/action_pipe_direction_" + face.getName()));
+                SpriteHolderRegistry.getHolder("buildcraftcore:triggers/trigger_dir_" + face.getName()));
         }
     }
 

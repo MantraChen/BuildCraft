@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **47 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **55 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -95,6 +95,13 @@ features explicitly as work proceeds.
   gate/preset packets. Three further gate tests cover 25 variants on all six faces,
   variant drops/picking and reload, native statement/parameter edits, AND groups,
   Emzuli activation, redstone retraction, stale/distant access and bounded edit packets.
+  Eight further tests cover gate-controlled direction/paint with actual deliveries and
+  save/reload, stale output rejection, seven MJ/RF limits for all four limiter pipes,
+  matching travelling-item samples, and native sided inventory/fluid conditions.
+  Opening a gate beside a barrel or tank no longer initializes null Forge capabilities.
+  Empty/full/contains/space and 25/50/75% thresholds use Fabric storage views, including
+  furnace face restrictions and insertion-only/read-only fluid providers. Sample/NBT
+  matching and aborted insertion probes leave inventory, tanks and sample buckets intact.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -131,7 +138,9 @@ features explicitly as work proceeds.
   helper returned `foreground window did not report a process id` after client startup.
 - Packaged GPU client: **928 visible block states, 128 items and 183 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
-  screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
+  screen with all **30 core and 105 transport statements** resolving their icons and
+  localized descriptions. Direction, colour, wire and limit icons use the original assets.
+  It exits cleanly. The latest run has no invalid resource paths, JSON-model
   parse errors or missing blockstate variants. Unavailable guide links, legacy fluid
   animation frames and atlas mipmap warnings remain. This is not complete playability
   or a check of every in-world renderer and UI.
@@ -478,8 +487,8 @@ features explicitly as work proceeds.
   unloaded entities without loading chunks. Five world tests verify actual object/state,
   area/heat access, sided providers and lifecycle rejection. Miner and laser-table work
   predicates are exposed again, and machine statement callers use the native lookup.
-  Full gate integration remains unfinished: inventory/fluid statements still use old
-  capability paths, and other machines still need their work predicates restored.
+  Inventory/fluid gate statements now use sided Fabric storage and pass full-mod world
+  tests described above. Other machines still need their work predicates restored.
 
 - The guide now has native `Screen` rendering, two-page navigation, history, search,
   item links/tooltips, chapters, images and crafting/smelting/assembly recipe layouts.

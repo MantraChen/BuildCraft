@@ -13,9 +13,6 @@ import javax.annotation.Nonnull;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.Direction;
 
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
-import net.minecraftforge.items.IItemHandler;
 
 import buildcraft.api.statements.IStatementContainer;
 import buildcraft.api.statements.ITriggerExternal;
@@ -25,7 +22,6 @@ import buildcraft.api.statements.ITriggerProvider;
 import buildcraft.api.statements.containers.IRedstoneStatementContainer;
 import buildcraft.api.tiles.TilesAPI;
 
-import buildcraft.lib.misc.CapUtil;
 
 import buildcraft.core.BCCoreStatements;
 
@@ -67,8 +63,7 @@ public enum CoreTriggerProvider implements ITriggerProvider {
         }
 
         if (!blockInventoryTriggers) {
-            IItemHandler itemHandler = CapUtil.getCapability(tile, CapUtil.CAP_ITEMS, side.getOpposite());
-            if (itemHandler != null) {
+            if (StorageTriggerUtil.hasViews(StorageTriggerUtil.items(tile, side))) {
                 res.add(BCCoreStatements.TRIGGER_INVENTORY_EMPTY);
                 res.add(BCCoreStatements.TRIGGER_INVENTORY_SPACE);
                 res.add(BCCoreStatements.TRIGGER_INVENTORY_CONTAINS);
@@ -80,19 +75,14 @@ public enum CoreTriggerProvider implements ITriggerProvider {
         }
 
         if (!blockFluidHandlerTriggers) {
-            IFluidHandler fluidHandler = CapUtil.getCapability(tile, CapUtil.CAP_FLUIDS, side.getOpposite());
-            if (fluidHandler != null) {
-
-                IFluidTankProperties[] liquids = fluidHandler.getTankProperties();
-                if (liquids != null && liquids.length > 0) {
-                    res.add(BCCoreStatements.TRIGGER_FLUID_EMPTY);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_SPACE);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_CONTAINS);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_FULL);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_25);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_50);
-                    res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_75);
-                }
+            if (StorageTriggerUtil.hasViews(StorageTriggerUtil.fluids(tile, side))) {
+                res.add(BCCoreStatements.TRIGGER_FLUID_EMPTY);
+                res.add(BCCoreStatements.TRIGGER_FLUID_SPACE);
+                res.add(BCCoreStatements.TRIGGER_FLUID_CONTAINS);
+                res.add(BCCoreStatements.TRIGGER_FLUID_FULL);
+                res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_25);
+                res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_50);
+                res.add(BCCoreStatements.TRIGGER_FLUID_BELOW_75);
             }
         }
 

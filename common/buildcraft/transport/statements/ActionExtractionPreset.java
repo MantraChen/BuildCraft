@@ -32,7 +32,7 @@ public class ActionExtractionPreset extends BCStatement implements IActionIntern
 
     @Override
     public String getDescription() {
-        return "gate.action.extraction." + index.colour.getName();
+        return buildcraft.lib.misc.LocaleUtil.localize("gate.action.extraction", buildcraft.lib.misc.LocaleUtil.localizeColour(index.colour));
     }
 
     @Override
