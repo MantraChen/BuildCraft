@@ -50,6 +50,10 @@ public class ItemPipeHolder extends BlockItem implements IItemPipe {
             lines.add(Text.translatable("item.buildcrafttransport.obsidian.tip"));
             lines.add(Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
         }
+        if(definition==buildcraft.transport.BCTransportPipes.stripesItem){
+            lines.add(Text.translatable("item.buildcrafttransport.stripes.tip"));
+            lines.add(Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
+        }
     }
 
     @Override public Text getName(ItemStack stack) {

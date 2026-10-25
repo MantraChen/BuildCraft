@@ -516,3 +516,18 @@ delivery and transactional RF conversion. The client fixture checks native pipe
 placement, collisions, resource reload, a full restart with items in transit,
 engine-powered collection of four entity types, exact item/NBT delivery, a native
 barrel screen and removal of stale MJ access. Its screenshots are saved locally.
+
+Run `./scripts/full-smoke.ps1 -Stripes` for the stripes pipe client fixture in
+`verification/stripes-client-run/`. Twenty-seven additional server tests cover
+transactional bounded MJ input, six-face mining, saved long-precision progress,
+changed/denied targets, native block/tool/crop/entity/dispenser interactions,
+fake-player inventory isolation, gate choices and malformed packets. Relocation
+tests cover ownership, colours, wires, plugs, travelling contents, stale storage
+views, duplicate requests, protected or incompatible moves, callback mutations,
+branch/machine refusal, perpendicular retraction and native world-tick delivery.
+In particular, inserting an item before a newly loaded pipe's first tick must not
+add the world's age to its travel delay a second time.
+The real client checks native placement and wrench packets, all six direction-rod
+models and atlas reload, a full restart retaining paid mining work, engine-powered
+mining, actual item-flow block and hoe use, extension/retraction, exact tool/pipe
+refunds and the native barrel screen. Screenshots are saved in `screenshots/`.

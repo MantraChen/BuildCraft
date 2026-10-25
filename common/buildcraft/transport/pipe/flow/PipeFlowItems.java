@@ -294,7 +294,7 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         face1 = from == null ? to : null;
         face2 = to;
 
-        long now = pipe.getHolder().getPipeWorld().getTime();
+        long now = resolveTimeBase(pipe.getHolder().getPipeWorld());
 
         TravellingItem firstItem = new TravellingItem(stack);
         firstItem.isPhantom = true;
@@ -341,9 +341,8 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         return ItemTransactorHelper.getTransactor(oTile, face.getOpposite()) != NoSpaceTransactor.INSTANCE;
     }
 
-    @Override
-    public void onTick() {
-        World world = pipe.getHolder().getPipeWorld();
+    /** Attach saved relative timings before mixing in newly inserted absolute-world timings. */
+    private long resolveTimeBase(World world) {
         if (needsTimeBase) {
             for (var group : items.getAllElements()) for (var item : group) {
                 item.tickStarted += world.getTime();
@@ -351,6 +350,13 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
             }
             needsTimeBase = false;
         }
+        return world.getTime();
+    }
+
+    @Override
+    public void onTick() {
+        World world = pipe.getHolder().getPipeWorld();
+        resolveTimeBase(world);
 
         List<TravellingItem> toTick = items.advance();
         if (!world.isClient && !toTick.isEmpty()) pipe.getHolder().scheduleNetworkUpdate(IPipeHolder.PipeMessageReceiver.FLOW);
@@ -632,7 +638,7 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         if (speed < 0.01) {
             speed = 0.01;
         }
-        long now = world.getTime();
+        long now = resolveTimeBase(world);
         TravellingItem item = new TravellingItem(stack);
         if (from == null) {
             // Find a reasonable alternative (as it's not allowed to be null)
@@ -673,7 +679,7 @@ public final class PipeFlowItems extends PipeFlow implements IFlowItems {
         }
 
         World world = pipe.getHolder().getPipeWorld();
-        long now = world.getTime();
+        long now = resolveTimeBase(world);
 
         TravellingItem item = new TravellingItem(toInsert);
         item.side = from;

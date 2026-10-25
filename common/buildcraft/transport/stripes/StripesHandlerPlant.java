@@ -1,36 +1,22 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.transport.stripes;
-
-// STUB(R.Chen): StripesHandlerPlant — CropManager API still uses Forge types (PlayerEntity, BlockState,
-// BlockView). Deferred to Phase 4E when CropManager is migrated to Fabric.
-
+import buildcraft.api.crops.CropManager;
+import buildcraft.api.transport.*;
+import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.item.*;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
-
-import buildcraft.api.transport.IStripesActivator;
-import buildcraft.api.transport.IStripesHandlerItem;
-
 public enum StripesHandlerPlant implements IStripesHandlerItem {
     INSTANCE;
-
-    @Override
-    public boolean handle(World world,
-                          BlockPos pos,
-                          Direction direction,
-                          ItemStack stack,
-                          PlayerEntity player,
-                          IStripesActivator activator) {
-        // STUB(R.Chen): CropManager uses Forge PlayerEntity — deferred to Phase 4E.
-        return false;
+    @Override public boolean handle(World world,BlockPos pos,Direction side,ItemStack stack,PlayerEntity player,IStripesActivator activator){
+        var target=pos.offset(side);
+        if(CropManager.getDefaultHandler()!=null && CropManager.isSeed(stack)){
+            StripesInteraction.allow(player,target,side.getOpposite());
+            if(CropManager.plantCrop(world,player,stack,target.down()) || CropManager.plantCrop(world,player,stack,target))return true;
+        }
+        if(!(stack.getItem() instanceof BlockItem item))return false;var block=item.getBlock();
+        if(!(block instanceof PlantBlock || block instanceof SugarCaneBlock || block instanceof CactusBlock || block instanceof BambooBlock))return false;
+        return StripesInteraction.useItemOnBlock(world,player,stack,target.down(),Direction.UP) || StripesInteraction.useItemOnBlock(world,player,stack,target,Direction.UP);
     }
 }

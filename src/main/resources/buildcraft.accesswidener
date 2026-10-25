@@ -1,3 +1,5 @@
 accessWidener v2 named
+# Reuse the registered native dispenser behaviours without treating a pipe as a dispenser block entity.
+accessible field net/minecraft/block/DispenserBlock BEHAVIORS Ljava/util/Map;
 # Preserve the native pickup stack, including tipped-arrow data and modded projectile overrides.
 accessible method net/minecraft/entity/projectile/PersistentProjectileEntity asItemStack ()Lnet/minecraft/item/ItemStack;

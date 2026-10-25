@@ -175,11 +175,15 @@ public final class AssemblyGameTests implements FabricGameTest {
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void fullInventorySpillsExactlyOneProductAndUnlocksAdvancement(TestContext c) {
-        var tile=table(c);red(tile,1);c.setBlockState(POS.down(),Blocks.BARREL);var barrel=(BarrelBlockEntity)c.getBlockEntity(POS.down());for(int i=0;i<barrel.size();i++)barrel.setStack(i,new ItemStack(Items.STONE,64));
+        var tile=table(c);red(tile,1);
+        // The empty template does not cover every adjacent fixture cell reused by later batches.
+        for(var face:Direction.values())c.setBlockState(POS.offset(face),Blocks.AIR);
+        c.setBlockState(POS.down(),Blocks.BARREL);var barrel=(BarrelBlockEntity)c.getBlockEntity(POS.down());for(int i=0;i<barrel.size();i++)barrel.setStack(i,new ItemStack(Items.STONE,64));
+        var previous=new HashSet<>(c.getWorld().getEntitiesByClass(net.minecraft.entity.ItemEntity.class,new Box(tile.getPos()).expand(1),e->true));
         tile.receiveLaserPower(tile.getTarget());tile.tick();tile.tick();
-        long drops=c.getWorld().getEntitiesByClass(net.minecraft.entity.ItemEntity.class,new Box(tile.getPos()).expand(1),e->e.getStack().isOf(BCSiliconItems.redstoneChipset)).stream().mapToInt(e->e.getStack().getCount()).sum();
+        long drops=c.getWorld().getEntitiesByClass(net.minecraft.entity.ItemEntity.class,new Box(tile.getPos()).expand(1),e->!previous.contains(e) && e.getStack().isOf(BCSiliconItems.redstoneChipset)).stream().mapToInt(e->e.getStack().getCount()).sum();
         var player=c.getWorld().getServer().getPlayerManager().getPlayer(tile.getOwner().getId());var adv=c.getWorld().getServer().getAdvancementLoader().get(new Identifier("buildcraftsilicon:laser_power"));
-        c.assertTrue(drops==1 && player.getAdvancementTracker().getProgress(adv).isDone(),"Output spill/owner advancement failed");c.complete();
+        c.assertTrue(drops==1 && player.getAdvancementTracker().getProgress(adv).isDone(),"Output spill/owner advancement failed: new drops="+drops);c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void sixLaserFacingsDeliverConservedMj(TestContext c) {

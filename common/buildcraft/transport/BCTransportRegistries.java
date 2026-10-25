@@ -40,7 +40,7 @@ public class BCTransportRegistries {
         PipeApi.pipeRegistry = PipeRegistry.INSTANCE;
         PipeApi.stripeRegistry = StripesRegistry.INSTANCE;
         PipeApi.extensionManager = PipeExtensionManager.INSTANCE;
-        // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(PipeExtensionManager.INSTANCE) removed — Phase 4F.
+        // Relocation is processed by the native END_WORLD_TICK hook in BCTransportInitializer.
 
         PipeApi.flowItems = new PipeFlowType(PipeFlowItems::new, PipeFlowItems::new);
         PipeApi.flowFluids = new PipeFlowType(PipeFlowFluids::new, PipeFlowFluids::new);

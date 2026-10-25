@@ -47,6 +47,14 @@ their native item data; living inventories are excluded. Own drops wait twenty
 ticks before recollection. Native power adaptors also support transactional RF
 conversion and rollback. Use `./scripts/full-smoke.ps1 -Obsidian` for real collision,
 engine-driven collection, native delivery and a complete saved-world restart.
+Stripes pipes use incoming blocks, tools and native dispenser items, returning
+remainders through the pipe. MJ powers protected mining with saved progress and
+a 256 MJ battery. Item pipes extend the head at the end of the world tick; void
+item pipes retract it and return the catalyst, removed pipe and its contents.
+Ownership, travelling items, wires and plugs survive relocation. Wrenches and
+gates select the working face, shown by the original gold direction rod.
+Use `./scripts/full-smoke.ps1 -Stripes` for native placement, paid mining across a
+world restart, engine supply, tool use, extension/retraction and returned items.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

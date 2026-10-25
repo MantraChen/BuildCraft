@@ -144,9 +144,17 @@ public class BlockUtil {
     public static final Direction[] HORIZONTALS = Direction.Type.HORIZONTAL.stream().toArray(Direction[]::new);
     public static final int BUCKET_VOLUME = 1000;
 
-    // STUB(R.Chen): Forge useItemOnBlock → Fabric ItemUsageContext migration deferred. Returns false.
     public static boolean useItemOnBlock(World world, net.minecraft.entity.player.PlayerEntity player,
             ItemStack stack, BlockPos pos, Direction side) {
-        return false;
+        if(world!=player.getWorld() || world.isClient || !world.isChunkLoaded(pos) || !world.isInBuildLimit(pos)
+            || !world.getWorldBorder().contains(pos) || !world.canPlayerModifyAt(player,pos))return false;
+        var hit=new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(pos)
+            .add(side.getOffsetX()*.5,side.getOffsetY()*.5,side.getOffsetZ()*.5),side,pos,false);
+        var previous=player.getMainHandStack();player.setStackInHand(Hand.MAIN_HAND,stack);
+        try{
+            var result=net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(player,world,Hand.MAIN_HAND,hit);
+            if(result!=net.minecraft.util.ActionResult.PASS)return result.isAccepted();
+            return stack.useOnBlock(new net.minecraft.item.ItemUsageContext(player,Hand.MAIN_HAND,hit)).isAccepted();
+        }finally{if(previous!=stack)player.setStackInHand(Hand.MAIN_HAND,previous);}
     }
 }

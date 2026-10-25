@@ -33,9 +33,11 @@ public class StripesHandlerPipes implements IStripesHandlerItem {
             // Item pipe: request extending on end of tick
             if (PipeApi.extensionManager.requestPipeExtension(world, pos, direction, activator, stack.copy())) {
                 // No items should be sent back immediately, handled by the pipe extension manager later
-                player.getInventory().clear();
+                player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, ItemStack.EMPTY);
                 return true;
             }
+            // A busy or blocked extension returns the stack; never fall through to ordinary block placement.
+            return true;
         }
 
         return false;

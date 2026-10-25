@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **383 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **410 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -299,8 +299,8 @@ features explicitly as work proceeds.
   demand probes and actual delivery. Rollback restores buffers and tick quotas together.
   Native RF animation shares the matrix/atlas-safe geometry path, with 768 additional
   GPU cases. Redstone converts all nine MJ pipe materials to RF and undo preserves dye.
-  Stripes behavior still requires integration; native obsidian collection is verified below. Registration of a pipe type
-  does not establish its special behavior. Pluggable render APIs remain client-only
+  Native stripes work and obsidian collection are verified below. Registration of a
+  pipe type alone does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
   classes shadowing Minecraft's native `Chunk` and LWJGL's `BufferUtils`; the latter
@@ -1299,4 +1299,50 @@ Remake by FelixMantra.
   the travelling item, the collection scene and the native delivery inventory.
   Delivery checks wait for actual arrival within a bounded timeout, accounting
   for stone-pipe deceleration. The original purple obsidian texture is retained.
+
+### Native stripes mining, item use and pipe relocation
+
+- Restored the stripes working face, native gate choices, wrench rotation and the
+  original gold direction rod on all six faces. Atlas reload replaces cached
+  geometry. The item has English/Chinese instructions and “Remake by FelixMantra”.
+- Mining consumes up to 10 MJ per tick from a hard-bounded 256 MJ transactional
+  battery. Native hardness determines the total cost; a diamond-pickaxe fake
+  player harvests through native break protection and loot. Long-precision paid
+  progress survives saves, remains paid while protection refuses the break, and
+  resets when the target or direction changes. Unbreakable targets consume no MJ.
+- Incoming items use native block placement, hoes, crop planting, shears, living
+  entity interactions and registered dispenser behaviours. Denied block/entity
+  callbacks stop handler fallthrough and return the tool/item. Fake-player
+  inventory and selected slot are restored; normal item NBT and tool wear persist.
+  A virtual dispenser inventory safely receives extra bucket/bottle outputs.
+- Item pipes request an end-of-world-tick extension. One pipe becomes the base
+  and the complete head moves forward; void item pipes request retraction and
+  are returned as catalysts. Retraction returns the removed pipe's colour,
+  contents, plugs and wires, and refuses branches and machine endpoints.
+  It can follow an eligible perpendicular pipe when the backward path is invalid.
+- Movement preserves owner identity, head parts, battery and travelling items.
+  Fresh holders invalidate cached old storage/MJ interfaces. Both affected cells
+  pass native use/break checks, followed by state, identity and NBT revalidation;
+  obstructed, protected, incompatible and duplicate requests return their items.
+  Partial relocation exceptions restore both snapshots before refunding.
+- The first real-client run found a timing bug: a fresh holder loaded saved
+  relative travel times, accepted a new return stack using absolute world time,
+  then added world time to both on its first tick. This could delay returned items
+  by the age of the world. Item flow now resolves saved timings before admitting
+  new real or phantom items. Tests cover insertion before the first loaded tick
+  and actual world-tick delivery after relocation.
+- The legacy block-handler registry, including minecart dismantling, was not
+  invoked by the original baseline stripes behavior and is not advertised as
+  restored here. Native item-on-entity interactions are covered. Other unfinished
+  machines and legacy guide/asset warnings remain outside this milestone.
+- Twenty-seven new tests bring the packaged-mod suite to 410 passing GameTests
+  in `verification/stripes-final-4.log`. The wire graph is checked after its normal
+  first-tick registration. An existing assembly spill fixture now isolates its
+  adjacent cells and counts newly spawned products, avoiding leftovers from earlier
+  test batches. No assembly production behavior was changed.
+- The connected client completes in the same log with `failures=0` and a clean
+  shutdown in 1 minute 27 seconds. It validates a full world restart, engine-driven
+  mining, block and hoe use through travelling items, extension/retraction,
+  exact returned pipe/catalyst counts, wrench packets and the native barrel UI.
+  Seven reviewed screenshots are in `verification/stripes-client-run/screenshots/`.
   Existing guide recipe and texture-animation/mipmap warnings are unchanged.

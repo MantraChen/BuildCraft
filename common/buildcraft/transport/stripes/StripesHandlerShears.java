@@ -1,36 +1,26 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.transport.stripes;
-
-// STUB(R.Chen): StripesHandlerShears — IShearable is a Forge interface; ItemShears→ShearsItem.
-// Shear logic restores in Phase 4E when Forge-compat shear API is handled.
-
+import buildcraft.api.transport.*;
+import buildcraft.lib.misc.BlockUtil;
+import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.item.*;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
-
-import buildcraft.api.transport.IStripesActivator;
-import buildcraft.api.transport.IStripesHandlerItem;
-
 public enum StripesHandlerShears implements IStripesHandlerItem {
     INSTANCE;
-
-    @Override
-    public boolean handle(World world,
-                          BlockPos pos,
-                          Direction direction,
-                          ItemStack stack,
-                          PlayerEntity player,
-                          IStripesActivator activator) {
-        // STUB(R.Chen): IShearable is a Forge interface — deferred to Phase 4E.
-        return false;
+    @Override public boolean handle(World world,BlockPos pos,Direction side,ItemStack stack,PlayerEntity player,IStripesActivator activator){
+        if(!(stack.getItem() instanceof ShearsItem) || !(world instanceof ServerWorld server))return false;
+        var target=pos.offset(side);if(!StripesInteraction.loaded(world,target))return false;var state=world.getBlockState(target);
+        if(!(state.isIn(BlockTags.LEAVES) || state.isOf(Blocks.VINE) || state.isOf(Blocks.GLOW_LICHEN) || state.isOf(Blocks.GRASS) || state.isOf(Blocks.TALL_GRASS)
+            || state.isOf(Blocks.FERN) || state.isOf(Blocks.LARGE_FERN) || state.isOf(Blocks.DEAD_BUSH) || state.isOf(Blocks.COBWEB)))return false;
+        var drops=BlockUtil.breakBlockAndGetDrops(server,target,stack,player.getGameProfile(),false);
+        if(drops.isEmpty())throw new StripesInteraction.Denied();
+        stack.damage(1,player,p->p.sendToolBreakStatus(Hand.MAIN_HAND));
+        for(var drop:drops.get())if(!activator.sendItem(drop,side))activator.dropItem(drop,side);
+        return true;
     }
 }

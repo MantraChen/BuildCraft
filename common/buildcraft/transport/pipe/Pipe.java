@@ -255,6 +255,9 @@ public final class Pipe implements IPipe, IDebuggable {
         flow.postPluggableTick();
     }
 
+    /** Refresh topology for an atomic end-of-tick relocation without advancing items or machinery. */
+    public void refreshConnections() { updateConnections(); }
+
     private void updateConnections() {
         if (holder.getPipeWorld().isClient) {
             return;

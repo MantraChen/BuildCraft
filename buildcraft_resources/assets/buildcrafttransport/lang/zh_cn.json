@@ -1,4 +1,5 @@
 {
+  "item.buildcrafttransport.stripes.tip": "使用传入的工具和方块；供应 MJ 可采掘前方。物品管道伸长管头，虚空物品管道收回管头。",
   "item.buildcrafttransport.obsidian.tip": "只连接一个出口：自动收集接触物品；供应 MJ 可吸取前方 4 格范围的物品。",
   "item.buildcrafttransport.plug_blocker": "管道封堵塞",
   "item.buildcrafttransport.plug_blocker.tip": "阻止管道在安装面连接。",

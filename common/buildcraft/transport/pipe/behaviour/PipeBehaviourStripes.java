@@ -1,171 +1,141 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native Fabric stripes pipe. Remake by FelixMantra.
  */
-
 package buildcraft.transport.pipe.behaviour;
 
-// STUB(R.Chen): PipeBehaviourStripes — FakePlayer (Forge), BuildCraftAPI.fakePlayerProvider,
-// BlockUtil.computeBlockBreakPower/breakBlockAndGetDrops not migrated. Phase 4F.
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import java.io.IOException;
-
-import net.fabricmc.api.EnvType;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-
-import buildcraft.api.mj.IMjConnector;
-import buildcraft.api.mj.IMjRedstoneReceiver;
-import buildcraft.api.mj.MjAPI;
-import buildcraft.api.mj.MjBattery;
+import java.util.*;
+import buildcraft.api.core.EnumPipePart;
+import buildcraft.api.mj.*;
+import buildcraft.api.tools.IToolWrench;
 import buildcraft.api.transport.IStripesActivator;
-import buildcraft.api.transport.pipe.IFlowItems;
-import buildcraft.api.transport.pipe.IPipe;
-import buildcraft.api.transport.pipe.IPipeHolder.PipeMessageReceiver;
-import buildcraft.api.transport.pipe.PipeBehaviour;
-import buildcraft.api.transport.pipe.PipeEventHandler;
-import buildcraft.api.transport.pipe.PipeEventItem;
-import buildcraft.api.transport.pipe.PipeFlow;
-import buildcraft.api.transport.pluggable.PipePluggable;
+import buildcraft.api.transport.pipe.*;
+import buildcraft.lib.misc.*;
+import buildcraft.lib.mj.TransactionalMjReceiver;
+import buildcraft.transport.BCTransportStatements;
+import buildcraft.transport.statements.ActionPipeDirection;
+import buildcraft.transport.stripes.StripesInteraction;
+import buildcraft.transport.tile.TilePipeHolder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.transfer.v1.transaction.*;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.registry.Registries;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.*;
 
-import buildcraft.lib.misc.InventoryUtil;
-import buildcraft.lib.misc.MessageUtil;
-import buildcraft.lib.misc.NBTUtilBC;
-import buildcraft.lib.misc.StackUtil;
-
-import net.minecraft.item.ItemStack;
-
-public class PipeBehaviourStripes extends PipeBehaviour implements IStripesActivator, IMjRedstoneReceiver {
-    private final MjBattery battery = new MjBattery(256 * MjAPI.MJ);
-
-    @Nullable
-    public Direction direction = null;
-    private int progress;
-
-    public PipeBehaviourStripes(IPipe pipe) {
-        super(pipe);
+public class PipeBehaviourStripes extends PipeBehaviour implements IStripesActivator, IMjRedstoneReceiver, TransactionalMjReceiver {
+    private static final long CAPACITY=256*MjAPI.MJ,PER_TICK=10*MjAPI.MJ;
+    public Direction direction;
+    private long stored,progress;
+    private BlockPos workPos;
+    private BlockState workState;
+    private int retry;
+    private final int crackId=System.identityHashCode(this);
+    private final SnapshotParticipant<Long> energySnapshots=new SnapshotParticipant<>(){
+        @Override protected Long createSnapshot(){return stored;}
+        @Override protected void readSnapshot(Long state){stored=state;}
+        @Override protected void onFinalCommit(){dirty();}
+    };
+    public PipeBehaviourStripes(IPipe pipe){super(pipe);}
+    public PipeBehaviourStripes(IPipe pipe,NbtCompound nbt){
+        super(pipe,nbt);stored=Math.max(0,Math.min(CAPACITY,nbt.getCompound("battery").getLong("stored")));
+        direction=NBTUtilBC.readEnum(nbt.get("direction"),Direction.class);
+        if(nbt.contains("workPos") && nbt.contains("workState")){
+            workPos=BlockPos.fromLong(nbt.getLong("workPos"));workState=NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(),nbt.getCompound("workState"));progress=Math.max(0,nbt.getLong("progress"));
+        }
     }
-
-    public PipeBehaviourStripes(IPipe pipe, NbtCompound nbt) {
-        super(pipe, nbt);
-        battery.readFromNbt(nbt.getCompound("battery"));
-        setDirection(NBTUtilBC.readEnum(nbt.get("direction"), Direction.class));
+    public long getStoredMicroMj(){return stored;}
+    public long getProgressMicroMj(){return progress;}
+    public boolean isLive(){return pipe.getHolder() instanceof TilePipeHolder holder && holder.isStorageAvailable() && holder.getPipe()==pipe && !holder.getWorld().isClient;}
+    private void dirty(){var tile=pipe.getHolder().getPipeTile();if(tile!=null)tile.markDirty();}
+    private boolean outlet(Direction side){if(side==null || pipe.isConnected(side))return false;var plug=pipe.getHolder().getPluggable(side);return plug==null || !plug.isBlocking();}
+    public void setDirection(Direction side){
+        if(direction==side)return;clearWork();direction=side;dirty();
+        var world=pipe.getHolder().getPipeWorld();if(world!=null && !world.isClient)pipe.getHolder().scheduleNetworkUpdate(IPipeHolder.PipeMessageReceiver.BEHAVIOUR);
     }
-
-    @Override
-    public NbtCompound writeToNbt() {
-        NbtCompound nbt = super.writeToNbt();
-        nbt.put("battery", battery.writeToNbt());
-        nbt.put("direction", NBTUtilBC.writeEnum(direction));
-        return nbt;
+    private void clearCracks(){var world=pipe.getHolder().getPipeWorld();if(world instanceof ServerWorld && workPos!=null)world.setBlockBreakingInfo(crackId,workPos,-1);}
+    private void clearWork(){clearCracks();boolean changed=workPos!=null || progress!=0;progress=0;workPos=null;workState=null;retry=0;if(changed)dirty();}
+    @PipeEventHandler public void onInvalidate(PipeEventTileState.Invalidate event){clearCracks();}
+    @PipeEventHandler public void onUnload(PipeEventTileState.ChunkUnload event){clearCracks();}
+    @Override public boolean canConnect(Direction face,PipeBehaviour other){return !(other instanceof PipeBehaviourStripes);}
+    @Override public IMjConnector getMjConnector(Direction side){return this;}
+    @Override public boolean canConnect(IMjConnector other){return true;}
+    @Override public boolean canReceive(){return isLive();}
+    @Override public long getPowerRequested(){return isLive()?CAPACITY-stored:0;}
+    @Override public long receivePower(long power,boolean simulate){
+        if(power<=0 || !isLive())return power;long accepted=Math.min(power,CAPACITY-stored);
+        if(!simulate && accepted>0){var tx=Transaction.getCurrentUnsafe();if(tx!=null)energySnapshots.updateSnapshots(tx);stored+=accepted;if(tx==null)dirty();}
+        return power-accepted;
     }
-
-    @Override
-    public void readPayload(PacketByteBuf buffer, EnvType side, Object ctx) throws IOException {
-        super.readPayload(buffer, side, ctx);
-        direction = MessageUtil.readEnumOrNull(buffer, Direction.class);
+    @Override public long receivePower(long power,TransactionContext transaction){
+        if(power<=0 || !isLive())return power;long accepted=Math.min(power,CAPACITY-stored);
+        if(accepted>0){energySnapshots.updateSnapshots(transaction);stored+=accepted;}return power-accepted;
     }
-
-    @Override
-    public void writePayload(PacketByteBuf buffer, EnvType side) {
-        super.writePayload(buffer, side);
-        MessageUtil.writeEnumOrNull(buffer, direction);
+    @Override public NbtCompound writeToNbt(){
+        var nbt=super.writeToNbt();var battery=new NbtCompound();battery.putLong("stored",stored);nbt.put("battery",battery);nbt.put("direction",NBTUtilBC.writeEnum(direction));
+        if(workPos!=null && workState!=null && progress>0){nbt.putLong("workPos",workPos.asLong());nbt.put("workState",NbtHelper.fromBlockState(workState));nbt.putLong("progress",progress);}return nbt;
     }
-
-    // Sides
-
-    private void setDirection(@Nullable Direction newValue) {
-        if (direction != newValue) {
-            direction = newValue;
-            if (!pipe.getHolder().getPipeWorld().isClient) {
-                pipe.getHolder().scheduleNetworkUpdate(PipeMessageReceiver.BEHAVIOUR);
+    @Override public void writePayload(PacketByteBuf buffer,EnvType side){if(side==EnvType.SERVER)buffer.writeByte(direction==null?6:direction.ordinal());}
+    @Override public void readPayload(PacketByteBuf buffer,EnvType side,Object ctx) throws IOException {
+        if(side!=EnvType.CLIENT)return;int value=buffer.readUnsignedByte();if(value>6)throw new IOException("Invalid stripes direction");direction=value==6?null:Direction.values()[value];
+    }
+    @PipeEventHandler public void addActions(PipeEventStatement.AddActionInternal event){for(var face:Direction.values())if(outlet(face))event.actions.add(BCTransportStatements.ACTION_PIPE_DIRECTION[face.ordinal()]);}
+    @PipeEventHandler public void onAction(PipeEventActionActivate event){if(isLive() && event.action instanceof ActionPipeDirection action && outlet(action.direction))setDirection(action.direction);}
+    @Override public boolean onPipeActivate(PlayerEntity player,HitResult trace,float x,float y,float z,EnumPipePart part){
+        var hand=EntityUtil.getWrenchHand(player);if(hand==null || !pipe.getHolder().canPlayerInteract(player))return false;var stack=player.getStackInHand(hand);var wrench=(IToolWrench)stack.getItem();
+        if(!wrench.canWrench(player,hand,stack,trace))return false;
+        if(isLive()){int start=direction==null?-1:direction.ordinal();for(int i=1;i<=6;i++){var next=Direction.values()[(start+i)%6];if(outlet(next)){setDirection(next);wrench.wrenchUsed(player,hand,stack,trace);break;}}}return true;
+    }
+    @Override public void onTick(){
+        if(!isLive() || Transaction.getCurrentUnsafe()!=null)return;
+        if(!outlet(direction)){
+            Direction next=null;int count=0;for(var face:Direction.values())if(pipe.isConnected(face)){next=face.getOpposite();count++;}
+            setDirection(count==1 && outlet(next)?next:null);
+        }
+        var world=(ServerWorld)pipe.getHolder().getPipeWorld();var origin=pipe.getHolder().getPipePos();
+        if(direction==null){clearWork();return;}var target=origin.offset(direction);
+        if(!StripesInteraction.loaded(world,target)){clearWork();return;}
+        var state=world.getBlockState(target);long cost=BlockUtil.computeBlockBreakPower(world,target);
+        if(cost<=0 || cost==Long.MAX_VALUE){clearWork();return;}
+        if(!target.equals(workPos) || state!=workState){clearWork();workPos=target;workState=state;}
+        if(progress>cost){progress=cost;dirty();}
+        if(progress<cost){long used=Math.min(stored,Math.min(PER_TICK,cost-progress));stored-=used;progress+=used;if(used>0){dirty();world.setBlockBreakingInfo(crackId,target,(int)(9.0*progress/cost));}return;}
+        if(retry>0){retry--;return;}
+        var drops=BlockUtil.breakBlockAndGetDrops(world,target,new ItemStack(Items.DIAMOND_PICKAXE),pipe.getHolder().getOwner(),false);
+        if(drops.isPresent()){clearWork();dirty();for(var stack:drops.get())if(!sendItem(stack,direction))dropItem(stack,direction);}
+        else retry=20; // Retain paid work while native protection refuses the break.
+    }
+    @PipeEventHandler public void onDrop(PipeEventItem.Drop event){
+        if(!isLive() || !outlet(direction) || event.getStack().isEmpty())return;
+        var world=(ServerWorld)pipe.getHolder().getPipeWorld();var pos=pipe.getHolder().getPipePos();var face=direction;
+        var player=FakePlayerProvider.INSTANCE.getFakePlayer(world,pipe.getHolder().getOwner(),pos);
+        var inventory=player.getInventory();var previous=new ArrayList<ItemStack>();for(int i=0;i<inventory.size();i++)previous.add(inventory.getStack(i).copy());int selected=inventory.selectedSlot;
+        float yaw=player.getYaw(),pitch=player.getPitch();var oldPos=player.getPos();boolean handled=false;
+        try{
+            inventory.clear();inventory.selectedSlot=0;player.setStackInHand(Hand.MAIN_HAND,event.getStack().copy());
+            player.setYaw(face.asRotation());player.setPitch(face==Direction.UP?-90:face==Direction.DOWN?90:0);
+            try{
+                if(StripesInteraction.allow(player,pos.offset(face),face.getOpposite()).isAccepted())handled=true;
+                else if(isLive())handled=PipeApi.stripeRegistry.handleItem(world,pos,face,player.getMainHandStack(),player,this);
+            }catch(StripesInteraction.Denied denied){handled=true;}
+            if(handled){
+                event.setStack(ItemStack.EMPTY);
+                for(int i=0;i<inventory.size();i++){var stack=inventory.removeStack(i);if(!stack.isEmpty() && !sendItem(stack,face))dropItem(stack,face);}
             }
+        }finally{
+            inventory.clear();for(int i=0;i<previous.size();i++)inventory.setStack(i,previous.get(i));inventory.selectedSlot=selected;player.refreshPositionAndAngles(oldPos.x,oldPos.y,oldPos.z,yaw,pitch);
         }
     }
-
-    // IMjRedstoneReceiver
-
-    @Override
-    public boolean canConnect(@Nonnull IMjConnector other) {
-        return true;
+    @Override public boolean sendItem(ItemStack stack,Direction from){
+        if(stack.isEmpty())return true;if(!isLive() || !(pipe.getFlow() instanceof IFlowItems flow))return false;flow.insertItemsForce(stack.copy(),from,null,.02);dirty();return true;
     }
-
-    @Override
-    public long getPowerRequested() {
-        return battery.getCapacity() - battery.getStored();
-    }
-
-    @Override
-    public long receivePower(long microJoules, boolean simulate) {
-        return battery.addPowerChecking(microJoules, simulate);
-    }
-
-    // Stripes
-
-    @Override
-    public boolean canConnect(Direction face, PipeBehaviour other) {
-        return !(other instanceof PipeBehaviourStripes);
-    }
-
-    @Override
-    public void onTick() {
-        World world = pipe.getHolder().getPipeWorld();
-        BlockPos pos = pipe.getHolder().getPipePos();
-        if (world.isClient) {
-            return;
-        }
-        if (direction == null || pipe.isConnected(direction)) {
-            int sides = 0;
-            Direction dir = null;
-            for (Direction face : Direction.values()) {
-                if (pipe.isConnected(face)) {
-                    sides++;
-                    dir = face;
-                }
-            }
-            if (sides == 1) {
-                setDirection(dir.getOpposite());
-            } else {
-                setDirection(null);
-            }
-        }
-        battery.tick(world, pipe.getHolder().getPipePos());
-        if (direction != null) {
-            // STUB(R.Chen): block breaking deferred — BlockUtil.computeBlockBreakPower/breakBlockAndGetDrops not migrated.
-            progress = 0;
-        } else {
-            progress = 0;
-        }
-    }
-
-    @PipeEventHandler
-    public void onDrop(PipeEventItem.Drop event) {
-        // STUB(R.Chen): onDrop deferred — FakePlayer + PipeApi.stripeRegistry not migrated. Phase 4F.
-    }
-
-    @Override
-    public void dropItem(@Nonnull ItemStack stack, Direction direction) {
-        InventoryUtil.drop(pipe.getHolder().getPipeWorld(), pipe.getHolder().getPipePos(), stack);
-    }
-
-    @Override
-    public boolean sendItem(@Nonnull ItemStack stack, Direction from) {
-        PipeFlow flow = pipe.getFlow();
-        if (flow instanceof IFlowItems) {
-            ((IFlowItems) flow).insertItemsForce(stack, from, null, 0.02);
-            return true;
-        } else {
-            return false;
-        }
-    }
+    @Override public void dropItem(ItemStack stack,Direction from){InventoryUtil.drop(pipe.getHolder().getPipeWorld(),pipe.getHolder().getPipePos(),stack.copy());}
 }
