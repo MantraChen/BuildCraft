@@ -48,7 +48,6 @@ public class TileMarkerVolume extends TileMarker<VolumeConnection> implements IT
 
     public TileMarkerVolume(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
         super(type, pos, state);
-        caps.addCapabilityInstance(TilesAPI.CAP_TILE_AREA_PROVIDER, this, EnumPipePart.VALUES);
     }
 
     @Override
@@ -127,7 +126,8 @@ public class TileMarkerVolume extends TileMarker<VolumeConnection> implements IT
     // @Override -- removed: method does not exist in Fabric 1.20.1
     @Environment(EnvType.CLIENT)
     public Box getRenderBoundingBox() {
-        return INFINITE_EXTENT_AABB;
+        int range = BCCoreConfig.markerMaxDistance;
+        return new Box(pos.add(-range, -range, -range), pos.add(range, range, range));
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1

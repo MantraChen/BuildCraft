@@ -53,7 +53,7 @@ public class BlockMarkerVolume extends BlockMarkerBase {
         if (tile instanceof TileMarkerVolume) {
             TileMarkerVolume volume = (TileMarkerVolume) tile;
 
-            boolean powered = world.isBlockPowered(pos);
+            boolean powered = world.isReceivingRedstonePower(pos);
 
             if (volume.isShowingSignals() != powered) {
                 volume.switchSignals();

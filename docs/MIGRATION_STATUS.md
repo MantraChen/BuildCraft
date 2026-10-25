@@ -58,14 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 171 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 167 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **93 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **20 world tests passed** after 92 regression tests; the
-  subsequent standalone run also passed the new native registry-metadata test.
+- Headless Fabric GameTest: **25 world tests passed** after 93 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -159,6 +158,14 @@ features explicitly as work proceeds.
   now receive actual positions/states and persist progress through native NBT callbacks.
   Engine drops, creative groups, full machine reloads, fluid registration and connected
   client rendering remain to be validated.
+- Machine work/control/heat/area services now use native Fabric `BlockApiLookup` instead
+  of Forge capability tokens. Direct interface implementations expose their services;
+  sided block providers can register normally. Lookups reject removed, unattached and
+  unloaded entities without loading chunks. Five world tests verify actual object/state,
+  area/heat access, sided providers and lifecycle rejection. Miner and laser-table work
+  predicates are exposed again, and machine statement callers use the native lookup.
+  Full gate integration remains unfinished: inventory/fluid statements still use old
+  capability paths, and other machines still need their work predicates restored.
 
 Remaining work includes full compilation, transport/item and screen registration, network
 debug/robotics messages, renderers, fluid/energy integration, full quarry operation, packaged

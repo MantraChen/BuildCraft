@@ -15,7 +15,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import buildcraft.api.statements.IActionExternal;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.api.statements.IStatement;
 import buildcraft.api.statements.IStatementContainer;
 import buildcraft.api.statements.IStatementParameter;
@@ -47,7 +46,7 @@ public class ActionMachineControl extends BCStatement implements IActionExternal
 
     @Override
     public void actionActivate(BlockEntity target, Direction side, IStatementContainer source, IStatementParameter[] parameters) {
-        IControllable controllable = CapUtil.getCapability(target, TilesAPI.CAP_CONTROLLABLE, side.getOpposite());
+        IControllable controllable = TilesAPI.find(TilesAPI.CONTROLLABLE, target, side.getOpposite());
         if (controllable != null && controllable.acceptsControlMode(mode)) {
             controllable.setControlMode(mode);
         }

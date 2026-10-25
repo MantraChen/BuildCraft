@@ -50,8 +50,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   Box / INFINITE  → Fabric render bounds are handled via BuiltinModelItemRenderer / BER
 //   BCCoreConfig.miningMaxDepth→ MINING_MAX_DEPTH stub constant
 //   BCFactoryBlocks.tube      → isTubeBlock() stub (returns false until BCFactoryBlocks is in libLeaf)
-//   TilesAPI.CAP_HAS_WORK     → Forge capability — commented out (deferred to Phase 4F)
-public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
+public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, buildcraft.api.tiles.IHasWork {
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("miner");
     public static final int NET_LED_STATUS = IDS.allocId("LED_STATUS");
     public static final int NET_WANTED_Y = IDS.allocId("WANTED_Y");
@@ -73,9 +72,10 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     public TileMiner(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         caps.addProvider(new MjCapabilityHelper(createMjReceiver()));
-        // STUB(R.Chen): TilesAPI.CAP_HAS_WORK — Forge capability; deferred to Phase 4F.
-        //   caps.addCapabilityInstance(TilesAPI.CAP_HAS_WORK, () -> !isComplete, EnumPipePart.VALUES);
     }
+
+    @Override
+    public boolean hasWork() { return !isComplete; }
 
     protected abstract void mine();
 

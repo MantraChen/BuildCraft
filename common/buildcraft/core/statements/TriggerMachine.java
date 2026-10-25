@@ -13,7 +13,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import buildcraft.api.statements.IStatement;
-import buildcraft.lib.misc.CapUtil;
 import buildcraft.api.statements.IStatementContainer;
 import buildcraft.api.statements.IStatementParameter;
 import buildcraft.api.statements.ITriggerExternal;
@@ -48,7 +47,7 @@ public class TriggerMachine extends BCStatement implements ITriggerExternal {
 
     @Override
     public boolean isTriggerActive(BlockEntity tile, Direction side, IStatementContainer container, IStatementParameter[] parameters) {
-        IHasWork hasWork = CapUtil.getCapability(tile, TilesAPI.CAP_HAS_WORK, side.getOpposite());
+        IHasWork hasWork = TilesAPI.find(TilesAPI.HAS_WORK, tile, side.getOpposite());
         if (hasWork == null) {
             return false;
         }

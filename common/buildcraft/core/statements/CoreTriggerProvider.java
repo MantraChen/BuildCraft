@@ -96,7 +96,7 @@ public enum CoreTriggerProvider implements ITriggerProvider {
             }
         }
 
-        if (CapUtil.hasCapability(tile, TilesAPI.CAP_HAS_WORK, null)) {
+        if (TilesAPI.find(TilesAPI.HAS_WORK, tile, side.getOpposite()) != null) {
             res.add(BCCoreStatements.TRIGGER_MACHINE_ACTIVE);
             res.add(BCCoreStatements.TRIGGER_MACHINE_INACTIVE);
         }

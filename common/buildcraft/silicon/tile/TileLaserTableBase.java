@@ -27,7 +27,7 @@ import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-public abstract class TileLaserTableBase extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, ILaserTarget, IDebuggable {
+public abstract class TileLaserTableBase extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, ILaserTarget, IDebuggable, buildcraft.api.tiles.IHasWork {
     private static final long MJ_FLOW_ROUND = MjAPI.MJ / 10;
     private final AverageLong avgPower = new AverageLong(120);
     public long avgPowerClient;
@@ -35,9 +35,10 @@ public abstract class TileLaserTableBase extends TileBC_Neptune implements build
 
     protected TileLaserTableBase(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        // STUB(R.Chen): TilesAPI.CAP_HAS_WORK — Forge capability; deferred to Phase 4F.
-        // caps.addCapabilityInstance(TilesAPI.CAP_HAS_WORK, () -> getTarget() > 0, EnumPipePart.VALUES);
     }
+
+    @Override
+    public boolean hasWork() { return getTarget() > 0; }
 
     public abstract long getTarget();
 
