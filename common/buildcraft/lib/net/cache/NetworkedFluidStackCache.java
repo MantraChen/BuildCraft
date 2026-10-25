@@ -26,7 +26,7 @@ public class NetworkedFluidStackCache extends NetworkedObjectCache<FluidStackBC>
     private static final int FLUID_AMOUNT = 1;
 
     public NetworkedFluidStackCache() {
-        super(new FluidStackBC(FluidRegistryBC.WATER, FLUID_AMOUNT));
+        super(FluidStackBC.EMPTY);
     }
 
     @Override
@@ -52,34 +52,17 @@ public class NetworkedFluidStackCache extends NetworkedObjectCache<FluidStackBC>
 
     @Override
     protected FluidStackBC copyOf(FluidStackBC object) {
-        return object.copy();
+        return object == null ? FluidStackBC.EMPTY : FluidStackBC.of(object.getFluidVariant(), FLUID_AMOUNT);
     }
 
     @Override
     protected void writeObject(FluidStackBC obj, PacketBufferBC buffer) {
-        FluidVariant fv = obj.getFluidVariant();
-        buffer.writeString(FluidRegistryBC.getFluidName(fv.getFluid()));
-        NbtCompound nbt = fv.getNbt();
-        if (nbt == null) {
-            buffer.writeBoolean(false);
-        } else {
-            buffer.writeBoolean(true);
-            buffer.writeNbt(nbt);
-        }
+        obj.getFluidVariant().toPacket(buffer);
     }
 
     @Override
     protected FluidStackBC readObject(PacketBufferBC buffer) throws IOException {
-        Fluid fluid = FluidRegistryBC.getFluid(buffer.readString(255));
-        if (fluid == null) return FluidStackBC.EMPTY;
-        FluidVariant fv;
-        if (buffer.readBoolean()) {
-            NbtCompound nbt = buffer.readNbt();
-            fv = FluidVariant.of(fluid, nbt);
-        } else {
-            fv = FluidVariant.of(fluid);
-        }
-        return FluidStackBC.of(fv, FLUID_AMOUNT);
+        return FluidStackBC.of(FluidVariant.fromPacket(buffer), FLUID_AMOUNT);
     }
 
     @Override

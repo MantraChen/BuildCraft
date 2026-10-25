@@ -42,14 +42,18 @@ public class BCLibClientInitializer implements ClientModInitializer {
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
             .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS);
 
-        // Forge: ClientConnectedToServerEvent
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            // STUB(R.Chen): BuildCraftObjectCaches.onClientJoinServer();
+        ClientPlayConnectionEvents.INIT.register((handler, client) -> {
+            buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
         });
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+            buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer());
 
         // Forge: ClientTickEvent (Phase.END)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             buildcraft.lib.misc.MessageUtil.postClientTick();
+            if (client.player != null && client.getNetworkHandler() != null) {
+                buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientTick(buildcraft.lib.net.BCNetworkManager::sendToServer);
+            }
             // STUB(R.Chen): ItemDebugger hover-debug request → use MinecraftClient#crosshairTarget.
         });
 

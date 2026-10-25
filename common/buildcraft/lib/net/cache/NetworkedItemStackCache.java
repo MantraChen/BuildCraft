@@ -10,7 +10,6 @@ import java.util.Objects;
 
 import net.minecraft.item.ItemStack;
 
-import buildcraft.lib.misc.StackUtil;
 import buildcraft.lib.net.PacketBufferBC;
 
 import it.unimi.dsi.fastutil.Hash;
@@ -20,7 +19,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 public class NetworkedItemStackCache extends NetworkedObjectCache<ItemStack> {
 
     public NetworkedItemStackCache() {
-        super(StackUtil.EMPTY);
+        super(ItemStack.EMPTY);
     }
 
     @Override

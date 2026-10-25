@@ -58,14 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 196 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 194 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **79 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **88 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **14 world tests passed** after 76 regression tests; the
-  subsequent standalone regression run also passed three new tick-queue tests.
+- Headless Fabric GameTest: **14 world tests passed** after the 88 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -128,9 +127,15 @@ features explicitly as work proceeds.
 - Vanilla tile NBT now separates render-only updates from persistent loading, and
   neighbour/redstone callbacks use native 1.20.1 signatures. Full machine save/reload
   and renderer validation remain outstanding.
+- Item/fluid network caches now allocate real IDs, copy mutable stacks, preserve NBT,
+  batch unresolved IDs into bounded Fabric requests, apply typed responses and invalidate
+  suppliers on disconnect. Server cache IDs reset between server sessions, and unresolved
+  fluid renders stay blank. Nine regression tests cover round trips, deduplication, batch
+  limits, malformed packets, failed sends and session isolation. Live pipe/tank rendering
+  still requires the full connected client.
 
 Remaining work includes full compilation, block/entity and screen registration, network
-cache/marker/debug messages, renderers, fluid/energy integration, full quarry operation, packaged
+marker/debug messages, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.
 

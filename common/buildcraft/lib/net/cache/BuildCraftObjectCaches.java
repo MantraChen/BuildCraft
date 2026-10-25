@@ -1,48 +1,64 @@
 /*
  * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.lib.net.cache;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-
 import net.minecraft.item.ItemStack;
+import buildcraft.lib.compat.FluidStackBC;
 
-import buildcraft.lib.misc.StackUtil;
+/** Shared cache registration; values are reset at connection/server lifecycle boundaries. */
+public final class BuildCraftObjectCaches {
+    private static final List<NetworkedObjectCache<?>> REGISTRY = new ArrayList<>();
+    public static final List<NetworkedObjectCache<?>> CACHES = Collections.unmodifiableList(REGISTRY);
+    public static final NetworkedItemStackCache CACHE_ITEMS = registerCache(new NetworkedItemStackCache());
+    public static final NetworkedFluidStackCache CACHE_FLUIDS = registerCache(new NetworkedFluidStackCache());
+    private static boolean frozen;
 
-// STUB(R.Chen): full implementation in Phase 4E.
-public class BuildCraftObjectCaches {
+    private BuildCraftObjectCaches() {}
 
-    /** Real NetworkedFluidStackCache — provides typed server()/client() API Tank.java expects. */
-    public static final NetworkedFluidStackCache CACHE_FLUIDS = new NetworkedFluidStackCache();
-    /** STUB(R.Chen): all caches list — stub for FML lifecycle calls. */
-    public static final List<Object> CACHES = new ArrayList<>();
+    public static <C extends NetworkedObjectCache<?>> C registerCache(C cache) {
+        if (frozen) throw new IllegalStateException("Cannot register a cache after a connection starts");
+        if (REGISTRY.contains(cache)) throw new IllegalArgumentException("Cache already registered");
+        if (REGISTRY.size() >= 256) throw new IllegalStateException("Too many network caches");
+        REGISTRY.add(java.util.Objects.requireNonNull(cache));
+        return cache;
+    }
 
-    /** STUB(R.Chen): returns a sentinel id; real id allocation is Phase 4E. */
-    public static int storeItemStack(@Nonnull ItemStack stack) { return 0; }
+    static NetworkedObjectCache<?> getCache(int id) {
+        if (id < 0 || id >= REGISTRY.size()) throw new IllegalArgumentException("Unknown cache: " + id);
+        return REGISTRY.get(id);
+    }
 
-    /** STUB(R.Chen): returns a sentinel id; real id allocation is Phase 4E. */
-    public static int getItemStackId(@Nonnull ItemStack stack) { return 0; }
+    public static int storeItemStack(ItemStack stack) { return CACHE_ITEMS.server().store(stack); }
+    public static int getItemStackId(ItemStack stack) { return CACHE_ITEMS.server().getId(stack); }
+    public static Supplier<ItemStack> retrieveItemStack(int id) { return CACHE_ITEMS.client().retrieve(id); }
+    public static int storeFluid(FluidVariant fluid) { return CACHE_FLUIDS.server().store(FluidStackBC.of(fluid, 1)); }
+    public static int getFluidId(FluidVariant fluid) { return CACHE_FLUIDS.server().getId(FluidStackBC.of(fluid, 1)); }
+    public static Supplier<FluidVariant> retrieveFluid(int id) {
+        NetworkedFluidStackCache.Link link = CACHE_FLUIDS.client().retrieve(id);
+        return () -> link.get().getFluidVariant();
+    }
 
-    /** STUB(R.Chen): returns an empty supplier until the client cache is migrated. */
-    public static Supplier<ItemStack> retrieveItemStack(int id) { return () -> StackUtil.EMPTY; }
+    public static void onClientJoinServer() {
+        frozen = true;
+        CACHES.forEach(NetworkedObjectCache::onClientJoinServer);
+    }
 
-    /** STUB(R.Chen): returns a sentinel id; real id allocation is Phase 4E. */
-    public static int storeFluid(@Nonnull FluidVariant fluid) { return 0; }
+    public static void onClientTick(Consumer<MessageObjectCacheRequest> sender) {
+        CACHES.forEach(cache -> cache.onClientWorldTick(sender));
+    }
 
-    /** STUB(R.Chen): returns a sentinel id; real id allocation is Phase 4E. */
-    public static int getFluidId(@Nonnull FluidVariant fluid) { return 0; }
+    public static void onServerStarting() {
+        frozen = true;
+        onServerStopped();
+    }
 
-    /** STUB(R.Chen): returns a blank supplier until the client cache is migrated. */
-    public static Supplier<FluidVariant> retrieveFluid(int id) { return FluidVariant::blank; }
+    public static void onServerStopped() { CACHES.forEach(NetworkedObjectCache::onServerStopped); }
 }

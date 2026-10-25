@@ -11,7 +11,6 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import buildcraft.lib.misc.LocaleUtil;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 
@@ -165,7 +164,7 @@ public final class FluidStackBC {
     public String getLocalizedName() {
         if (fluid == null) return "null";
         String key = "fluid." + FluidRegistryBC.getFluidName(fluid);
-        String localized = buildcraft.lib.misc.LocaleUtil.localize(key);
+        String localized = net.minecraft.text.Text.translatable(key).getString();
         return localized.startsWith("fluid.") ? getFluidName() : localized;
     }
 

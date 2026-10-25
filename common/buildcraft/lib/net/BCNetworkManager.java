@@ -59,6 +59,9 @@ public final class BCNetworkManager {
         ServerPlayNetworking.registerGlobalReceiver(MessageContainer.TYPE, (packet, player, sender) ->
             handle(() -> NetworkRouting.receiveContainer(packet, new NetworkContext(player, sender::sendPacket)),
                 player.networkHandler::disconnect));
+        ServerPlayNetworking.registerGlobalReceiver(buildcraft.lib.net.cache.MessageObjectCacheRequest.TYPE,
+            (packet, player, sender) -> handle(() -> sender.sendPacket(packet.createResponse()),
+                player.networkHandler::disconnect));
     }
 
     /** Call from a {@code ClientModInitializer.onInitializeClient()}. */
@@ -72,6 +75,8 @@ public final class BCNetworkManager {
         ClientPlayNetworking.registerGlobalReceiver(MessageContainer.TYPE, (packet, player, sender) ->
             handle(() -> NetworkRouting.receiveContainer(packet, new NetworkContext(player, sender::sendPacket)),
                 player.networkHandler.getConnection()::disconnect));
+        ClientPlayNetworking.registerGlobalReceiver(buildcraft.lib.net.cache.MessageObjectCacheResponse.TYPE,
+            (packet, player, sender) -> handle(packet::apply, player.networkHandler.getConnection()::disconnect));
     }
 
     private static void handle(PacketAction action, Consumer<net.minecraft.text.Text> disconnect) {

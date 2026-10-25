@@ -51,7 +51,6 @@ public class BCLibInitializer implements ModInitializer {
         // Registry.register(Registries.BLOCK_ENTITY_TYPE, ...);
 
         buildcraft.lib.net.BCNetworkManager.registerCommon();
-        // STUB(R.Chen): BuildCraftObjectCaches.fmlPreInit/fmlPostInit — port to Fabric lifecycle hooks.
 
         registerLifecycleEvents();
 
@@ -61,6 +60,7 @@ public class BCLibInitializer implements ModInitializer {
     private static void registerLifecycleEvents() {
         // Forge: FMLServerStartingEvent → register command
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            buildcraft.lib.net.cache.BuildCraftObjectCaches.onServerStarting();
             // STUB(R.Chen): port CommandBuildCraft to Fabric's CommandRegistrationCallback.
         });
 
@@ -69,6 +69,7 @@ public class BCLibInitializer implements ModInitializer {
             buildcraft.lib.misc.MessageUtil.postServerTick(server);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(buildcraft.lib.misc.MessageUtil::stopServer);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> buildcraft.lib.net.cache.BuildCraftObjectCaches.onServerStopped());
 
         // Forge: WorldEvent.Unload (server side)
         ServerWorldEvents.UNLOAD.register((server, world) -> {
