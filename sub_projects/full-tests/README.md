@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The 44 server tests currently verify:
+The 47 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -92,18 +92,26 @@ The 44 server tests currently verify:
   disabled presets expire, and removing the gate stops extraction. Native paint
   controls preserve all four samples/colours and reject invalid, distant and stale
   updates. Gate creation and Emzuli state packets preserve live configuration.
-  Gate item placement, rendering and player configuration UI are not covered yet.
+- All 25 gate variants place through native block interaction on all six faces,
+  consume one survival item, retain variant drops/pick stacks and reload before world
+  attachment. Malformed clay modifiers cannot create a zero-slot gate. Native screen
+  edits travel through bounded container packets, select server-approved statements,
+  link AND conditions and activate Emzuli extraction presets. Parameters cycle without
+  consuming samples, side-only redstone outputs retract after clearing the action,
+  and distant/replaced-gate screens cannot edit settings. Opening payloads preserve
+  candidates, parameters and activation state.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
-127 default item models and 158 explicit item/pipe variants. It rejects missing models,
+128 default item models and 183 explicit item/pipe/gate variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map
 locations, decorated blocks, lists, snapshots and single-block schematics. It also
 checks that the chute, tank and gear/wrench crafting chain have translated names and
 that registry-reload command text remains available. All 46 pipe models have nonempty
 geometry, valid textures and vertices within block bounds, both plain and with red/blue
 dye. Pipe item names are localized, and all four gate extraction-preset sprites exist
-in the stitched block atlas. It requires
+in the stitched block atlas. All 25 gates have nonempty textured geometry on six faces
+in both lit and unlit states (300 combinations), within native block bounds. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

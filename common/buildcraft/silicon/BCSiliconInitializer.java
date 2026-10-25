@@ -23,7 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
- * Blocks and tile factories register here; pluggables, items and screens still need integration.
+ * Blocks, gate items/attachments and the native gate screen register here.
  */
 public class BCSiliconInitializer implements ModInitializer {
 
@@ -41,11 +41,12 @@ public class BCSiliconInitializer implements ModInitializer {
         // STUB(R.Chen): BCSiliconConfig.preInit() — port to Fabric config (FabricLoader.getConfigDir).
         BCSiliconTags.register();
         BCSiliconBlocks.preInit();
-        // STUB(R.Chen): BCSiliconItems.preInit() — migrate items to Registries.ITEM once lib.item lands.
+        BCSiliconItems.preInit();
+        BCSiliconScreens.register();
         BCSiliconPlugs.preInit();
         // STUB(R.Chen): BCSiliconSprites.fmlPreInit() — register sprites via Fabric Atlas event.
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for each of:
-        //               ASSEMBLY_TABLE, ADVANCED_CRAFTING_TABLE, INTEGRATION_TABLE, GATE.
+        //               ASSEMBLY_TABLE, ADVANCED_CRAFTING_TABLE, INTEGRATION_TABLE.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCSiliconProxy) → Fabric lifecycle callbacks.
 
         // --- Forge init (BCSilicon.init) -----------------------------------------

@@ -49,7 +49,7 @@ public final class FullClientSmoke implements ClientModInitializer {
                     if (!model.isBuiltin()) checkQuads(model, null, id.toString(), failures);
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
-            int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures);
+            int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures) + checkGateGeometry(client, failures);
             for (var slot : buildcraft.transport.pipe.behaviour.PipeBehaviourEmzuli.SlotIndex.VALUES) {
                 var sprite = buildcraft.transport.BCTransportSprites.ACTION_EXTRACTION_PRESET.get(slot).getSprite();
                 if (sprite == null || sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add(slot + ": missing gate extraction preset sprite");
@@ -95,6 +95,29 @@ public final class FullClientSmoke implements ClientModInitializer {
                 }
                 count++;
             }
+        }
+        return count;
+    }
+
+    private static int checkGateGeometry(net.minecraft.client.MinecraftClient client, ArrayList<String> failures) {
+        int count = 0;
+        for (var variant : buildcraft.silicon.item.ItemPluggableGate.variants()) {
+            var stack = buildcraft.silicon.BCSiliconItems.plugGate.getStack(variant);
+            var model = client.getItemRenderer().getModel(stack, null, null, 0);
+            if (!model.isBuiltin() || stack.getName().getString().contains("gate.")) failures.add("Invalid gate item " + variant.getVariantName());
+            for (var side : Direction.values()) for (boolean on : new boolean[] {false, true}) {
+                var quads = buildcraft.silicon.client.BCSiliconClient.MODEL.getQuads(variant, side, on);
+                if (quads.length < 12) failures.add("Empty gate geometry " + variant.getVariantName());
+                for (var quad : quads) {
+                    if (quad.toBakedBlock().getSprite().getContents().getId().equals(MissingSprite.getMissingSpriteId())) failures.add("Missing gate texture " + variant.getVariantName());
+                    var data = quad.toBakedBlock().getVertexData();
+                    for (int v=0;v<4;v++) for(int axis=0;axis<3;axis++) {
+                        float p = Float.intBitsToFloat(data[v*8+axis]);
+                        if (!Float.isFinite(p) || p<0 || p>1) failures.add("Gate geometry outside block " + variant.getVariantName());
+                    }
+                }
+            }
+            count++;
         }
         return count;
     }

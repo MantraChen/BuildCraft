@@ -219,6 +219,7 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
 
     public void readPayload(PacketBufferBC buffer, EnvType side, Object ctx) throws IOException {
         int id = buffer.readUnsignedByte();
+        if (side == EnvType.SERVER) return; // Player edits are validated by the bound native gate screen.
         if (id == NET_ID_CHANGE) {
             boolean isAction = buffer.readBoolean();
             int slot = buffer.readUnsignedByte();
@@ -548,9 +549,11 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
 
         public StatementPair(int index) {
             IStatementChangeListener tChange = (s, i) -> {
+                getTile().markDirty();
                 sendStatementUpdate(false, index);
             };
             IStatementChangeListener aChange = (s, i) -> {
+                getTile().markDirty();
                 sendStatementUpdate(true, index);
             };
             trigger = new FullStatement<>(TriggerType.INSTANCE, variant.numTriggerArgs, tChange);

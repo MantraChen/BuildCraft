@@ -24,23 +24,18 @@ public class GateVariant {
     private final int hash;
 
     public GateVariant(EnumGateLogic logic, EnumGateMaterial material, EnumGateModifier modifier) {
-        this.logic = logic;
+        this.logic = material.canBeModified ? logic : EnumGateLogic.AND;
         this.material = material;
-        this.modifier = modifier;
-        this.numSlots = material.numSlots / modifier.slotDivisor;
-        this.numTriggerArgs = modifier.triggerParams;
-        this.numActionArgs = modifier.actionParams;
-        this.hash = Objects.hash(logic, material, modifier);
+        this.modifier = material.canBeModified ? modifier : EnumGateModifier.NO_MODIFIER;
+        this.numSlots = material.numSlots / this.modifier.slotDivisor;
+        this.numTriggerArgs = this.modifier.triggerParams;
+        this.numActionArgs = this.modifier.actionParams;
+        this.hash = Objects.hash(this.logic, material, this.modifier);
     }
 
     public GateVariant(NbtCompound nbt) {
-        this.logic = EnumGateLogic.getByOrdinal(nbt.getByte("logic"));
-        this.material = EnumGateMaterial.getByOrdinal(nbt.getByte("material"));
-        this.modifier = EnumGateModifier.getByOrdinal(nbt.getByte("modifier"));
-        this.numSlots = material.numSlots / modifier.slotDivisor;
-        this.numTriggerArgs = modifier.triggerParams;
-        this.numActionArgs = modifier.actionParams;
-        this.hash = Objects.hash(logic, material, modifier);
+        this(EnumGateLogic.getByOrdinal(nbt.getByte("logic")), EnumGateMaterial.getByOrdinal(nbt.getByte("material")),
+            EnumGateModifier.getByOrdinal(nbt.getByte("modifier")));
     }
 
     public NbtCompound writeToNBT() {
@@ -52,13 +47,8 @@ public class GateVariant {
     }
 
     public GateVariant(PacketByteBuf buffer) {
-        this.logic = EnumGateLogic.getByOrdinal(buffer.readUnsignedByte());
-        this.material = EnumGateMaterial.getByOrdinal(buffer.readUnsignedByte());
-        this.modifier = EnumGateModifier.getByOrdinal(buffer.readUnsignedByte());
-        this.numSlots = material.numSlots / modifier.slotDivisor;
-        this.numTriggerArgs = modifier.triggerParams;
-        this.numActionArgs = modifier.actionParams;
-        this.hash = Objects.hash(logic, material, modifier);
+        this(EnumGateLogic.getByOrdinal(buffer.readUnsignedByte()), EnumGateMaterial.getByOrdinal(buffer.readUnsignedByte()),
+            EnumGateModifier.getByOrdinal(buffer.readUnsignedByte()));
     }
 
     public void writeToBuffer(PacketByteBuf buffer) {

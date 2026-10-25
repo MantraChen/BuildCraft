@@ -1,0 +1,13 @@
+{
+  "gui.buildcraftsilicon.gate.capacity": "%s 组条件与动作 · %s 个条件参数 / %s 个动作参数",
+  "gui.buildcraftsilicon.gate.columns": "条件 → 动作",
+  "gui.buildcraftsilicon.gate.select_action": "选择动作",
+  "gui.buildcraftsilicon.gate.select_trigger": "选择条件",
+  "gui.buildcraftsilicon.gate.search": "搜索条件或动作",
+  "gui.buildcraftsilicon.gate.statement_help": "左键选择，右键清除",
+  "gui.buildcraftsilicon.gate.parameter_help": "拿着样本物品点击，或点击切换参数选项",
+  "gui.buildcraftsilicon.gate.link": "使用 %s 与下一组联接",
+  "gate.side.down": "下", "gate.side.up": "上", "gate.side.north": "北",
+  "gate.side.south": "南", "gate.side.west": "西", "gate.side.east": "东",
+  "gate.modifier.lapis": "青金石升级", "gate.modifier.quartz": "石英升级", "gate.modifier.diamond": "钻石升级"
+}

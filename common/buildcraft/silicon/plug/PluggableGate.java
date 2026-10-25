@@ -29,15 +29,7 @@ import buildcraft.silicon.gate.GateLogic;
 import buildcraft.silicon.gate.GateVariant;
 import buildcraft.transport.pipe.PluggableHolder;
 
-/**
- * Pipe pluggable for logic gates (migrated stub).
- *
- * STUB(R.Chen): Expression model system (FunctionContext, ContextInfo, ModelVariableData,
- * NodeVariable*, BooleanPossibilities) is not in libLeaf — all model code removed.
- * STUB(R.Chen): BCSiliconItems, BCSiliconGuis, ItemGateCopier, AdvancementUtil deferred.
- * STUB(R.Chen): Box → Box (net.minecraft.util.math.Box); direction-specific BOXES array
- * deferred until BlockEntity/rendering phase.
- */
+/** Native gate attachment, persisted logic and server-validated screen. Remake by FelixMantra. */
 public class PluggableGate extends PipePluggable implements IWireEmitter {
 
     public final GateLogic logic;
@@ -109,12 +101,24 @@ public class PluggableGate extends PipePluggable implements IWireEmitter {
 
     @Override
     public Box getBoundingBox() {
-        // STUB(R.Chen): Direction-specific bounding boxes deferred. Generic centred gate box.
-        double min = 5 / 16.0;
-        double max = 11 / 16.0;
-        double ll  = 2 / 16.0;
-        double uu  = 14 / 16.0;
-        return new Box(min, ll, min, max, uu, max);
+        return switch (side) {
+            case DOWN -> new Box(5/16.0, 2/16.0, 5/16.0, 11/16.0, 4/16.0, 11/16.0);
+            case UP -> new Box(5/16.0, 12/16.0, 5/16.0, 11/16.0, 14/16.0, 11/16.0);
+            case NORTH -> new Box(5/16.0, 5/16.0, 2/16.0, 11/16.0, 11/16.0, 4/16.0);
+            case SOUTH -> new Box(5/16.0, 5/16.0, 12/16.0, 11/16.0, 11/16.0, 14/16.0);
+            case WEST -> new Box(2/16.0, 5/16.0, 5/16.0, 4/16.0, 11/16.0, 11/16.0);
+            case EAST -> new Box(12/16.0, 5/16.0, 5/16.0, 14/16.0, 11/16.0, 11/16.0);
+        };
+    }
+
+    @Override public net.minecraft.item.ItemStack getPickStack() {
+        return buildcraft.silicon.BCSiliconItems.plugGate.getStack(logic.variant);
+    }
+
+    @Override public boolean onPluggableActivate(net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.hit.HitResult hit, float x, float y, float z) {
+        if (!holder.canPlayerInteract(player)) return false;
+        buildcraft.silicon.BCSiliconScreens.open(player, this);
+        return true;
     }
 
     @Override
@@ -139,6 +143,5 @@ public class PluggableGate extends PipePluggable implements IWireEmitter {
     @Override
     public void onTick() {
         logic.onTick();
-        // STUB(R.Chen): clientModelData.tick() deferred until model system is migrated.
     }
 }

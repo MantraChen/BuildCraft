@@ -521,6 +521,8 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
         redstoneValues = new int[6];
         PluggableHolder holder = pluggables.get(side);
         PipePluggable old = holder.pluggable;
+        if (old == with) return old;
+        if (old != null) old.onRemove();
         holder.pluggable = with;
 
         eventBus.unregisterHandler(old);
@@ -530,6 +532,7 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
             pipe.markForUpdate();
         }
         if (!world.isClient) {
+            markDirty();
             if (old != with) {
                 wireManager.getWireSystems().rebuildWireSystemsAround(this);
             }

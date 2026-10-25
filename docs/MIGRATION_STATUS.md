@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **44 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **47 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -92,7 +92,9 @@ features explicitly as work proceeds.
   Four Emzuli tests attach actual gate logic, select extraction presets, deliver painted
   items through Daizuli outputs after save/reload, expire inactive/removed gates, keep
   power queries side-effect-free, validate native paint controls and round-trip live
-  gate/preset packets. Gate item placement/configuration UI remain unfinished.
+  gate/preset packets. Three further gate tests cover 25 variants on all six faces,
+  variant drops/picking and reload, native statement/parameter edits, AND groups,
+  Emzuli activation, redstone retraction, stale/distant access and bounded edit packets.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -124,7 +126,10 @@ features explicitly as work proceeds.
   diamonds; left/right/middle paint controls select, reverse and clear colours. White
   and black settings on different presets, activation and the sample survive F3+T
   and saving/re-entering. This validates Emzuli's screen, not player gate configuration.
-- Packaged GPU client: **928 visible block states, 127 items and 158 item variants pass**
+  The new gate configuration screen has server/packet tests and packaged GPU geometry
+  checks, but its manual client interaction check remains pending: the Windows input
+  helper returned `foreground window did not report a process id` after client startup.
+- Packaged GPU client: **928 visible block states, 128 items and 183 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
   parse errors or missing blockstate variants. Unavailable guide links, legacy fluid
@@ -184,8 +189,17 @@ features explicitly as work proceeds.
   extraction preset icons use their actual authored textures in the block atlas.
   Core statements now register during normal startup, before saved gates are loaded;
   tests resolve trigger IDs from the registry instead of initializing them implicitly.
+  Gate items now register with 25 original NBT variants, six oriented collision boxes,
+  survival placement consumption, variant drops and creative picking. Their authored
+  plate/logic/modifier/illuminated overlay models render on all six faces and invalidate
+  cached quads on resource reload. Native gate screens offer searchable statements,
+  server-owned sample/enum parameters, linked AND/OR groups and live activation state.
+  Edits use the existing bounded container channel (vanilla button packets only hold a
+  signed byte), validate current gate identity/permissions and available statements,
+  and mark the tile dirty. Malformed clay gate modifiers normalize to one basic slot.
   Full fluid/power/RF transport, obsidian/stripes behavior
-  and pluggable/gate gameplay still require integration. Registration of a pipe type
+  and remaining pluggable/wire gameplay still require integration. Gate crafting and
+  inventory/fluid gate statements remain unfinished. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
@@ -486,7 +500,7 @@ features explicitly as work proceeds.
   reload, GPU rendering and live guide input remain unverified. The Stirling engine
   screen has now been opened in the full client; other screens still need validation.
 
-Remaining work includes remaining resource/model/recipe migration, gate/pluggable/wire
+Remaining work includes remaining resource/model/recipe migration, gate crafting and other pluggable/wire
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
 integration, full quarry operation, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is

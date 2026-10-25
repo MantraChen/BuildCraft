@@ -1,0 +1,13 @@
+{
+  "gui.buildcraftsilicon.gate.capacity": "%s statement pairs · %s trigger / %s action parameters",
+  "gui.buildcraftsilicon.gate.columns": "Conditions → Actions",
+  "gui.buildcraftsilicon.gate.select_action": "Choose an action",
+  "gui.buildcraftsilicon.gate.select_trigger": "Choose a condition",
+  "gui.buildcraftsilicon.gate.search": "Search statements",
+  "gui.buildcraftsilicon.gate.statement_help": "Left-click to choose; right-click to clear",
+  "gui.buildcraftsilicon.gate.parameter_help": "Click with a sample item, or click to cycle options",
+  "gui.buildcraftsilicon.gate.link": "Join with the next pair using %s",
+  "gate.side.down": "Down", "gate.side.up": "Up", "gate.side.north": "North",
+  "gate.side.south": "South", "gate.side.west": "West", "gate.side.east": "East",
+  "gate.modifier.lapis": "Lapis upgrade", "gate.modifier.quartz": "Quartz upgrade", "gate.modifier.diamond": "Diamond upgrade"
+}

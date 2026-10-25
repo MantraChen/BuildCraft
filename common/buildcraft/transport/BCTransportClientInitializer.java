@@ -47,6 +47,7 @@ public class BCTransportClientInitializer implements ClientModInitializer {
 
         // Set the client-side pipe API registry so PipeApiClient.registry is available
         PipeApiClient.registry = PipeRegistryClient.INSTANCE;
+        buildcraft.silicon.client.BCSiliconClient.register();
 
         // Register flow renderers
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowPower.class,        PipeFlowRendererPower.INSTANCE);

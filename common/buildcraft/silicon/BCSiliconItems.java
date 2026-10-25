@@ -14,13 +14,10 @@ import buildcraft.silicon.item.ItemPluggableLens;
 import buildcraft.silicon.item.ItemPluggablePulsar;
 import buildcraft.silicon.item.ItemRedstoneChipset;
 
-/**
- * STUB(R.Chen): BCSiliconItems registration deferred until lib.item (ItemBC_Neptune,
- * RegistrationHelper) is migrated. Item instances are null placeholders.
- */
+/** Native gate registration; other silicon items still await restoration. */
 public class BCSiliconItems {
 
-    // STUB(R.Chen): Item references are null until preInit() is wired.
+    // Other silicon items remain unregistered until their behavior is migrated.
     public static ItemRedstoneChipset redstoneChipset;
     public static ItemGateCopier gateCopier;
     public static ItemPluggableGate plugGate;
@@ -30,6 +27,9 @@ public class BCSiliconItems {
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
-        // STUB(R.Chen): Registry.register(Registries.ITEM, ...) calls deferred.
+        plugGate = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon", "plug_gate"), new ItemPluggableGate(new net.minecraft.item.Item.Settings()));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)
+            .register(entries -> ItemPluggableGate.variants().forEach(variant -> entries.add(plugGate.getStack(variant))));
     }
 }
