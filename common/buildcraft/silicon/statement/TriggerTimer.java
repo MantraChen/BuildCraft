@@ -54,6 +54,11 @@ public class TriggerTimer extends BCStatement implements ITriggerInternal {
 
     @Override
     public boolean isTriggerActive(IStatementContainer source, IStatementParameter[] parameters) {
+        if(!(source instanceof buildcraft.api.gates.IGate gate))return false;
+        boolean present=false;
+        for(var side:net.minecraft.util.math.Direction.values())
+            if(gate.getPipeHolder().getPluggable(side) instanceof buildcraft.silicon.plug.PluggableTimer timer && timer.isAttached()){present=true;break;}
+        if(!present)return false;
         World world = source.getTile().getWorld();
         return world.getTime() % (20 * duration.duration) == 0;
     }

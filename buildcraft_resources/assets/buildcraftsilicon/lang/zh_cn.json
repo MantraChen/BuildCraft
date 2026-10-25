@@ -1,4 +1,10 @@
 {
+  "item.buildcraftsilicon.plug_pulsar": "脉冲器",
+  "item.buildcraftsilicon.plug_pulsar.tip": "右键切换；门可控制持续脉冲或单次抽取。",
+  "item.buildcraftsilicon.plug_light_sensor": "光照传感器",
+  "item.buildcraftsilicon.plug_light_sensor.tip": "为管道这一面添加明亮和黑暗门控条件。",
+  "item.buildcraftsilicon.plug_timer": "计时器",
+  "item.buildcraftsilicon.plug_timer.tip": "添加 5、10、15 秒门控条件。",
   "block.buildcraftsilicon.integration_table": "集成台",
   "gui.buildcraftsilicon.integration.working": "等待激光供能",
   "gui.buildcraftsilicon.integration.ready": "准备就绪",

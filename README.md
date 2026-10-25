@@ -50,7 +50,7 @@ use sided Fabric storage, including non-consuming sample and capacity checks.
 All 16 wire colours place on pipe corners, connect matching networks and carry gate
 signals. Breaking an attachment preserves the pipe and honours native break protection.
 Native laser assembly restores five chipsets, all 24 modified gate variants and all
-16 wire colours through 45 data-pack recipes. Directional lasers receive MJ through
+16 wire colours and three control attachments through 48 data-pack recipes. Directional lasers receive MJ through
 native pipes, stop at obstructions and retain bounded batteries across saves. The
 assembly screen queues recipes, keeps selections while ingredients are missing and
 preserves paid work; products prefer pipes, then inventories, then drop nearby.
@@ -70,7 +70,15 @@ The original baseline defines no built-in integration recipes, so this table
 requires recipes supplied by a data pack or add-on. The test fixture's chipset
 upgrade is an example, not a production recipe. See the
 [integration recipe format](docs/MIGRATION_STATUS.md#native-integration-table).
-Charging tables and other pluggables still need restoration.
+Pulsars, timers and light sensors now attach to pipes, retain their original models
+and provide native gate choices. Pulsars support manual/continuous operation and
+queued single extractions; timer intervals are 5/10/15 seconds and light conditions
+use the sensor's face. Single-action latches persist across world reloads, and
+removing an attachment disables its conditions. Use
+`./scripts/full-smoke.ps1 -ControlPlugs` for the connected-client fixture.
+Facades, lenses and other remaining pluggables still need restoration.
+The charging table was already an empty, development-only placeholder in the
+original baseline; it is not exposed as a supported production feature.
 Fluid pipes now expose native transactional storage, retain exact droplets/NBT through
 save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
 clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.

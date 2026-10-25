@@ -32,10 +32,14 @@ public class BCTransportConfig {
     public static boolean powerPipeUseOldMjTexture = false;
     public static PowerLossMode lossMode = PowerLossMode.DEFAULT;
     public static int networkUpdateRate = 4;
-    private static buildcraft.lib.config.Property propBasePowerRate, propBaseRfRate, propLossMode;
+    private static buildcraft.lib.config.Property propBasePowerRate, propBaseRfRate, propLossMode, propMjPerItem, propMjPerMillibucket;
 
     public static void preInit() {
         var config = buildcraft.core.BCCoreConfig.config;
+        propMjPerItem=config.get("general","pipes.mjPerItem",(int)MjAPI.MJ).setMinValue((int)MJ_REQ_ITEM_MIN).setMaxValue(Integer.MAX_VALUE);
+        propMjPerMillibucket=config.get("general","pipes.mjPerMillibucket",1000).setMinValue((int)MJ_REQ_MILLIBUCKET_MIN).setMaxValue(Integer.MAX_VALUE);
+        buildcraft.lib.config.EnumRestartRequirement.WORLD.setTo(propMjPerItem);
+        buildcraft.lib.config.EnumRestartRequirement.WORLD.setTo(propMjPerMillibucket);
         propBasePowerRate = config.get("general", "pipes.basePowerRate", 4).setMinValue(1).setMaxValue(40);
         propBaseRfRate = config.get("general", "pipes.baseRfRate", 40).setMinValue(10).setMaxValue(4000);
         buildcraft.lib.config.EnumRestartRequirement.WORLD.setTo(propBaseRfRate);
@@ -51,6 +55,7 @@ public class BCTransportConfig {
 
     public static void reloadConfig() {
         if (propBasePowerRate == null) return;
+        mjPerItem=propMjPerItem.getInt();mjPerMillibucket=propMjPerMillibucket.getInt();
         basePowerRate = Math.max(1, Math.min(40, propBasePowerRate.getInt()));
         baseRfRate = Math.max(10, Math.min(4000, propBaseRfRate.getInt()));
         lossMode = buildcraft.lib.misc.ConfigUtil.parseEnumForConfig(propLossMode, PowerLossMode.DEFAULT);
@@ -79,6 +84,8 @@ public class BCTransportConfig {
         rf(BCTransportPipes.diamondRf, rfRate * 64, false);
         rf(BCTransportPipes.diaWoodRf, rfRate * 64, true);
     }
+    public static long itemExtractionCost(){return Math.max(MJ_REQ_ITEM_MIN,Math.min(Integer.MAX_VALUE,mjPerItem));}
+    public static long millibucketExtractionCost(){return Math.max(MJ_REQ_MILLIBUCKET_MIN,Math.min(Integer.MAX_VALUE,mjPerMillibucket));}
     private static void rf(buildcraft.api.transport.pipe.PipeDefinition pipe, int rate, boolean receiver) {
         if (pipe != null) buildcraft.api.transport.pipe.PipeApi.rfTransferData.put(pipe,
             new buildcraft.api.transport.pipe.PipeApi.RedstoneFluxTransferInfo(rate, receiver));

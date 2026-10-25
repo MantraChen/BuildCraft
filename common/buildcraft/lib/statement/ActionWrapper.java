@@ -29,6 +29,9 @@ import buildcraft.api.statements.IStatementParameter;
 public abstract class ActionWrapper extends StatementWrapper implements IActionInternal {
 
     protected boolean isActive = false;
+    /** Edge-triggered actions keep their latch when their gate is saved and reloaded. */
+    public final boolean isActive(){return isActive;}
+    public final void restoreActivation(boolean active){isActive=active;}
 
     public ActionWrapper(IAction delegate, EnumPipePart sourcePart) {
         super(delegate, sourcePart);

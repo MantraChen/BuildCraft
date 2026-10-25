@@ -1,44 +1,14 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.silicon.plug;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.Box;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
-
-import buildcraft.api.transport.pipe.IPipeHolder;
-import buildcraft.api.transport.pluggable.PipePluggable;
+import buildcraft.api.transport.pipe.*;
 import buildcraft.api.transport.pluggable.PluggableDefinition;
-
-/**
- * STUB(R.Chen): PluggableLightSensor implementation deferred until the full pluggable system
- * and dependent APIs are migrated to Fabric 1.20.1.
- */
-public class PluggableLightSensor extends PipePluggable {
-
-    public PluggableLightSensor(PluggableDefinition def, IPipeHolder holder, Direction side) {
-        super(def, holder, side);
-    }
-
-    public PluggableLightSensor(PluggableDefinition def, IPipeHolder holder, Direction side, NbtCompound nbt) {
-        super(def, holder, side);
-        // STUB(R.Chen): NBT loading deferred.
-    }
-
-    public PluggableLightSensor(PluggableDefinition def, IPipeHolder holder, Direction side, PacketByteBuf buf) {
-        super(def, holder, side);
-        // STUB(R.Chen): Net loading deferred.
-    }
-
-    @Override
-    public Box getBoundingBox() {
-        // STUB(R.Chen): Direction-specific bounding box deferred.
-        return new Box(5/16.0, 5/16.0, 5/16.0, 11/16.0, 11/16.0, 11/16.0);
+import buildcraft.silicon.*;
+public final class PluggableLightSensor extends PluggableSidedPlate {
+    public PluggableLightSensor(PluggableDefinition def,IPipeHolder holder,Direction side){super(def,holder,side);}
+    @Override public ItemStack getPickStack(){return new ItemStack(BCSiliconItems.plugLightSensor);}
+    @PipeEventHandler public void addTriggers(PipeEventStatement.AddTriggerInternalSided event) {
+        if(event.side==side && isAttached()){event.triggers.add(BCSiliconStatements.TRIGGER_LIGHT_LOW);event.triggers.add(BCSiliconStatements.TRIGGER_LIGHT_HIGH);}
     }
 }

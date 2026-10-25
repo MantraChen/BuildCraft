@@ -1,21 +1,5 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.silicon.item;
-
-import net.minecraft.item.Item;
-
-/**
- * STUB(R.Chen): Full ItemPluggablePulsar implementation deferred until lib.item (ItemBC_Neptune, IItemPluggable,
- * model registration) is migrated to Fabric 1.20.1.
- */
-public class ItemPluggablePulsar extends Item {
-
-    public ItemPluggablePulsar(Settings settings) {
-        super(settings);
-    }
+public final class ItemPluggablePulsar extends ItemPluggableControl {
+    public ItemPluggablePulsar(Settings settings){super(settings,Kind.PULSAR);}
 }

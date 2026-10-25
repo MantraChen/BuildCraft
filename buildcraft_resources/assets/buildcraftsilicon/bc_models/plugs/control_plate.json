@@ -1,0 +1,20 @@
+{
+  "textures": {
+    "#pulsar": "buildcraftsilicon:plugs/pulsar_static",
+    "#light_sensor": "buildcraftsilicon:plugs/daylight_sensor",
+    "#timer": "buildcraftsilicon:plugs/timer",
+    "particle": "#pulsar"
+  },
+  "rules": [{"when": "side != Facing.west", "type": "builtin:rotate_facing", "from": "Facing.west", "to": "side"}],
+  "elements": [{
+    "from": [2, 5, 5], "to": [4.01, 11, 11], "shade": true,
+    "faces": {
+      "down": {"uv": ["kind == 'pulsar' ? 2 : 3", 5, 5, 11], "texture": "'#' + kind"},
+      "up": {"uv": ["kind == 'pulsar' ? 2 : 3", 5, 5, 11], "texture": "'#' + kind"},
+      "north": {"uv": ["kind == 'pulsar' ? 2 : 3", 5, 5, 11], "texture": "'#' + kind"},
+      "south": {"uv": ["kind == 'pulsar' ? 2 : 3", 5, 5, 11], "texture": "'#' + kind"},
+      "west": {"uv": [5, 5, 11, 11], "texture": "'#' + kind"},
+      "east": {"uv": [5, 5, 11, 11], "texture": "'#' + kind"}
+    }
+  }]
+}

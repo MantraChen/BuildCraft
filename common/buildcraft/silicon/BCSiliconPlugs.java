@@ -32,10 +32,8 @@ public class BCSiliconPlugs {
         // STUB(R.Chen): PluggableLens not in libLeaf — deferred until lens is migrated.
         // lens = register("lens", PluggableLens::new, PluggableLens::new);
         pulsar = register("pulsar", PluggablePulsar::new, PluggablePulsar::new);
-        // STUB(R.Chen): PluggableLightSensor not in libLeaf — deferred.
-        // lightSensor = register("daylight_sensor", PluggableLightSensor::new);
-        // STUB(R.Chen): PluggableTimer not in libLeaf — deferred.
-        // timer = register("timer", PluggableTimer::new);
+        lightSensor = register("daylight_sensor", buildcraft.silicon.plug.PluggableLightSensor::new);
+        timer = register("timer", buildcraft.silicon.plug.PluggableTimer::new);
         // STUB(R.Chen): PluggableFacade not in libLeaf — deferred.
         // facade = register("facade", PluggableFacade::new, PluggableFacade::new);
     }

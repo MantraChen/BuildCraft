@@ -20,6 +20,7 @@ public class BCSiliconRecipes {
     public static final net.minecraft.recipe.SpecialRecipeSerializer<buildcraft.silicon.recipe.GateCraftingRecipe> GATE_CRAFTING=
         new net.minecraft.recipe.SpecialRecipeSerializer<>(buildcraft.silicon.recipe.GateCraftingRecipe::new);
     public static void init() {
+        net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer.register(buildcraft.silicon.recipe.RedstoneEngineIngredient.SERIALIZER);
         var integration=new net.minecraft.util.Identifier("buildcraftsilicon","integration");
         net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_TYPE,integration,INTEGRATION);
         net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,integration,INTEGRATION_SERIALIZER);

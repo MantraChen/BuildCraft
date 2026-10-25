@@ -1,0 +1,9 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 1000,
+  "ingredients": [
+    {"ingredient": {"fabric:type": "buildcraftsilicon:redstone_engine"}},
+    {"ingredient": {"item": "minecraft:iron_ingot"}, "count": 2}
+  ],
+  "result": {"item": "buildcraftsilicon:plug_pulsar"}
+}

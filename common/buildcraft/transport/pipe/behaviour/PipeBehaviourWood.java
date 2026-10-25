@@ -66,25 +66,25 @@ public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRe
         }
     }
 
-    // BCTransportConfig constants inlined (BCTransportConfig has Forge deps, not in libLeaf).
-    private static final long MJ_PER_ITEM        = MjAPI.MJ;      // BCTransportConfig.mjPerItem default
-    private static final long MJ_PER_MILLIBUCKET = 1_000L;        // BCTransportConfig.mjPerMillibucket default
-
     protected long extract(long power, boolean simulate) {
         if (power > 0) {
+            long itemCost=buildcraft.transport.BCTransportConfig.itemExtractionCost();
+            long fluidCost=buildcraft.transport.BCTransportConfig.millibucketExtractionCost();
             if (pipe.getFlow() instanceof IFlowItems) {
                 IFlowItems flow = (IFlowItems) pipe.getFlow();
-                int maxItems = (int) (power / MJ_PER_ITEM);
+                int maxItems = (int)Math.min(64,power/itemCost);
                 if (maxItems > 0) {
                     int extracted = extractItems(flow, getCurrentDir(), maxItems, simulate);
                     if (extracted > 0) {
-                        return power - extracted * MJ_PER_ITEM;
+                        return power - extracted * itemCost;
                     }
                 }
             } else if (pipe.getFlow() instanceof IFlowFluid) {
-                long droplets = power / MJ_PER_MILLIBUCKET * 81 + power % MJ_PER_MILLIBUCKET * 81 / MJ_PER_MILLIBUCKET;
+                // A bounded extraction request cannot overflow even for an oversized energy offer.
+                long capped=Math.min(power,fluidCost*1000*1000);
+                long droplets = capped / fluidCost * 81 + capped % fluidCost * 81 / fluidCost;
                 long extracted = extractFluid((IFlowFluid) pipe.getFlow(), getCurrentDir(), droplets, simulate);
-                return power - (extracted * MJ_PER_MILLIBUCKET + 80) / 81;
+                return power - (extracted * fluidCost + 80) / 81;
             }
         }
         return power;

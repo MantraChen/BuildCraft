@@ -34,6 +34,9 @@ From the repository root on Windows:
 
 # Also verify integration recipes, blocked output, NBT and laser work:
 ./scripts/full-smoke.ps1 -Integration
+
+# Also verify native pulsars, timers, light sensors and their gate controls:
+./scripts/full-smoke.ps1 -ControlPlugs
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -143,7 +146,22 @@ extraction, stopped beams, stale handles and native removal. The example recipe 
 not shipped in the production mod; the original baseline has no built-in integration
 recipes.
 
-The 271 server tests currently verify:
+The control-attachment client uses `verification/control-plugs-client-run/`.
+It places native pulsars, timers and light sensors, checks every model facing and
+the pulsar stroke before and after resource reload, toggles manual operation and searches the real gate picker for
+single pulses, timers and darkness. A full world restart must preserve exactly one
+pending request without retriggering its still-high gate. Actual wooden/stone pipes
+deliver the resulting items, and native attachment breaking must preserve the pipe
+while stopping the removed control's behavior.
+
+The 286 server tests currently verify:
+
+- Fifteen control-attachment tests cover all six placement faces, pipe eligibility,
+  manual cadence, retrying single requests, exact bucket extraction, configured MJ
+  costs, renewable gate leases, independent action-row latches, save/reload without
+  another edge, current hardware/sided choices, actual 5/10/15-second world periods,
+  day/night sensing, packet/NBT bounds, three assembly recipes, native pipe delivery
+  and exact attachment recovery on removal.
 
 - Sixteen integration tests cover exact charging after final input consumption,
   full/incompatible output, central NBT copying and result overrides, split/overlapping
@@ -160,7 +178,7 @@ The 271 server tests currently verify:
   packets, survival unlocks/distance checks, real laser supply, wooden extraction,
   exact removal, native NBT-aware machine crafting and bounded saved energy.
 
-- Twenty-one assembly tests cover all 45 native recipes and packet synchronization,
+- Twenty-one assembly tests cover all 48 native recipes and packet synchronization,
   counted/overlapping/exact-NBT ingredients, original costs and variants, round-robin
   selections, paid work across missing inputs/deselection/reload, sided transactions,
   pipe-priority output, full-inventory spills, exact removal and bucket remainders.

@@ -41,8 +41,12 @@ public class TriggerLightSensor extends BCStatement implements ITriggerInternalS
 
     @Override
     public boolean isTriggerActive(Direction side, IStatementContainer source, IStatementParameter[] parameters) {
+        if(!(source instanceof buildcraft.api.gates.IGate gate)
+            || !(gate.getPipeHolder().getPluggable(side) instanceof buildcraft.silicon.plug.PluggableLightSensor sensor)
+            || !sensor.isAttached())return false;
         BlockEntity tile = source.getTile();
         BlockPos pos = tile.getPos().offset(side);
+        if(!tile.getWorld().isChunkLoaded(pos))return false;
         int light = tile.getWorld().getLightLevel(pos);
         return (light < 8) ^ bright;
     }

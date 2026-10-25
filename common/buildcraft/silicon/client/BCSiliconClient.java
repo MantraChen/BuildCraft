@@ -12,6 +12,7 @@ import net.minecraft.util.math.Direction;
 
 public final class BCSiliconClient {
     public static final GateModel MODEL = new GateModel();
+    public static final ControlPlugModel CONTROL_MODEL = new ControlPlugModel();
     public static void register() {
         net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiIntegrationTable>register(BCSiliconScreens.INTEGRATION,
             (handler,inventory,title)->new buildcraft.silicon.gui.GuiIntegrationTable((buildcraft.silicon.container.ContainerIntegrationTable)handler,inventory,title));
@@ -28,7 +29,7 @@ public final class BCSiliconClient {
                 var trace = buildcraft.transport.BCTransportBlocks.pipeHolder.rayTrace(player.getWorld(), hit.getBlockPos(), player);
                 if (trace != null && trace.subHit > 6 && trace.subHit <= 12) {
                     var plug = tile.getPluggable(buildcraft.transport.block.BlockPipeHolder.getPartSideHit(trace));
-                    if (plug instanceof PluggableGate) return plug.getPickStack();
+                    if (plug instanceof PluggableGate || plug instanceof buildcraft.silicon.plug.PluggableSidedPlate) return plug.getPickStack();
                 }
             }
             return net.minecraft.item.ItemStack.EMPTY;
@@ -37,6 +38,23 @@ public final class BCSiliconClient {
         PipeRegistryClient.INSTANCE.registerRenderer(PluggableGate.class, (gate, matrices, consumer, light, delta) -> {
             for (var quad : MODEL.getQuads(gate.logic.variant, gate.side, gate.logic.isOn)) quad.render(consumer, matrices.peek(), light, OverlayTexture.DEFAULT_UV);
         });
+        PipeRegistryClient.INSTANCE.registerRenderer(buildcraft.silicon.plug.PluggableLightSensor.class,(plug,matrices,consumer,light,delta)->{
+            for(var quad:CONTROL_MODEL.getQuads(buildcraft.silicon.item.ItemPluggableControl.Kind.LIGHT_SENSOR,plug.side,false,false,false,0))quad.render(consumer,matrices.peek(),light,OverlayTexture.DEFAULT_UV);
+        });
+        PipeRegistryClient.INSTANCE.registerRenderer(buildcraft.silicon.plug.PluggableTimer.class,(plug,matrices,consumer,light,delta)->{
+            for(var quad:CONTROL_MODEL.getQuads(buildcraft.silicon.item.ItemPluggableControl.Kind.TIMER,plug.side,false,false,false,0))quad.render(consumer,matrices.peek(),light,OverlayTexture.DEFAULT_UV);
+        });
+        PipeRegistryClient.INSTANCE.registerRenderer(buildcraft.silicon.plug.PluggablePulsar.class,(plug,matrices,consumer,light,delta)->{
+            for(var quad:CONTROL_MODEL.getQuads(buildcraft.silicon.item.ItemPluggableControl.Kind.PULSAR,plug.side,plug.isPulsing(),plug.isAutomatic(),plug.isManual(),(plug.getPulseStage()+delta)/20.0))quad.render(consumer,matrices.peek(),light,OverlayTexture.DEFAULT_UV);
+        });
+        for(var item:java.util.List.of(BCSiliconItems.plugPulsar,BCSiliconItems.plugLightSensor,BCSiliconItems.plugTimer)) {
+            net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item,(stack,mode,matrices,consumers,light,overlay)->{
+                var consumer=consumers.getBuffer(RenderLayer.getEntityCutout(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+                matrices.push();matrices.translate(5/16.0,0,0);
+                for(var quad:CONTROL_MODEL.getQuads(item.kind,Direction.WEST,false,false,false,0))quad.render(consumer,matrices.peek(),light,overlay);
+                matrices.pop();
+            });
+        }
         net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCSiliconItems.plugGate,
             (stack, mode, matrices, consumers, light, overlay) -> {
                 var consumer = consumers.getBuffer(RenderLayer.getEntityCutout(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));

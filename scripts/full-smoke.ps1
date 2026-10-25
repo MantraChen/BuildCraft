@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -184,5 +184,17 @@ if ($Integration) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $integrationOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runIntegrationClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($ControlPlugs) {
+    $controlRun = Join-Path $verification 'control-plugs-client-run'
+    $controlConfig = Join-Path $controlRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $controlConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $controlConfig 'main.cfg') -Force
+    $controlOptions = Join-Path $controlRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $controlOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $controlOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runControlPlugClientSmoke --console=plain
 }
 exit $LASTEXITCODE

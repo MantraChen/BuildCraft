@@ -1,91 +1,91 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native pulse extraction, gate controls and animation. Remake by FelixMantra.
  */
 package buildcraft.silicon.plug;
 
+import java.io.IOException;
+import net.fabricmc.api.EnvType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.Box;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Direction;
-
-import buildcraft.api.transport.pipe.IPipeHolder;
-import buildcraft.api.transport.pluggable.PipePluggable;
+import buildcraft.api.mj.*;
+import buildcraft.api.transport.pipe.*;
 import buildcraft.api.transport.pluggable.PluggableDefinition;
+import buildcraft.silicon.*;
+import buildcraft.transport.BCTransportConfig;
 
-/**
- * Pipe pluggable for the pulsar (migrated stub).
- *
- * STUB(R.Chen): MjAPI/MjRedstoneReceiver, BCTransportConfig, PipeEventStatement,
- * expression model system, BCSiliconItems, SoundUtil all removed — deferred until
- * the respective lib / transport layers are migrated.
- */
-public class PluggablePulsar extends PipePluggable {
-
-    private static final int PULSE_STAGE = 20;
-
-    private boolean manuallyEnabled = false;
-    private int pulseStage = 0;
-    private int gateEnabledTicks;
-    private int gateSinglePulses;
-
-    // Simple creator constructor
-    public PluggablePulsar(PluggableDefinition definition, IPipeHolder holder, Direction side) {
-        super(definition, holder, side);
+/** One 20-tick pulse; single extraction requests survive unavailable inputs/capacity. */
+public final class PluggablePulsar extends PluggableSidedPlate {
+    public static final int PULSE_STAGE=20,MAX_PENDING=1024;
+    private boolean manuallyEnabled,pulsingClient,autoClient;
+    private int pulseStage,gateEnabledTicks,gateSinglePulses,lastFlags=-1;
+    public PluggablePulsar(PluggableDefinition definition,IPipeHolder holder,Direction side){super(definition,holder,side);}
+    public PluggablePulsar(PluggableDefinition definition,IPipeHolder holder,Direction side,NbtCompound nbt) {
+        this(definition,holder,side);manuallyEnabled=nbt.getBoolean("manuallyEnabled");
+        pulseStage=Math.max(0,Math.min(PULSE_STAGE-1,nbt.getInt("pulseStage")));
+        gateEnabledTicks=Math.max(0,Math.min(10,nbt.getInt("gateEnabledTicks")));
+        gateSinglePulses=Math.max(0,Math.min(MAX_PENDING,nbt.getInt("gateSinglePulses")));
     }
-
-    // Saving + Loading
-    public PluggablePulsar(PluggableDefinition definition, IPipeHolder holder, Direction side, NbtCompound nbt) {
-        super(definition, holder, side);
-        this.manuallyEnabled = nbt.getBoolean("manuallyEnabled");
-        gateEnabledTicks = nbt.getInt("gateEnabledTicks");
-        gateSinglePulses = nbt.getInt("gateSinglePulses");
-        pulseStage = Math.max(0, Math.min(nbt.getInt("pulseStage"), PULSE_STAGE));
+    public PluggablePulsar(PluggableDefinition definition,IPipeHolder holder,Direction side,PacketByteBuf buffer) {
+        this(definition,holder,side);readData(buffer);
     }
-
-    @Override
-    public NbtCompound writeToNbt() {
-        NbtCompound nbt = super.writeToNbt();
-        nbt.putBoolean("manuallyEnabled", manuallyEnabled);
-        nbt.putInt("gateEnabledTicks", gateEnabledTicks);
-        nbt.putInt("gateSinglePulses", gateSinglePulses);
-        nbt.putInt("pulseStage", pulseStage);
-        return nbt;
+    @Override public NbtCompound writeToNbt() {
+        var nbt=super.writeToNbt();nbt.putBoolean("manuallyEnabled",manuallyEnabled);nbt.putInt("pulseStage",pulseStage);
+        nbt.putInt("gateEnabledTicks",gateEnabledTicks);nbt.putInt("gateSinglePulses",gateSinglePulses);return nbt;
     }
-
-    // Networking (net loader constructor)
-    public PluggablePulsar(PluggableDefinition definition, IPipeHolder holder, Direction side, PacketByteBuf buffer) {
-        super(definition, holder, side);
-        // STUB(R.Chen): network data reading deferred — readData() removed until payload migrated.
+    @Override public ItemStack getPickStack(){return new ItemStack(BCSiliconItems.plugPulsar);}
+    public boolean isPulsing(){return holder.getPipeWorld().isClient?pulsingClient:manuallyEnabled || gateEnabledTicks>0 || gateSinglePulses>0;}
+    public boolean isAutomatic(){return holder.getPipeWorld().isClient?autoClient:gateEnabledTicks>0 || gateSinglePulses>0;}
+    public boolean isManual(){return manuallyEnabled;}
+    public int getPulseStage(){return pulseStage;}
+    public int getPendingPulses(){return gateSinglePulses;}
+    public void enablePulsar(){if(liveServer() && gateEnabledTicks!=10){gateEnabledTicks=10;holder.getPipeTile().markDirty();}}
+    public void addSinglePulse(){if(liveServer() && gateSinglePulses<MAX_PENDING){gateSinglePulses++;holder.getPipeTile().markDirty();}}
+    @Override public void onTick() {
+        if(!isAttached())return;
+        if(holder.getPipeWorld().isClient){pulseStage=isPulsing()?(pulseStage+1)%PULSE_STAGE:0;return;}
+        boolean on=isPulsing();int oldStage=pulseStage;
+        pulseStage=on?pulseStage+1:0;
+        if(gateEnabledTicks>0)gateEnabledTicks--;
+        if(pulseStage>=PULSE_STAGE) {
+            pulseStage=0;
+            if(holder.getPipe()!=null && holder.getPipe().getBehaviour() instanceof IMjRedstoneReceiver receiver) {
+                if(gateSinglePulses>0) {
+                    long amount=holder.getPipe().getFlow() instanceof IFlowFluid?BCTransportConfig.millibucketExtractionCost()*1000
+                        :holder.getPipe().getFlow() instanceof IFlowItems?BCTransportConfig.itemExtractionCost():MjAPI.MJ;
+                    if(amount>0 && receiver.receivePower(amount,true)==0 && receiver.receivePower(amount,false)==0)gateSinglePulses--;
+                } else receiver.receivePower(MjAPI.MJ,false);
+            }
+        }
+        int flags=(isPulsing()?1:0)|(isAutomatic()?2:0)|(manuallyEnabled?4:0);
+        if(flags!=lastFlags){lastFlags=flags;scheduleNetworkUpdate();}
+        if(on || oldStage!=pulseStage)holder.getPipeTile().markDirty();
     }
-
-    @Override
-    public Box getBoundingBox() {
-        // STUB(R.Chen): Direction-specific bounding boxes deferred. Generic centred pulsar box.
-        double min = 5 / 16.0;
-        double max = 11 / 16.0;
-        double ll  = 2 / 16.0;
-        double uu  = 14 / 16.0;
-        return new Box(min, ll, min, max, uu, max);
+    @PipeEventHandler public void addActions(PipeEventStatement.AddActionInternalSided event) {
+        if(event.side==side && isAttached()){event.actions.add(BCSiliconStatements.ACTION_PULSAR_CONSTANT);event.actions.add(BCSiliconStatements.ACTION_PULSAR_SINGLE);}
     }
-
-    @Override
-    public boolean isBlocking() {
+    @Override public boolean onPluggableActivate(PlayerEntity player,HitResult hit,float x,float y,float z) {
+        if(!isAttached() || !holder.canPlayerInteract(player))return false;
+        if(!holder.getPipeWorld().isClient) {
+            manuallyEnabled=!manuallyEnabled;holder.getPipeTile().markDirty();scheduleNetworkUpdate();
+            holder.getPipeWorld().playSound(null,holder.getPipePos(),net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK,net.minecraft.sound.SoundCategory.BLOCKS,.3f,manuallyEnabled?.6f:.5f);
+        }
         return true;
     }
-
-    public void enablePulsar() {
-        gateEnabledTicks = 10;
+    private void writeData(PacketByteBuf buffer) {
+        buffer.writeBoolean(isPulsing());buffer.writeBoolean(isAutomatic());buffer.writeBoolean(manuallyEnabled);buffer.writeByte(pulseStage);
     }
-
-    public void addSinglePulse() {
-        gateSinglePulses++;
+    private void readData(PacketByteBuf buffer) {
+        boolean on=buffer.readBoolean(),automatic=buffer.readBoolean(),manual=buffer.readBoolean();int stage=buffer.readUnsignedByte();
+        if(stage>=PULSE_STAGE || on!=(automatic || manual))throw new IllegalArgumentException("Invalid pulsar state");
+        pulsingClient=on;autoClient=automatic;manuallyEnabled=manual;pulseStage=stage;
     }
-
-    private boolean isPulsing() {
-        return manuallyEnabled || gateEnabledTicks > 0 || gateSinglePulses > 0;
+    @Override public void writeCreationPayload(PacketByteBuf buffer){writeData(buffer);}
+    @Override public void writePayload(PacketByteBuf buffer,EnvType side){if(side==EnvType.SERVER)writeData(buffer);}
+    @Override public void readPayload(PacketByteBuf buffer,EnvType side,Object context) throws IOException {
+        if(side==EnvType.CLIENT)try{readData(buffer);}catch(IllegalArgumentException error){throw new IOException("Invalid pulsar update",error);}
     }
 }

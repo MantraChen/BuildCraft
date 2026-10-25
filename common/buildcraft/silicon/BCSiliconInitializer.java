@@ -45,7 +45,7 @@ public class BCSiliconInitializer implements ModInitializer {
         BCSiliconScreens.register();
         BCSiliconPlugs.preInit();
         // STUB(R.Chen): BCSiliconSprites.fmlPreInit() — register sprites via Fabric Atlas event.
-        // Integration tables still need native screens and behavior.
+        // Native table screens and registered control attachments use the common pipe network.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCSiliconProxy) → Fabric lifecycle callbacks.
 
         // --- Forge init (BCSilicon.init) -----------------------------------------

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **271 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **286 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -873,7 +873,7 @@ features explicitly as work proceeds.
   `verification/assembly-client-run/screenshots/`, including the original table GUI,
   visible laser production, queued recipes and actual output barrel. The fixture
   exits cleanly with zero failures.
-- Charging tables, remaining silicon pluggables and legacy
+- Remaining silicon pluggables and legacy
   assembly-script/guide integration are still pending. Native data packs are the
   supported recipe source for the restored assembly table.
 
@@ -973,6 +973,59 @@ result's declared NBT overrides matching keys. By default unrelated components
 prevent a match; surplus amounts of required materials are allowed. Set
 `allow_extra: true` to leave unrelated materials in place. Neither flag defaults
 to true. Packet synchronization retains these counts, flags and NBT.
+
+### Native pulsar, timer and light-sensor attachments
+
+- All three original attachments are registered with native placement on all six
+  pipe faces, collision/connection blocking, picking, drops, NBT and client models.
+  Pulsars attach only to pipe behaviors accepting redstone-engine pulses. Native
+  tooltips include `Remake by FelixMantra`.
+- Attachment textures are included in the native block atlas. Pulsar stroke
+  expressions refresh for each rendered phase, and their variable nodes are rebuilt
+  after model reloads; static plate faces retain the original texture coordinates.
+- Pulsars reproduce the original 20-tick cycle, manual toggle, ten-tick renewable
+  gate lease and queued single requests. A single item request uses the configured
+  item extraction cost; a fluid request requires one whole bucket. Failed simulation
+  retains the request and changes neither the source nor the pipe. Queue/stage data
+  is bounded, saved and synchronized; stale/removed attachments reject work.
+- Gate choices expose constant/single actions on the pulsar's face, bright/dark
+  conditions on the sensor's face, and global 5/10/15-second timer conditions.
+  Sensor readings include day/night darkness; missing hardware disables a saved
+  condition and stale screen selections are rejected. Each gate row now owns its
+  own edge latch, and single-action latches persist across saves to prevent another
+  extraction when a still-high input is reloaded.
+- Restored the original three assembly recipes (1,000 MJ for a pulsar, 500 MJ each
+  for a timer or sensor), bringing the native assembly list to 48. The pulsar's
+  ingredient uses the same redstone-engine variant resolution as native placement,
+  including named/default/legacy stacks; creative and other variants do not match.
+  Native recipe packets preserve this custom ingredient.
+- The original `pipes.mjPerItem` and `pipes.mjPerMillibucket` settings now drive
+  both wooden extraction and single pulses. Native property bounds and world-restart
+  metadata are restored; large energy offers use bounded item/fluid arithmetic.
+- Fifteen additional packaged tests bring the suite to **286 passing tests**:
+  native placement on every face, unsupported/occupied/distant placement, manual
+  cadence, failed-request retries, exact buckets/droplets, configured costs,
+  constant leases and single edges, independent gate rows, saved latches/queues,
+  hardware-dependent choices, real world timer periods, daylight/night readings,
+  bounded NBT/packets, assembly recipes, live item delivery and exact removal drops.
+- The real Fabric client fixture also passes with `failures=0`: six-facing models
+  and animation before/after resource reload, manual toggles, searched native gate
+  choices, pending-request recovery across a full world restart, six exact delivered
+  diamonds, and removal of the sensor/pulsar while preserving the pipe and timer.
+  Six screenshots were inspected for attachment models and native gate states.
+  Reproduce with `./scripts/full-smoke.ps1 -ControlPlugs`; local evidence is in
+  `verification/control-plugs-tests-01.log`, `verification/control-plugs-client-05.log`
+  and `verification/control-plugs-client-run/screenshots/`.
+
+### Development-only placeholders in the original baseline
+
+The charging table is not an unfinished Fabric migration of a working machine:
+`archive/pr-4754~60` already contains only a `getTarget() == 0` implementation,
+and registers its block only when `BCLib.DEV` is enabled. Its original tooltip
+explicitly says nothing can be charged. Earlier notes listing it as a required
+restoration were inaccurate. It remains a development-only placeholder, rather
+than being advertised as a functioning production table. A new charging system
+would be a separately designed feature, not a restoration of this baseline.
 
 Remaining work includes remaining resource/model/recipe migration and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

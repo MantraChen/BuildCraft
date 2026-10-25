@@ -1,4 +1,10 @@
 {
+  "item.buildcraftsilicon.plug_pulsar": "Pulsar",
+  "item.buildcraftsilicon.plug_pulsar.tip": "Right-click to toggle; gates can request continuous or single extraction pulses.",
+  "item.buildcraftsilicon.plug_light_sensor": "Light Sensor",
+  "item.buildcraftsilicon.plug_light_sensor.tip": "Adds bright/dark gate conditions for this pipe face.",
+  "item.buildcraftsilicon.plug_timer": "Timer",
+  "item.buildcraftsilicon.plug_timer.tip": "Adds 5, 10 and 15 second gate conditions.",
   "block.buildcraftsilicon.integration_table": "Integration Table",
   "gui.buildcraftsilicon.integration.working": "Waiting for laser power",
   "gui.buildcraftsilicon.integration.ready": "Ready",

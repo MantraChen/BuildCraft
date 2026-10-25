@@ -1,0 +1,5 @@
+{
+  "type": "buildcraftsilicon:assembly", "mj": 500,
+  "ingredients": [{"ingredient": {"item": "minecraft:daylight_detector"}}],
+  "result": {"item": "buildcraftsilicon:plug_light_sensor"}
+}

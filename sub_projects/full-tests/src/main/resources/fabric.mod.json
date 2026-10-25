@@ -6,6 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "buildcraft.test.full.ControlPlugGameTests",
       "buildcraft.test.full.IntegrationGameTests",
       "buildcraft.test.full.AdvancedCraftingGameTests",
       "buildcraft.test.full.AssemblyGameTests",
@@ -34,6 +35,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.ControlPlugClientSmoke",
       "buildcraft.test.full.IntegrationClientSmoke",
       "buildcraft.test.full.AdvancedCraftingClientSmoke",
       "buildcraft.test.full.AssemblyClientSmoke",

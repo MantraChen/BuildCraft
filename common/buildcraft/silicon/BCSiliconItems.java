@@ -23,10 +23,18 @@ public class BCSiliconItems {
     public static ItemPluggableGate plugGate;
     public static ItemPluggableLens plugLens;
     public static ItemPluggablePulsar plugPulsar;
-    // STUB(R.Chen): plugLightSensor and plugTimer items not yet stubbed as ItemPluggableSimple equivalent.
+    public static buildcraft.silicon.item.ItemPluggableControl plugLightSensor,plugTimer;
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
+        plugPulsar=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","plug_pulsar"),new ItemPluggablePulsar(new net.minecraft.item.Item.Settings()));
+        plugLightSensor=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","plug_light_sensor"),new buildcraft.silicon.item.ItemPluggableControl(new net.minecraft.item.Item.Settings(),buildcraft.silicon.item.ItemPluggableControl.Kind.LIGHT_SENSOR));
+        plugTimer=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","plug_timer"),new buildcraft.silicon.item.ItemPluggableControl(new net.minecraft.item.Item.Settings(),buildcraft.silicon.item.ItemPluggableControl.Kind.TIMER));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)
+            .register(entries->{entries.add(plugPulsar);entries.add(plugLightSensor);entries.add(plugTimer);});
         redstoneChipset=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcraftsilicon","redstone_chipset"),new ItemRedstoneChipset(new net.minecraft.item.Item.Settings()));
         net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)

@@ -124,6 +124,13 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
 
         readConfigData(nbt);
 
+        int latches=nbt.getShort("single_action_latches");
+        for(int i=0;i<statements.length;i++) {
+            var action=statements[i].action.get();
+            if(action!=null && action.getDelegate() instanceof buildcraft.api.statements.IActionSingle single && single.singleActionTick())
+                action.restoreActivation((latches & (1<<i))!=0);
+        }
+
         wireBroadcasts.addAll(NBTUtilBC.readEnumSet(nbt.get("wireBroadcasts"), DyeColor.class));
     }
 
@@ -177,6 +184,12 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
             }
         }
         nbt.put("wireBroadcasts", NBTUtilBC.writeEnumSet(wireBroadcasts, DyeColor.class));
+        int latches=0;
+        for(int i=0;i<statements.length;i++) {
+            var action=statements[i].action.get();
+            if(action!=null && action.isActive() && action.getDelegate() instanceof buildcraft.api.statements.IActionSingle single && single.singleActionTick())latches|=1<<i;
+        }
+        nbt.putShort("single_action_latches",(short)latches);
         return nbt;
     }
 
@@ -439,6 +452,7 @@ public class GateLogic implements IGate, IWireEmitter, IRedstoneStatementContain
         }
 
         if (!Arrays.equals(prevTriggers, triggerOn) || !Arrays.equals(prevActions, actionOn)) {
+            getPipeHolder().getPipeTile().markDirty();
             sendResolveData();
         }
     }

@@ -121,7 +121,8 @@ public class ContainerGate extends ContainerBC_Neptune {
             if (action) {
                 var selected = choice < 0 ? null : actions.get(choice);
                 if (selected != null && !gate.logic.getAllValidActions().contains(selected)) return false;
-                gate.logic.statements[row].action.set(selected);
+                // Each row owns its edge latch, even when two rows choose the same action.
+                gate.logic.statements[row].action.set(selected==null?null:ActionWrapper.wrap(selected.getDelegate(),selected.sourcePart.face));
             } else {
                 var selected = choice < 0 ? null : triggers.get(choice);
                 if (selected != null && !gate.logic.getAllValidTriggers().contains(selected)) return false;
