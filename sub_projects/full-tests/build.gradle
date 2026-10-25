@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        pumpClientSmoke {
+            client()
+            runDir '../../verification/pump-client-run'
+            vmArg '-Dbuildcraft.pumpClientSmoke=true'
+        }
         miningWellClientSmoke {
             client()
             runDir '../../verification/mining-well-client-run'

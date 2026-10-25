@@ -59,7 +59,8 @@ public class TileSpringOil extends BlockEntity implements IDebuggable, ITileOilS
         if (totalSources > 0 && info.sourcesPumped >= (long) totalSources * 7 / 8) {
             // BCLog.logger.info("Pumped nearly all oil blocks!");
             if (oilPos.equals(getPos().up())) {
-                AdvancementUtil.unlockAdvancement(profile.getId(), ADVANCEMENT_PUMP_LARGE_OIL_WELL);
+                if (world instanceof net.minecraft.server.world.ServerWorld serverWorld)
+                    AdvancementUtil.unlockAdvancement(serverWorld, profile.getId(), ADVANCEMENT_PUMP_LARGE_OIL_WELL);
             }
         }
     }

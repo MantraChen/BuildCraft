@@ -85,6 +85,12 @@ Mining wells now excavate a vertical column using native loot and sided item out
 Their shafts extend, repair and retract, honour mining/interaction protection, and
 stop at bedrock or viscous fluids. Redstone pauses mining. Paid work uses 64-bit MJ
 values and survives reloading; native engine/pipe power and the survival recipe work.
+Pumps now collect connected water, lava, oil and gas sources for 10 MJ per bucket,
+search large reservoirs across ticks, and output exact fluid amounts into native pipes
+or tanks. Renewable water respects real source neighbors, support, config and the
+native game rule. Protected cells, waterlogged hosts, full/incompatible tanks and saved
+partial work are handled without duplicating fluid. Manual buckets, removal recovery,
+the survival recipe and owner advancements are restored.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
@@ -95,6 +101,8 @@ Add `-Quarry` to verify native quarry placement, client animation, saving/reopen
 world and automatic loading of a distant quarry, then inspect its exact mined output.
 Add `-MiningWell` to inspect its visible shaft and LED state, reopen partially paid
 work, and finish excavation using an engine and MJ pipes before testing removal.
+Add `-Pump` to reopen partially paid pumping work, collect nine finite oil sources
+using an engine and pipes, and verify exact delivery, client state and advancements.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

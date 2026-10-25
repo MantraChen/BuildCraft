@@ -17,6 +17,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Quarry
 # Also verify mining-well animation, saved work and engine-driven excavation:
 ./scripts/full-smoke.ps1 -MiningWell
+# Also verify pump placement, saved paid work and finite oil delivery through pipes:
+./scripts/full-smoke.ps1 -Pump
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -59,8 +61,22 @@ to finish mining, with exact diamond/gold-block output and automatic shaft retra
 It checks native removal and stale energy rejection, capturing
 `screenshots/mining-well-active.png` and `screenshots/mining-well-complete.png`.
 
-The 138 server tests currently verify:
+The pump client uses `verification/pump-client-run/`. It places a pump above nine
+finite oil sources, observes the shaft/LED, saves 4 MJ of paid work and reopens the
+world. A creative engine and MJ pipes power collection; a stone fluid pipe delivers
+exactly nine buckets to a tank. The fixture allows the pipe's actual 20 mB/t rate,
+checks localized remake credit and owner advancements, then verifies retraction,
+empty client fluid state, native removal and stale energy rejection. Screenshots are
+`screenshots/pump-active.png` and `screenshots/pump-complete.png`.
 
+The 154 server tests currently verify:
+
+- Sixteen pump tests cover finite/renewable/flowing/unsupported water, source-conversion
+  rules and live config, exact MJ costs, native oil/gas and waterlogged drains, protected
+  shafts/sources, disconnected paths, redstone, partial-work reload, old storage handles,
+  fractional/full/incompatible tanks, native fluid-pipe output and survival recipes.
+  They also exercise a 2,206-cell reservoir across search ticks, real bucket interaction,
+  exact removal shards, malformed network packets and world-bottom oil-spring credit.
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
   block ticks without a block entity.

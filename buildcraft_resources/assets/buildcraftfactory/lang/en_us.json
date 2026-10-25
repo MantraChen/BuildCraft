@@ -1,4 +1,11 @@
 {
   "block.buildcraftfactory.tank": "Tank",
-  "block.buildcraftfactory.chute": "Chute"
+  "block.buildcraftfactory.chute": "Chute",
+  "block.buildcraftfactory.pump": "Pump",
+  "advancements.buildcraftfactory.draining_the_world.title": "Draining the World",
+  "advancements.buildcraftfactory.draining_the_world.remake_description": "Collect fluid with a pump — Remake by FelixMantra",
+  "advancements.buildcraftfactory.oil_platform.title": "Oil Platform",
+  "advancements.buildcraftfactory.oil_platform.description": "Pump crude oil from the world",
+  "advancements.buildcraftfactory.black_gold.title": "Black Gold",
+  "advancements.buildcraftfactory.black_gold.description": "Drain an oil reservoir down to its spring"
 }

@@ -131,6 +131,7 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     /** Repair only the shaft's replaceable cells; never erase an intervening solid block. */
     protected boolean updateLength() {
         if (world==null || world.isClient) return false;
+        int previousReach=tubeReach,previousLength=wantedLength;
         BlockPos target=getTargetPos();
         int length=target==null?0:pos.getY()-target.getY();
         if (length<0 || length>maxShaftLength()) length=0;
@@ -146,7 +147,7 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
             currentLength=wantedLength=length;
             sendNetworkUpdate(NET_WANTED_Y);
         }
-        markChunkDirty();
+        if (previousReach!=tubeReach || previousLength!=wantedLength) markChunkDirty();
         return success;
     }
 
@@ -252,11 +253,14 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
         super.writePayload(id, buffer, side);
         if (side == NetSide.SERVER) {
             if (id == NET_RENDER_DATA) {
-                writePayload(NET_LED_STATUS, buffer, side);
+                buffer.writeBoolean(isComplete());
+                battery.writeToBuffer(buffer);
                 buffer.writeInt(wantedLength);
+                writeMinerState(buffer);
             } else if (id == NET_LED_STATUS) {
                 buffer.writeBoolean(isComplete());
                 battery.writeToBuffer(buffer);
+                writeMinerState(buffer);
             } else if (id == NET_WANTED_Y) {
                 buffer.writeInt(wantedLength);
             }
@@ -273,9 +277,11 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
                 long energy=buffer.readLong();
                 int length=id==NET_RENDER_DATA?buffer.readInt():wantedLength;
                 if (energy<0 || length<0 || length>maxShaftLength())throw new IOException("Invalid miner render state");
+                Runnable applyExtension=readMinerState(buffer);
                 isComplete=complete;
                 var tag=new NbtCompound();tag.putLong("stored",energy);battery.readFromNbt(tag);
                 if(id==NET_RENDER_DATA)currentLength=lastLength=wantedLength=length;
+                applyExtension.run();
             } else if (id==NET_WANTED_Y) {
                 int length=buffer.readInt();
                 if(length<0 || length>maxShaftLength())throw new IOException("Invalid miner shaft length");
@@ -283,6 +289,11 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
             }
         }
     }
+
+    protected void writeMinerState(PacketBufferBC buffer) {}
+
+    /** Parse extensions before applying any shared state, so truncated packets cannot partially update a machine. */
+    protected Runnable readMinerState(PacketBufferBC buffer) throws IOException { return () -> {}; }
 
     @Override
     public void getDebugInfo(List<String> left, List<String> right, Direction side) {

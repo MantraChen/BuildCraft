@@ -1,4 +1,11 @@
 {
   "block.buildcraftfactory.tank": "储罐",
-  "block.buildcraftfactory.chute": "滑槽"
+  "block.buildcraftfactory.chute": "滑槽",
+  "block.buildcraftfactory.pump": "泵",
+  "advancements.buildcraftfactory.draining_the_world.title": "抽干世界",
+  "advancements.buildcraftfactory.draining_the_world.remake_description": "使用泵收集液体 — Remake by FelixMantra",
+  "advancements.buildcraftfactory.oil_platform.title": "石油平台",
+  "advancements.buildcraftfactory.oil_platform.description": "从世界中抽取原油",
+  "advancements.buildcraftfactory.black_gold.title": "黑色黄金",
+  "advancements.buildcraftfactory.black_gold.description": "将油田抽到泉眼处"
 }

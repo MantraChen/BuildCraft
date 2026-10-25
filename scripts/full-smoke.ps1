@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -88,5 +88,17 @@ if ($MiningWell) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $wellOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runMiningWellClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Pump) {
+    $pumpRun = Join-Path $verification 'pump-client-run'
+    $pumpConfig = Join-Path $pumpRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $pumpConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $pumpConfig 'main.cfg') -Force
+    $pumpOptions = Join-Path $pumpRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $pumpOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $pumpOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runPumpClientSmoke --console=plain
 }
 exit $LASTEXITCODE

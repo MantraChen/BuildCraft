@@ -36,6 +36,13 @@ import buildcraft.api.core.BCLog;
 public class AdvancementUtil {
     private static final Set<Identifier> UNKNOWN_ADVANCEMENTS = new HashSet<>();
 
+    /** Resolve a machine owner in its own server instead of relying on Forge's global server singleton. */
+    public static void unlockAdvancement(ServerWorld world, UUID owner, Identifier advancement) {
+        if (owner == null) return;
+        var player = world.getServer().getPlayerManager().getPlayer(owner);
+        if (player != null) unlockAdvancement(player, advancement);
+    }
+
     public static void unlockAdvancement(PlayerEntity player, Identifier advancementName) {
         if (player instanceof ServerPlayerEntity) {
             ServerPlayerEntity playerMP = (ServerPlayerEntity) player;

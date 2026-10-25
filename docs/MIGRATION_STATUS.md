@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **138 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **154 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -336,12 +336,12 @@ features explicitly as work proceeds.
   path/volume connections render through a scoped world-render callback. Architect scan
   surfaces use translucent native buffers, clipped bounds and fading ticks; scan caches
   clear on world changes/disconnect. Quarry appearance/drill movement and mining-well
-  shaft/LED appearance have now been observed in the real client; other integrations
+  shaft/LED appearance and pump collection have now been observed in the real client; other integrations
   still need validation.
 - Mining tubes now use native shape/hardness settings, bounded vertical owner lookup and
   Fabric's cancellable block-break event to protect a connected miner's tube in creative
   mode. Mining-well shaft placement, repair, retraction and this callback now pass
-  full-mod world tests; pump operation remains unfinished.
+  full-mod world tests; native pump collection now passes world/client checks too.
 - Restored bundled schematic compatibility rules and native server-data additions at
   `data/<namespace>/buildcraft/builders/rules/*.json`. Rules publish only after a complete
   successful load, support block-state/tag selectors and retain declared rule order.
@@ -665,6 +665,38 @@ features explicitly as work proceeds.
   checks exact diamond/gold-block output, and removes the miner through native player
   breaking. Both active/completed screenshots were inspected; the client saves/exits
   cleanly. Images are in `verification/mining-well-client-run/screenshots/`.
+
+### Native pumps
+
+- Replaced the pump placeholder with a 16-bucket persistent native tank and an
+  incremental connected-fluid search limited to 2,048 visited cells per tick. Search
+  respects loaded chunks, world height, shaft depth and radius; normal fluids search
+  upward/horizontally and gases downward/horizontally. Each drain rechecks the source,
+  connected path and shaft before spending previously unpaid work.
+- Collection costs 10 MJ per bucket. Source identity and partial payment survive a
+  fresh search after reload. Redstone pauses collection; buffered output still flows.
+  Output uses Fabric transactions, supports exact fractional extraction and rejects
+  outside insertion. Full or incompatible tanks preserve source blocks and energy.
+- Native drainable blocks provide water, lava and BuildCraft oil/gas; waterlogged
+  hosts remain intact. The machine owner is checked through native interaction
+  protection. Renewable water requires two real neighboring sources, native support,
+  the water-source-conversion rule and the consume-water setting. Flow alone cannot
+  generate buckets. Finite drains reserve a whole bucket before changing the world.
+- Shared miner synchronization parses pump extensions before applying common state;
+  truncated tank/LED packets leave energy and shaft state intact. Stable shafts no
+  longer dirty their block entity every tick; tank updates follow actual fluid changes.
+- Restored the iron/gear/tank/bucket recipe and native recipe-book unlock. Draining,
+  oil-platform and Black Gold advancements resolve the owner on the machine's server.
+  Modern world-bottom and legacy Y=0 oil-spring markers track pumped sources. The
+  localized pumping advancement includes **Remake by FelixMantra**.
+- Sixteen additional packaged-mod tests bring the suite to **154**. They include a
+  2,206-cell reservoir, manual buckets, exact removal shards, native pipe delivery,
+  protection, world-bottom oil credit and malformed network data.
+- The real client verifies native placement, shaft/LED animation, full world restart
+  with 4 MJ of paid work, engine/MJ-pipe power, and exactly nine finite oil buckets
+  delivered through a stone fluid pipe. Owner advancements, client empty state,
+  retraction and native removal are checked. Screenshots are under
+  `verification/pump-client-run/screenshots/`.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
