@@ -18,6 +18,13 @@ import buildcraft.lib.gui.ContainerBC_Neptune;
 /** Native server-authoritative machine screens. */
 public final class BCFactoryScreens {
     private BCFactoryScreens() {}
+    public static final ScreenHandlerType<ContainerBC_Neptune> DISTILLER = new ExtendedScreenHandlerType<>(
+        (syncId, inventory, data) -> {
+            var pos = data.readBlockPos();
+            if (!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileDistiller_BC8 tile))
+                throw new IllegalStateException("Distiller screen opened for missing machine at " + pos);
+            return new buildcraft.factory.container.ContainerDistiller(inventory.player, syncId, tile);
+        });
     public static final ScreenHandlerType<ContainerBC_Neptune> AUTO_WORKBENCH_ITEMS = new ExtendedScreenHandlerType<>(
         (syncId, inventory, data) -> {
             var pos = data.readBlockPos();
@@ -42,9 +49,20 @@ public final class BCFactoryScreens {
             return new ContainerChute(inventory.player, syncId, chute);
         });
     public static void register() {
+        Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftfactory", "distiller"), DISTILLER);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftfactory", "autoworkbench_item"), AUTO_WORKBENCH_ITEMS);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftfactory", "tank"), TANK);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftfactory", "chute"), CHUTE);
+    }
+    public static void openDistiller(PlayerEntity player, buildcraft.factory.tile.TileDistiller_BC8 tile) {
+        if (!(player instanceof ServerPlayerEntity) || !tile.canInteractWith(player)) return;
+        player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+            @Override public Text getDisplayName() { return tile.getCachedState().getBlock().getName(); }
+            @Override public void writeScreenOpeningData(ServerPlayerEntity user, PacketByteBuf data) { data.writeBlockPos(tile.getPos()); }
+            @Override public ScreenHandler createMenu(int syncId, PlayerInventory inventory, PlayerEntity user) {
+                return tile.canInteractWith(user) ? new buildcraft.factory.container.ContainerDistiller(user, syncId, tile) : null;
+            }
+        });
     }
     public static void openAutoWorkbench(PlayerEntity player, buildcraft.factory.tile.TileAutoWorkbenchItems tile) {
         if (!(player instanceof ServerPlayerEntity) || !tile.canInteractWith(player)) return;

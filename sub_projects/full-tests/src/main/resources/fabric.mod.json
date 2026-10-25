@@ -6,6 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "buildcraft.test.full.DistillerGameTests",
       "buildcraft.test.full.FullModGameTests",
       "buildcraft.test.full.ConnectedBlockGameTests",
       "buildcraft.test.full.ChuteGameTests",
@@ -28,6 +29,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.DistillerClientSmoke",
       "buildcraft.test.full.AutoCraftClientSmoke",
       "buildcraft.test.full.PumpClientSmoke",
       "buildcraft.test.full.MiningWellClientSmoke",

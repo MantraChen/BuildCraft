@@ -1,4 +1,7 @@
 {
+  "block.buildcraftfactory.distiller": "Distiller",
+  "advancements.buildcraftfactory.refining.title": "Oil Refining",
+  "advancements.buildcraftfactory.refining.remake_description": "Distill oil into useful fractions. Remake by FelixMantra.",
   "block.buildcraftfactory.tank": "Tank",
   "block.buildcraftfactory.chute": "Chute",
   "block.buildcraftfactory.pump": "Pump",

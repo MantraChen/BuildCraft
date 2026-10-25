@@ -19,6 +19,10 @@ public enum BCFactoryGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
+        if (this == DISTILLER && player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileDistiller_BC8 tile) {
+            BCFactoryScreens.openDistiller(player, tile);
+            return;
+        }
         if (this == AUTO_WORKBENCH_ITEMS && player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileAutoWorkbenchItems tile) {
             BCFactoryScreens.openAutoWorkbench(player, tile);
             return;

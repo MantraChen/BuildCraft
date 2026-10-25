@@ -21,6 +21,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Pump
 # Also verify automatic crafting, native GUI editing, recipe search and saved progress:
 ./scripts/full-smoke.ps1 -AutoCraft
+# Also verify distillation, bucket GUI packets, saved MJ and exact oil products:
+./scripts/full-smoke.ps1 -Distiller
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -79,7 +81,21 @@ pipes finish the planks, and the searchable unlocked-recipe browser selects stic
 The result must be exactly 64 sticks, with native owner advancement and removal drops.
 Screenshots are `screenshots/autocraft-progress.png` and `screenshots/autocraft-recipes.png`.
 
-The 166 server tests currently verify:
+The distiller client uses `verification/distiller-client-run/`. It places the machine,
+shift-clicks an oil bucket through the native screen and reopens a world with exactly
+4 MJ of paid progress. A live engine and MJ pipes refine 1,000 mB oil into 2,000 mB
+gas and 375 mB heavy oil. The client withdraws one gas bucket through the tank widget,
+rejects reverse output filling, verifies the advancement and recovers remaining fluid
+on removal. It captures `distiller-progress.png`, `distiller-refined.png` and
+`distiller-world.png` under that run's `screenshots/` directory.
+
+The 179 server tests currently verify:
+
+- Thirteen distiller tests cover all ten original recipes, exact ratios/MJ costs,
+  fractional shortage and blocked-output rollback, sided/filtered access, bounded
+  power and rate, saved partial work, recipe replacement/removal refunds, stale
+  references, native survival bucket GUI/crafting, exact removal recovery, powered
+  wooden fluid-pipe extraction, owner advancement and atomic tank snapshot decoding.
 
 - Twelve automatic-workbench tests verify 200-tick passive crafting, bounded/simulated
   MJ input, complete rollback on missing ingredients or full output, exact-NBT dynamic

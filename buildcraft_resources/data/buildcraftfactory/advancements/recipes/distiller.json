@@ -1,0 +1,5 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {"has_tank": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": ["buildcraftfactory:tank"]}]}}},
+  "rewards": {"recipes": ["buildcraftfactory:distiller"]}
+}

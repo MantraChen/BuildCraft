@@ -110,6 +110,12 @@ Add `-Pump` to reopen partially paid pumping work, collect nine finite oil sourc
 using an engine and pipes, and verify exact delivery, client state and advancements.
 Add `-AutoCraft` to exercise real ghost-slot and shift-click packets, save partial
 work, and use an engine plus the recipe browser to turn eight logs into 64 sticks.
+Add `-Distiller` to exercise native oil-bucket loading, saved MJ progress, live engine
+and pipe supply, exact refining products, tank GUI extraction and fluid rendering.
+Distillers restore all ten original temperature-specific recipes and sided ports:
+horizontal input, gas above and liquid below. Each batch commits all three tanks
+together. The native screen shows tank contents/MJ progress and **Remake by FelixMantra**.
+Heat exchangers still need restoration, so heated refining chains remain incomplete.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

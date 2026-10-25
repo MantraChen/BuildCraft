@@ -1,0 +1,10 @@
+{
+  "parent": "buildcraftcore:wrenched",
+  "display": {
+    "icon": {"item": "buildcraftfactory:distiller"},
+    "title": {"translate": "advancements.buildcraftfactory.refining.title"},
+    "description": {"translate": "advancements.buildcraftfactory.refining.remake_description"},
+    "frame": "task", "show_toast": true, "announce_to_chat": true
+  },
+  "criteria": {"code_trigger": {"trigger": "minecraft:impossible"}}
+}

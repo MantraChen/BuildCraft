@@ -19,9 +19,21 @@ public class ContainerDistiller extends ContainerBCTile<TileDistiller_BC8> {
     public final WidgetFluidTank widgetInputTank;
     public final WidgetFluidTank widgetOutputGasTank;
     public final WidgetFluidTank widgetOutputLiquidTank;
+    private final net.minecraft.screen.PropertyDelegate properties;
 
     public ContainerDistiller(PlayerEntity player, TileDistiller_BC8 tank) {
-        super(player, tank);
+        this(player, 0, tank);
+    }
+    public ContainerDistiller(PlayerEntity player, int syncId, TileDistiller_BC8 tank) {
+        super(buildcraft.factory.BCFactoryScreens.DISTILLER, player, syncId, tank);
+        properties = player.getWorld().isClient ? new net.minecraft.screen.ArrayPropertyDelegate(2)
+            : new net.minecraft.screen.PropertyDelegate() {
+                public int size() { return 2; }
+                public int get(int index) { return index == 0 ? tank.getProgressScaled()
+                    : (int) (tank.getStoredPower() / buildcraft.api.mj.MjAPI.MJ); }
+                public void set(int index, int value) {}
+            };
+        addProperties(properties);
 
         addFullPlayerInventory(79);
 
@@ -29,6 +41,8 @@ public class ContainerDistiller extends ContainerBCTile<TileDistiller_BC8> {
         widgetOutputGasTank = addWidget(new WidgetFluidTank(this, tank.tankGasOut));
         widgetOutputLiquidTank = addWidget(new WidgetFluidTank(this, tank.tankLiquidOut));
     }
+    public int getProgress() { return properties.get(0); }
+    public int getStoredMj() { return properties.get(1); }
 
     @Override
     public ItemStack quickMove(PlayerEntity player, int index) {

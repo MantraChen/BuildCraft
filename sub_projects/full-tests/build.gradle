@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        distillerClientSmoke {
+            client()
+            runDir '../../verification/distiller-client-run'
+            vmArg '-Dbuildcraft.distillerClientSmoke=true'
+        }
         autoCraftClientSmoke {
             client()
             runDir '../../verification/autocraft-client-run'

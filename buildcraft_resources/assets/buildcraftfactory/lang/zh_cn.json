@@ -1,4 +1,7 @@
 {
+  "block.buildcraftfactory.distiller": "蒸馏器",
+  "advancements.buildcraftfactory.refining.title": "石油精炼",
+  "advancements.buildcraftfactory.refining.remake_description": "将石油蒸馏为不同组分。Remake by FelixMantra。",
   "block.buildcraftfactory.tank": "储罐",
   "block.buildcraftfactory.chute": "滑槽",
   "block.buildcraftfactory.pump": "泵",

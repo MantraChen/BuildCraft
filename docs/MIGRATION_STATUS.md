@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **166 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **179 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -729,6 +729,39 @@ features explicitly as work proceeds.
   `verification/autocraft-client-run/screenshots/`.
 - The unregistered experimental fluid workbench and silicon advanced crafting table
   still require their separate integrations; this milestone restores the item machine.
+
+### Native oil distillation
+
+- Restored all ten original distillation recipes, including temperature-specific
+  products and common-factor-reduced mB/MJ ratios. Native amounts remain exact
+  droplets. The refinery registry now initializes before energy recipes.
+- Horizontal ports accept distillable input only; the top extracts gas and the bottom
+  extracts liquid. A complete batch extracts input and inserts both products in one
+  transaction. Missing input, incompatible output or fractional overflow changes no
+  materials. Wooden fluid pipes can extract the configured output port with MJ.
+- Restored the original 1024 MJ reservoir and its throughput ramp up to 6 MJ/tick.
+  Reservations count against capacity and survive world attachment/save reload.
+  Blocked, removed or changed recipes refund reserved energy without overflow;
+  stale interfaces reject removed/replaced machines.
+- Registered the native tank screen, progress/reservoir properties, server-side
+  bucket/shift-click interactions, facing-aware fluid renderer, survival recipe,
+  recipe-book unlock and owner advancement. The GUI and advancement include
+  **Remake by FelixMantra**. Output widgets allow withdrawal only, and all three
+  network tank snapshots validate before any visible fluid state changes.
+- Thirteen new tests bring the packaged-world suite to **179 passing tests**.
+  They include real survival-player bucket consumption, both blocked outputs,
+  exact-NBT rejection, bounded/simulated MJ, all ten recipes, paid-work reload,
+  runtime recipe changes, wooden-pipe extraction, exact shard recovery and a
+  truncated synchronization packet.
+- Heat exchangers are still unfinished. Cold oil can now be refined, but a complete
+  temperature-changing refinery chain is not yet supported in survival gameplay.
+- The real client places the distiller and loads a bucket through native shift-click,
+  preserves exactly 4 MJ through a complete world restart, then uses a live engine/MJ
+  network to refine 1,000 mB oil into 2,000 mB gas and 375 mB heavy oil. Native GUI
+  extraction returns one gas bucket, rejects reverse filling and synchronizes all
+  tank levels. Removal recovers exactly the remaining 1,375 mB as shards. Fluid
+  rendering and the progress/refined screens were visually inspected; screenshots
+  are in `verification/distiller-client-run/screenshots/`.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

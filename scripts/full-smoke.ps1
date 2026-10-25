@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -112,5 +112,17 @@ if ($AutoCraft) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $craftOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runAutoCraftClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Distiller) {
+    $distillerRun = Join-Path $verification 'distiller-client-run'
+    $distillerConfig = Join-Path $distillerRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $distillerConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $distillerConfig 'main.cfg') -Force
+    $distillerOptions = Join-Path $distillerRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $distillerOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $distillerOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runDistillerClientSmoke --console=plain
 }
 exit $LASTEXITCODE
