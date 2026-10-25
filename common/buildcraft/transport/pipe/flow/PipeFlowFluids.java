@@ -1,820 +1,403 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
-
-// FluidStack → FluidVariant (identity) + int millibuckets (per-section internal amount). The pipe's
-// internal fluid mechanics (sectioning, delayed travel, centre/side movement, networking) are kept
-// intact and run entirely on the migrated lib types. Fluid amounts crossing the IFlowFluid public
-// boundary are droplets (1 bucket = 81000) and are converted to/from internal mB via BCFluidStorage.
-//
-// STUB(R.Chen): external-tile fluid I/O is deferred to Phase 4F (FluidStorage.SIDED / BlockApiLookup).
-// Every edge that used to obtain a neighbouring tile's IFluidHandler through
-// getCapabilityFromPipe(side, CapUtil.CAP_FLUIDS) — extracting fluid into the pipe (tryExtractFluid*),
-// pushing fluid out (moveFromPipe) and routing fluid from the centre to externally-fed output sides
-// (moveFromCentre) — is stubbed to a no-op until the Fabric neighbour lookup is wired. Pipe-internal
-// flow (insertFluidsForce into the centre, side→centre movement, extractFluidsForce) is fully live.
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native Fabric transport remake by FelixMantra. */
 package buildcraft.transport.pipe.flow;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-
+import net.fabricmc.fabric.api.transfer.v1.fluid.*;
+import net.fabricmc.fabric.api.transfer.v1.storage.*;
+import net.fabricmc.fabric.api.transfer.v1.transaction.*;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import net.minecraft.util.math.*;
 import buildcraft.api.core.EnumPipePart;
 import buildcraft.api.core.SafeTimeTracker;
 import buildcraft.api.tiles.IDebuggable;
-import buildcraft.api.transport.pipe.IFlowFluid;
-import buildcraft.api.transport.pipe.IPipe;
-import buildcraft.api.transport.pipe.PipeApi;
-import buildcraft.api.transport.pipe.PipeApi.FluidTransferInfo;
-import buildcraft.api.transport.pipe.PipeEventFluid.OnMoveToCentre;
-import buildcraft.api.transport.pipe.PipeEventFluid.PreMoveToCentre;
-import buildcraft.api.transport.pipe.PipeEventHandler;
-import buildcraft.api.transport.pipe.PipeEventStatement;
-import buildcraft.api.transport.pipe.PipeFlow;
-
-import buildcraft.lib.compat.BCFluidStorage;
-import buildcraft.lib.misc.MathUtil;
-import buildcraft.lib.misc.VecUtil;
-import buildcraft.lib.net.PacketBufferBC;
+import buildcraft.api.transport.pipe.*;
 import buildcraft.lib.net.cache.BuildCraftObjectCaches;
-
 import buildcraft.transport.BCTransportStatements;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
+/** Seven delayed sections, with native transactional boundaries. All amounts are exact droplets. */
 public class PipeFlowFluids extends PipeFlow implements IFlowFluid, IDebuggable {
-
     private static final int DIRECTION_COOLDOWN = 60;
-    private static final int COOLDOWN_INPUT = -DIRECTION_COOLDOWN;
-    private static final int COOLDOWN_OUTPUT = DIRECTION_COOLDOWN;
-
-    /** STUB(R.Chen): BCCoreConfig.networkUpdateRate inlined; wired back in Phase 6 (core config). */
-    private static final int NETWORK_UPDATE_RATE = 10;
-
-    /** One bucket, in millibuckets — replaces Forge's {@code Fluid.BUCKET_VOLUME}. */
-    private static final int BUCKET_VOLUME = 1000;
-
     public static final int NET_FLUID_AMOUNTS = 2;
-
-    /** The number of pixels the fluid moves by per millisecond */
     public static final double FLOW_MULTIPLIER = 0.016;
-
-    private final FluidTransferInfo fluidTransferInfo = PipeApi.getFluidTransferInfo(pipe.getDefinition());
-
-    /* Default to an additional second of fluid inserting and removal. This means that (for a normal pipe like cobble)
-     * it will be 20 * (10 + 12) = 20 * 22 = 440 - oh that's not good is it */
-    public final int capacity = Math.max(BUCKET_VOLUME, fluidTransferInfo.transferPerTick * (10));// TEMP!
-
-    private final Map<EnumPipePart, Section> sections = new EnumMap<>(EnumPipePart.class);
-    /** The fluid currently held by this pipe, or null when empty. Amounts live per-section in mB. */
-    private FluidVariant currentFluid;
-    private int currentDelay;
-    private final SafeTimeTracker tracker = new SafeTimeTracker(NETWORK_UPDATE_RATE, 4);
-
-    // Client fields for interpolating amounts
+    private final PipeApi.FluidTransferInfo info = PipeApi.getFluidTransferInfo(pipe.getDefinition());
+    private final int rate = Math.multiplyExact(info.transferPerTick, 81);
+    public final int capacity = Math.max((int) FluidConstants.BUCKET, Math.multiplyExact(rate, 10));
+    private final int delay = Math.max(1, Math.min(1200, (int) info.transferDelayMultiplier));
+    private final EnumMap<EnumPipePart, Section> sections = new EnumMap<>(EnumPipePart.class);
+    private FluidVariant currentFluid, lastSentFluid;
+    private final SafeTimeTracker tracker = new SafeTimeTracker(10, 4);
     private long lastMessage, lastMessageMinus1;
-    private Supplier<FluidVariant> clientFluid = null;
+    private Supplier<FluidVariant> clientFluid;
+
+    private record SectionState(int amount, int time, int direction, int[] incoming) {}
+    private record FlowState(FluidVariant fluid, List<SectionState> sections) {}
+    private final SnapshotParticipant<FlowState> snapshots = new SnapshotParticipant<>() {
+        @Override protected FlowState createSnapshot() {
+            var states = new ArrayList<SectionState>();
+            for (var s : sections.values()) states.add(new SectionState(s.amount, s.time, s.direction, s.incoming.clone()));
+            return new FlowState(currentFluid, states);
+        }
+        @Override protected void readSnapshot(FlowState state) {
+            currentFluid = state.fluid();
+            int index = 0;
+            for (var s : sections.values()) {
+                var saved = state.sections().get(index++);
+                s.amount = saved.amount(); s.time = saved.time(); s.direction = saved.direction();
+                s.incoming = saved.incoming().clone(); s.pending = Arrays.stream(s.incoming).sum();
+            }
+        }
+        @Override protected void onFinalCommit() { pipe.getHolder().getPipeTile().markDirty(); }
+    };
 
     public PipeFlowFluids(IPipe pipe) {
         super(pipe);
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            sections.put(part, new Section(part));
-        }
+        if (rate <= 0) throw new IllegalArgumentException("Fluid pipe rate must be positive");
+        for (var part : EnumPipePart.VALUES) sections.put(part, new Section(part));
     }
 
     public PipeFlowFluids(IPipe pipe, NbtCompound nbt) {
-        super(pipe, nbt);
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            sections.put(part, new Section(part));
-        }
+        this(pipe);
         if (nbt.contains("fluid")) {
-            FluidVariant fluid = FluidVariant.fromNbt(nbt.getCompound("fluid"));
-            setFluid(fluid.isBlank() ? null : fluid);
-        } else {
-            setFluid(null);
+            var fluid = FluidVariant.fromNbt(nbt.getCompound("fluid"));
+            if (!fluid.isBlank()) currentFluid = fluid;
         }
-
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            int direction = part.getIndex();
-            String key = "tank[" + direction + "]";
-            if (nbt.contains(key)) {
-                sections.get(part).readFromNbt(nbt.getCompound(key));
-            }
-        }
+        if (currentFluid != null) for (var part : EnumPipePart.VALUES)
+            sections.get(part).readNbt(nbt.getCompound("tank[" + part.getIndex() + "]"), nbt.getInt("fluid_format") == 1);
+        clearIfEmpty();
     }
 
-    @Override
-    public NbtCompound writeToNbt() {
-        NbtCompound nbt = super.writeToNbt();
-
+    @Override public NbtCompound writeToNbt() {
+        var nbt = super.writeToNbt();
+        nbt.putInt("fluid_format", 1);
         if (currentFluid != null) {
             nbt.put("fluid", currentFluid.toNbt());
-
-            for (EnumPipePart part : EnumPipePart.VALUES) {
-                int direction = part.getIndex();
-                NbtCompound subTag = new NbtCompound();
-                sections.get(part).writeToNbt(subTag);
-                nbt.put("tank[" + direction + "]", subTag);
-            }
+            for (var part : EnumPipePart.VALUES) nbt.put("tank[" + part.getIndex() + "]", sections.get(part).writeNbt());
         }
-
         return nbt;
     }
 
-    @Override
-    public boolean canConnect(Direction face, PipeFlow other) {
-        return other instanceof IFlowFluid;
+    public long getAmount() { return sections.values().stream().mapToLong(s -> s.amount).sum(); }
+    public long getAmount(@Nullable Direction side) { return sections.get(EnumPipePart.fromFacing(side)).amount; }
+    public FluidVariant getFluid() { return currentFluid == null ? FluidVariant.blank() : currentFluid; }
+    public boolean doesContainFluid() { return getAmount() > 0; }
+    public Storage<FluidVariant> getStorage(Direction side) { return side == null ? null : sections.get(EnumPipePart.fromFacing(side)); }
+
+    private boolean live() {
+        var holder = pipe.getHolder(); var world = holder.getPipeWorld();
+        return world != null && !world.isClient && !holder.getPipeTile().isRemoved()
+            && world.isChunkLoaded(holder.getPipePos()) && world.getBlockEntity(holder.getPipePos()) == holder.getPipeTile()
+            && holder.getPipe() == pipe;
     }
 
-    @Override
-    public boolean canConnect(Direction face, BlockEntity oTile) {
-        // STUB(R.Chen): neighbour fluid-storage lookup deferred to Phase 4F (FluidStorage.SIDED).
-        // The original queried CAP_FLUIDS on the neighbour tile; with no Fabric equivalent wired yet,
-        // external-tile connections are disabled. Pipe→pipe connections still work above.
-        return false;
+    private Storage<FluidVariant> neighbour(Direction side, boolean connected) {
+        if (side == null || !live() || connected && !pipe.isConnected(side)) return null;
+        var plug = pipe.getHolder().getPluggable(side);
+        if (plug != null && plug.isBlocking()) return null;
+        var world = pipe.getHolder().getPipeWorld(); var pos = pipe.getHolder().getPipePos().offset(side);
+        if (!world.isChunkLoaded(pos)) return null;
+        return FluidStorage.SIDED.find(world, pos, side.getOpposite());
     }
 
-    @Override
-    public <T> T getCapability(@Nonnull Object capability, Direction facing) {
-        // STUB(R.Chen): FluidStorage.SIDED exposure deferred to Phase 4F.
-        // The original routed CAP_FLUIDS → the Section for the queried face via Capability#cast, which
-        // depends on the Forge capability system. Same deferral as PipeFlow/Pipe/PipeFlowItems.
-        return super.getCapability(capability, facing);
-    }
+    @Override public boolean canConnect(Direction face, PipeFlow other) { return other instanceof IFlowFluid; }
+    @Override public boolean canConnect(Direction face, BlockEntity other) { return neighbour(face, false) != null; }
 
-    @Override
-    public void addDrops(List<ItemStack> toDrop, int fortune) {
-        super.addDrops(toDrop, fortune);
-        // STUB(R.Chen): BCCoreItems.fragileFluidShard drop deferred to Phase 6 (core item migration).
-        // The original dropped a fragile-fluid-shard item carrying this pipe's remaining fluid contents.
-    }
-
-    public boolean doesContainFluid() {
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            if (sections.get(part).amount > 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @PipeEventHandler
-    public static void addTriggers(PipeEventStatement.AddTriggerInternal event) {
+    @PipeEventHandler public static void addTriggers(PipeEventStatement.AddTriggerInternal event) {
         event.triggers.add(BCTransportStatements.TRIGGER_FLUIDS_TRAVERSING);
     }
 
-    // IFlowFluid
-
-    @Override
-    public long tryExtractFluid(long droplets, Direction from, Object filter, boolean simulate) {
-        return tryExtractFluidInternal(droplets, from, simulate);
+    @Override public long tryExtractFluid(long droplets, Direction from, @Nullable FluidVariant filter, boolean simulate) {
+        return tryExtractFluidAdv(droplets, from, resource -> filter == null || filter.equals(resource), simulate);
     }
 
-    @Override
-    public long tryExtractFluidAdv(long droplets, Direction from, Object filter, boolean simulate) {
-        // STUB(R.Chen): the advanced (IFluidFilter / IFluidHandlerAdv) extraction path additionally
-        // inspects the neighbour's per-tank contents and filter matches; restore the filter handling
-        // once the FluidStorage.SIDED neighbour lookup is wired in Phase 4F.
-        return tryExtractFluidInternal(droplets, from, simulate);
-    }
-
-    private long tryExtractFluidInternal(long maxDroplets, Direction from, boolean simulate) {
-        if (from == null || maxDroplets <= 0) {
-            return 0;
+    @Override public long tryExtractFluidAdv(long droplets, Direction from, Predicate<FluidVariant> filter, boolean simulate) {
+        if (droplets <= 0 || from == null) return 0;
+        var source = neighbour(from, true);
+        if (source == null || !source.supportsExtraction()) return 0;
+        var side = sections.get(EnumPipePart.fromFacing(from)); var centre = sections.get(EnumPipePart.CENTER);
+        long available = Math.min(droplets, (long) capacity * 2 - side.amount - centre.amount);
+        if (available <= 0) return 0;
+        Set<FluidVariant> tried = new HashSet<>();
+        for (var view : source) {
+            var resource = view.getResource();
+            if (resource.isBlank() || !tried.add(resource) || !filter.test(resource)
+                    || currentFluid != null && !currentFluid.equals(resource)) continue;
+            try (var tx = Transaction.openOuter()) {
+                long extracted = source.extract(resource, available, tx);
+                if (extracted <= 0) continue;
+                snapshots.updateSnapshots(tx);
+                if (currentFluid == null) currentFluid = resource;
+                int first = side.fill((int) Math.min(extracted, capacity), false);
+                int second = centre.fill((int) (extracted - first), false);
+                if ((long) first + second != extracted) throw new IllegalStateException("Fluid extraction exceeded pipe capacity");
+                side.direction = -DIRECTION_COOLDOWN;
+                if (!simulate) tx.commit();
+                return extracted;
+            }
         }
-        // STUB(R.Chen): neighbour fluid handler lookup deferred to Phase 4F (FluidStorage.SIDED).
-        // The original obtained the neighbour's IFluidHandler via getCapabilityFromPipe(from, CAP_FLUIDS)
-        // and drained it into this pipe's sections (filling the side section then the centre). Until the
-        // Fabric lookup replaces the Forge capability, no external fluid can be pulled in.
         return 0;
     }
 
-    @Override
-    public long insertFluidsForce(Object fluid, long amount, @Nullable Direction from, boolean simulate) {
-        if (!(fluid instanceof FluidVariant)) {
-            return 0;
+    @Override public long insertFluidsForce(FluidVariant resource, long amount, @Nullable Direction from, boolean simulate) {
+        StoragePreconditions.notBlankNotNegative(resource, amount);
+        if (amount == 0 || !live() || currentFluid != null && !currentFluid.equals(resource)) return 0;
+        var centre = sections.get(EnumPipePart.CENTER);
+        int accepted = (int) Math.min(amount, centre.maxFill());
+        if (accepted <= 0) return 0;
+        try (var tx = Transaction.openOuter()) {
+            snapshots.updateSnapshots(tx); currentFluid = resource;
+            centre.fill(accepted, true);
+            if (from != null) sections.get(EnumPipePart.fromFacing(from)).direction = -DIRECTION_COOLDOWN;
+            if (!simulate) tx.commit();
         }
-        FluidVariant variant = (FluidVariant) fluid;
-        if (variant.isBlank() || amount <= 0) {
-            return 0;
-        }
-        if (currentFluid != null && !currentFluid.equals(variant)) {
-            return 0;
-        }
-        Section s = sections.get(EnumPipePart.CENTER);
-        if (currentFluid == null && !simulate) {
-            setFluid(variant);
-        }
-        int maxMb = (int) Math.min(Integer.MAX_VALUE, BCFluidStorage.dropletsToMB(amount));
-        int filled = s.fill(maxMb, !simulate);
-        if (filled == 0) {
-            return 0;
-        }
-        if (!simulate && from != null) {
-            sections.get(EnumPipePart.fromFacing(from)).ticksInDirection = COOLDOWN_INPUT;
-        }
-        return BCFluidStorage.mBToDroplets(filled);
+        return accepted;
     }
 
-    @Override
-    @Nullable
-    public Object extractFluidsForce(long min, long max, @Nullable Direction section, boolean simulate) {
-        long minMb = BCFluidStorage.dropletsToMB(min);
-        long maxMb = BCFluidStorage.dropletsToMB(max);
-        if (minMb > maxMb) {
-            throw new IllegalArgumentException("Minimum (" + minMb + ") > maximum (" + maxMb + ")");
-        }
-        if (maxMb < 0 || currentFluid == null) {
-            return null;
-        }
-        Section s = sections.get(EnumPipePart.fromFacing(section));
-        if (s.amount < minMb) {
-            return null;
-        }
-        // STUB(R.Chen): callers will receive a (FluidVariant, amount) pair in Phase 4E; for now only the
-        // fluid identity is returned and the drained amount is applied to the section directly.
-        int amount = MathUtil.clamp(s.amount, (int) minMb, (int) maxMb);
-        FluidVariant extracted = currentFluid;
-        if (!simulate) {
-            s.amount -= amount;
-            s.drainInternal(amount, false);
-            if (s.amount == 0) {
-                boolean isEmpty = true;
-                for (Section s2 : sections.values()) {
-                    isEmpty &= s2.amount == 0;
-                }
-                if (isEmpty) {
-                    setFluid(null);
-                }
+    @Override public FluidVolume extractFluidsForce(long min, long max, @Nullable Direction side, boolean simulate) {
+        if (min < 0 || max < min) throw new IllegalArgumentException("Invalid fluid extraction range");
+        if (!live() || currentFluid == null) return null;
+        var section = sections.get(EnumPipePart.fromFacing(side));
+        int amount = (int) Math.min(max, section.amount);
+        if (amount <= 0 || amount < min) return null;
+        var result = new FluidVolume(currentFluid, amount);
+        if (!simulate) try (var tx = Transaction.openOuter()) {
+            snapshots.updateSnapshots(tx);
+            section.amount -= amount;
+            // Force extraction may take travelling fluid; remove the corresponding delay credits.
+            int remove = Math.max(0, section.pending - section.amount);
+            for (int i = 1; i <= delay && remove > 0; i++) {
+                int slot = (section.time + i) % delay, taken = Math.min(remove, section.incoming[slot]);
+                section.incoming[slot] -= taken; section.pending -= taken; remove -= taken;
             }
+            clearIfEmpty(); tx.commit();
         }
-        return extracted;
+        return result;
     }
 
-    // IDebuggable
-
-    @Override
-    public void getDebugInfo(List<String> left, List<String> right, Direction side) {
-        boolean isRemote = pipe.getHolder().getPipeWorld().isClient;
-
-        FluidVariant fluid = isRemote ? getFluidStackForRender() : currentFluid;
-        left.add(" - FluidType = " + (fluid == null || fluid.isBlank() ? "empty" : fluid.toString()));
-
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            Section section = sections.get(part);
-            if (section == null) {
-                continue;
-            }
-            String faceName = part.face == null ? "center" : part.face.asString();
-            StringBuilder line = new StringBuilder(" - " + faceName + " = ");
-            int amount = isRemote ? section.target : section.amount;
-            line.append(amount > 0 ? Formatting.GREEN : "");
-            line.append(amount).append("").append(Formatting.RESET).append("mB");
-            line.append(" ").append(section.getCurrentDirection()).append(" (").append(section.ticksInDirection).append(
-                ")"
-            );
-
-            line.append(" [");
-            int last = -1;
-            int skipped = 0;
-
-            for (int i : section.incoming) {
-                if (i != last) {
-                    if (skipped > 0) {
-                        line.append("...").append(skipped).append("... ");
-                        skipped = 0;
-                    }
-                    last = i;
-                    line.append(i).append(", ");
-                } else {
-                    skipped++;
-                }
-            }
-            if (skipped > 0) {
-                line.append("...").append(skipped).append("... ");
-                skipped = 0;
-            }
-            line.append("0]");
-
-            left.add(line.toString());
+    private void clearIfEmpty() {
+        if (getAmount() == 0) {
+            currentFluid = null;
+            for (var s : sections.values()) { Arrays.fill(s.incoming, 0); s.pending = 0; }
         }
     }
 
-    // Rendering
-
-    @Environment(EnvType.CLIENT)
-    public FluidVariant getFluidStackForRender() {
-        return clientFluid == null ? null : clientFluid.get();
-    }
-
-    @Environment(EnvType.CLIENT)
-    public double[] getAmountsForRender(float partialTicks) {
-        double[] arr = new double[7];
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            Section s = sections.get(part);
-            arr[part.getIndex()] = s.clientAmountLast * (1 - partialTicks) + s.clientAmountThis * (partialTicks);
-        }
-        return arr;
-    }
-
-    @Environment(EnvType.CLIENT)
-    public Vec3d[] getOffsetsForRender(float partialTicks) {
-        Vec3d[] arr = new Vec3d[7];
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            Section s = sections.get(part);
-            if (s.offsetLast != null & s.offsetThis != null) {
-                arr[part.getIndex()] = s.offsetLast.multiply(1 - partialTicks).add(s.offsetThis.multiply(partialTicks));
-            }
-        }
-        return arr;
-    }
-
-    // Internal logic
-
-    private void setFluid(FluidVariant fluid) {
-        currentFluid = fluid;
-        currentDelay = (int) PipeApi.getFluidTransferInfo(pipe.getDefinition()).transferDelayMultiplier;
-        for (Section section : sections.values()) {
-            section.incoming = new int[currentDelay];
-            section.currentTime = 0;
-            section.ticksInDirection = 0;
-        }
-    }
-
-    @Override
-    public void onTick() {
-        World world = pipe.getHolder().getPipeWorld();
-        if (world.isClient) {
-            for (EnumPipePart part : EnumPipePart.VALUES) {
-                sections.get(part).tickClient();
-            }
-            return;
-        }
-
+    @Override public void onTick() {
+        var world = pipe.getHolder().getPipeWorld();
+        if (world.isClient) { for (var s : sections.values()) s.tickClient(); return; }
         if (currentFluid != null) {
-            // int timeSlot = (int) (world.getTime() % currentDelay);
-            int totalFluid = 0;
-            boolean canOutput = false;
-
-            for (EnumPipePart part : EnumPipePart.VALUES) {
-                Section section = sections.get(part);
-                section.currentTime = (section.currentTime + 1) % currentDelay;
-                section.advanceForMovement();
-                totalFluid += section.amount;
-                if (section.getCurrentDirection().canOutput()) {
-                    canOutput = true;
-                }
+            for (var s : sections.values()) {
+                s.time = (s.time + 1) % delay; s.pending -= s.incoming[s.time]; s.incoming[s.time] = 0;
             }
-            if (totalFluid == 0) {
-                setFluid(null);
-            } else {
-                // Fluid movement is split into 3 parts
-                // - move from pipe (to other tiles)
-                // - move from center (to sides)
-                // - move into center (from sides)
-
-                if (canOutput) {
-                    moveFromPipe();
-                }
-                moveFromCenter();
-                moveToCenter();
-            }
-
-            // tick cooldowns
-            for (EnumPipePart part : EnumPipePart.VALUES) {
-                Section section = sections.get(part);
-                if (section.ticksInDirection > 0) {
-                    section.ticksInDirection--;
-                } else if (section.ticksInDirection < 0) {
-                    section.ticksInDirection++;
-                }
-            }
+            moveFromPipe(); moveFromCenter(); moveToCenter(); clearIfEmpty();
+            pipe.getHolder().getPipeTile().markDirty();
         }
-
-        boolean send = false;
-
-        for (EnumPipePart part : EnumPipePart.VALUES) {
-            Section section = sections.get(part);
-            if (section.amount != section.lastSentAmount) {
-                send = true;
-                break;
-            } else {
-                Dir should = Dir.get(section.ticksInDirection);
-                if (section.lastSentDirection != should) {
-                    send = true;
-                    break;
-                }
-            }
+        boolean changed = !Objects.equals(lastSentFluid, currentFluid);
+        for (var s : sections.values()) {
+            s.direction -= Integer.signum(s.direction);
+            changed |= s.amount != s.lastSentAmount || Integer.signum(s.direction) != s.lastSentDirection;
         }
-
-        if (send && tracker.markTimeIfDelay(world)) {
-            // send a net update
-            sendPayload(NET_FLUID_AMOUNTS);
-        }
+        if (changed && tracker.markTimeIfDelay(world)) sendPayload(NET_FLUID_AMOUNTS);
     }
 
     private void moveFromPipe() {
-        // STUB(R.Chen): pushing fluid out to neighbouring tiles is deferred to Phase 4F (FluidStorage.SIDED).
-        // The original, for each output-facing side whose SideCheck resolved to a single allowed face,
-        // obtained the neighbour's IFluidHandler and filled it from this section, draining the section by
-        // the accepted amount and setting an OUTPUT cooldown. Restore once the neighbour lookup is wired.
+        for (var part : EnumPipePart.FACES) {
+            var section = sections.get(part);
+            int offered = section.maxDrain();
+            if (section.direction < 0 || offered <= 0) continue;
+            var check = new PipeEventFluid.SideCheck(pipe.getHolder(), this, currentFluid);
+            check.disallowAllExcept(part.face); pipe.getHolder().fireEvent(check);
+            if (!check.isAllowed(part.face)) continue;
+            var target = neighbour(part.face, true);
+            if (target == null) continue;
+            try (var tx = Transaction.openOuter()) {
+                int moved = (int) target.insert(currentFluid, offered, tx);
+                if (moved <= 0) continue;
+                snapshots.updateSnapshots(tx);
+                section.amount -= moved; section.direction = DIRECTION_COOLDOWN;
+                tx.commit();
+            }
+        }
     }
 
     private void moveFromCenter() {
-        // STUB(R.Chen): moving fluid from the centre to output sides is gated on a neighbouring tile that
-        // accepts fluid on that side; that lookup (getCapabilityFromPipe / FluidStorage.SIDED) is deferred
-        // to Phase 4F. With no external sink reachable, no centre→side movement occurs yet.
+        var centre = sections.get(EnumPipePart.CENTER);
+        int left = centre.maxDrain();
+        if (left <= 0) return;
+        var check = new PipeEventFluid.SideCheck(pipe.getHolder(), this, currentFluid);
+        for (var face : Direction.values()) {
+            var section = sections.get(EnumPipePart.fromFacing(face));
+            var target = neighbour(face, true);
+            boolean accepts = false;
+            if (section.direction >= 0 && section.maxFill() > 0 && target != null) try (var tx = Transaction.openOuter()) {
+                accepts = target.insert(currentFluid, Math.min(left, section.maxFill()), tx) > 0;
+            }
+            if (!accepts) check.disallow(face);
+        }
+        pipe.getHolder().fireEvent(check);
+        var choices = new ArrayList<>(check.getOrder()); Collections.shuffle(choices);
+        for (int i = 0; i < choices.size() && left > 0; i++) {
+            var section = sections.get(EnumPipePart.fromFacing(choices.get(i)));
+            int offered = (left + choices.size() - i - 1) / (choices.size() - i);
+            int moved = section.fill(offered, true);
+            centre.amount -= moved; left -= moved;
+            if (moved > 0) section.direction = DIRECTION_COOLDOWN;
+        }
     }
 
     private void moveToCenter() {
-        int transferInCount = 0;
-        Section center = sections.get(EnumPipePart.CENTER);
-        int spaceAvailable = capacity - center.amount;
-        if (spaceAvailable <= 0 || center.getMaxFilled() <= 0) {
-            return;
+        var centre = sections.get(EnumPipePart.CENTER);
+        int left = centre.maxFill();
+        if (left <= 0) return;
+        int[] offered = new int[6];
+        for (var part : EnumPipePart.FACES) {
+            var section = sections.get(part);
+            if (section.direction <= 0) offered[part.getIndex()] = section.maxDrain();
         }
-        int flowRate = fluidTransferInfo.transferPerTick;
-
-        List<EnumPipePart> faces = new ArrayList<>();
-        Collections.addAll(faces, EnumPipePart.FACES);
-        Collections.shuffle(faces);
-
-        int[] inputPerTick = new int[6];
-        for (EnumPipePart part : faces) {
-            Section section = sections.get(part);
-            inputPerTick[part.getIndex()] = 0;
-            if (section.getCurrentDirection().canInput()) {
-                inputPerTick[part.getIndex()] = section.drainInternal(flowRate, false);
-                if (inputPerTick[part.getIndex()] > 0) {
-                    transferInCount++;
-                }
-            }
+        var pre = new PipeEventFluid.PreMoveToCentre(pipe.getHolder(), this, currentFluid, left, offered.clone(), offered);
+        pipe.getHolder().fireEvent(pre);
+        var choices = new ArrayList<EnumPipePart>();
+        for (var part : EnumPipePart.FACES) if (offered[part.getIndex()] > 0) choices.add(part);
+        Collections.shuffle(choices);
+        int[] leaving = new int[6];
+        for (int i = 0; i < choices.size() && left > 0; i++) {
+            int index = choices.get(i).getIndex();
+            leaving[index] = Math.min(offered[index], (left + choices.size() - i - 1) / (choices.size() - i));
+            left -= leaving[index];
         }
-
-        int[] totalOffered = Arrays.copyOf(inputPerTick, 6);
-        PreMoveToCentre preMove = new PreMoveToCentre(
-            pipe.getHolder(), this, currentFluid, Math.min(flowRate, spaceAvailable), totalOffered, inputPerTick
-        );
-        // Event handlers edit the array in-place
-        pipe.getHolder().fireEvent(preMove);
-
-        int[] fluidLeavingSide = new int[6];
-
-        // Work out how much fluid should leave
-        int left = Math.min(flowRate, spaceAvailable);
-        float min = Math.min(flowRate * transferInCount, spaceAvailable) / (float) flowRate / transferInCount;
-        for (EnumPipePart part : EnumPipePart.FACES) {
-            Section section = sections.get(part);
-            // Move liquid from input sides to the centre
-            int i = part.getIndex();
-            if (inputPerTick[i] > 0) {
-                int amountToDrain = (int) (inputPerTick[i] * min);
-                if (amountToDrain < 1) {
-                    amountToDrain++;
-                }
-                if (amountToDrain > left) {
-                    amountToDrain = left;
-                }
-                int amountToPush = section.drainInternal(amountToDrain, false);
-                if (amountToPush > 0) {
-                    fluidLeavingSide[i] = amountToPush;
-                    left -= amountToPush;
-                }
-            }
-        }
-
-        int[] fluidEnteringCentre = Arrays.copyOf(fluidLeavingSide, 6);
-        OnMoveToCentre move = new OnMoveToCentre(
-            pipe.getHolder(), this, currentFluid, fluidLeavingSide, fluidEnteringCentre
-        );
-        pipe.getHolder().fireEvent(move);
-
-        for (EnumPipePart part : EnumPipePart.FACES) {
-            Section section = sections.get(part);
-            int i = part.getIndex();
-            int leaving = fluidLeavingSide[i];
-            if (leaving > 0) {
-                int actuallyDrained = section.drainInternal(leaving, true);
-                if (actuallyDrained != leaving) {
-                    throw new IllegalStateException(
-                        "Couldn't drain " + leaving + " from " + part + ", only drained " + actuallyDrained
-                    );
-                }
-                if (actuallyDrained > 0) {
-                    section.ticksInDirection = COOLDOWN_INPUT;
-                }
-                int entering = fluidEnteringCentre[i];
-                if (entering > 0) {
-                    int actuallyFilled = center.fill(entering, true);
-                    if (actuallyFilled != entering) {
-                        throw new IllegalStateException(
-                            "Couldn't fill " + entering + " from " + part + ", only filled " + actuallyFilled
-                        );
-                    }
-                }
-            }
+        int[] entering = leaving.clone();
+        pipe.getHolder().fireEvent(new PipeEventFluid.OnMoveToCentre(pipe.getHolder(), this, currentFluid, leaving, entering));
+        for (var part : EnumPipePart.FACES) {
+            int i = part.getIndex(); var section = sections.get(part);
+            if (leaving[i] <= 0) continue;
+            section.amount -= leaving[i]; section.direction = -DIRECTION_COOLDOWN;
+            if (centre.fill(entering[i], true) != entering[i]) throw new IllegalStateException("Fluid routing exceeded centre capacity");
         }
     }
 
-    @Override
-    public void writePayload(int id, PacketByteBuf buf, EnvType side) {
-        PacketBufferBC buffer = PacketBufferBC.asPacketBufferBc(buf);
-        if (side == EnvType.SERVER) {
-            if (id == NET_FLUID_AMOUNTS || id == NET_ID_FULL_STATE) {
-                boolean full = id == NET_ID_FULL_STATE;
-                if (currentFluid == null) {
-                    buffer.writeBoolean(false);
-                } else {
-                    buffer.writeBoolean(true);
-                    buffer.writeInt(BuildCraftObjectCaches.storeFluid(currentFluid));
-                }
-                for (EnumPipePart part : EnumPipePart.VALUES) {
-                    Section section = sections.get(part);
-                    if (full) {
-                        buffer.writeShort(section.amount);
-                    } else if (section.amount == section.lastSentAmount) {
-                        buffer.writeBoolean(false);
-                    } else {
-                        buffer.writeBoolean(true);
-                        buffer.writeShort(section.amount);
-                        section.lastSentAmount = section.amount;
-                    }
-                    Dir should = Dir.get(section.ticksInDirection);
-                    buffer.writeEnumValue(should); // This writes out 2 bits so don't bother with a boolean flag
-                    section.lastSentDirection = should;
-                }
-            }
+    @Override public void writePayload(int id, PacketByteBuf buffer, EnvType side) {
+        if (side != EnvType.SERVER || id < 0 || id > NET_FLUID_AMOUNTS) return;
+        buffer.writeBoolean(currentFluid != null);
+        if (currentFluid != null) buffer.writeVarInt(BuildCraftObjectCaches.storeFluid(currentFluid));
+        for (var part : EnumPipePart.VALUES) {
+            var s = sections.get(part);
+            buffer.writeVarInt(s.amount); buffer.writeByte(Integer.signum(s.direction) + 1);
+            if (id != NET_ID_FULL_STATE) { s.lastSentAmount = s.amount; s.lastSentDirection = Integer.signum(s.direction); }
         }
+        if (id != NET_ID_FULL_STATE) lastSentFluid = currentFluid;
     }
 
-    @Override
-    public void readPayload(int id, PacketByteBuf buf, EnvType side) throws IOException {
-        PacketBufferBC buffer = PacketBufferBC.asPacketBufferBc(buf);
-        if (side == EnvType.CLIENT) {
-            if (id == NET_FLUID_AMOUNTS || id == NET_ID_FULL_STATE) {
-                boolean full = id == NET_ID_FULL_STATE;
-                if (buffer.readBoolean()) {
-                    int fluidId = buffer.readInt();
-                    clientFluid = BuildCraftObjectCaches.retrieveFluid(fluidId);
-                }
-                for (EnumPipePart part : EnumPipePart.VALUES) {
-                    Section section = sections.get(part);
-                    if (full || buffer.readBoolean()) {
-                        section.target = buffer.readShort();
-                        if (full) {
-                            section.clientAmountLast = section.clientAmountThis = section.target;
-                        }
-                    }
-
-                    Dir dir = buffer.readEnumValue(Dir.class);
-                    section.ticksInDirection = dir == Dir.NONE ? 0 : dir == Dir.IN ? COOLDOWN_INPUT : COOLDOWN_OUTPUT;
-                }
-                lastMessageMinus1 = lastMessage;
-                lastMessage = pipe.getHolder().getPipeWorld().getTime();
-            }
+    @Override public void readPayload(int id, PacketByteBuf buffer, EnvType side) throws IOException {
+        if (side != EnvType.CLIENT || id < 0 || id > NET_FLUID_AMOUNTS) return;
+        boolean hasFluid = buffer.readBoolean();
+        int fluidId = hasFluid ? buffer.readVarInt() : 0;
+        if (fluidId < 0) throw new IOException("Negative pipe fluid cache ID");
+        int[] amounts = new int[7], directions = new int[7];
+        for (var part : EnumPipePart.VALUES) {
+            int i = part.getIndex(); amounts[i] = buffer.readVarInt(); directions[i] = buffer.readUnsignedByte();
+            if (amounts[i] < 0 || amounts[i] > capacity || directions[i] > 2 || !hasFluid && amounts[i] != 0)
+                throw new IOException("Invalid fluid pipe section snapshot");
         }
+        clientFluid = hasFluid ? BuildCraftObjectCaches.retrieveFluid(fluidId) : null;
+        for (var part : EnumPipePart.VALUES) {
+            var s = sections.get(part); s.target = amounts[part.getIndex()];
+            s.direction = (directions[part.getIndex()] - 1) * DIRECTION_COOLDOWN;
+            if (id == NET_ID_FULL_STATE) s.clientAmountLast = s.clientAmountThis = s.target;
+        }
+        lastMessageMinus1 = lastMessage;
+        var world = pipe.getHolder().getPipeWorld(); lastMessage = world == null ? 0 : world.getTime();
     }
 
-    /** Holds data about a single section of this pipe. */
-    class Section {
+    @Environment(EnvType.CLIENT) public FluidVariant getFluidStackForRender() { return clientFluid == null ? null : clientFluid.get(); }
+    @Environment(EnvType.CLIENT) public double[] getAmountsForRender(float partialTicks) {
+        double[] result = new double[7];
+        for (var part : EnumPipePart.VALUES) { var s = sections.get(part); result[part.getIndex()] = s.clientAmountLast * (1-partialTicks) + s.clientAmountThis * partialTicks; }
+        return result;
+    }
+    @Environment(EnvType.CLIENT) public Vec3d[] getOffsetsForRender(float partialTicks) {
+        Vec3d[] result = new Vec3d[7];
+        for (var part : EnumPipePart.VALUES) { var s = sections.get(part); result[part.getIndex()] = s.offsetLast.multiply(1-partialTicks).add(s.offset.multiply(partialTicks)); }
+        return result;
+    }
+    @Override public void getDebugInfo(List<String> left, List<String> right, Direction side) {
+        left.add("Fluid = " + getFluid());
+        for (var part : EnumPipePart.VALUES) { var s = sections.get(part); left.add(part + " = " + s.amount + " droplets (" + s.pending + " travelling), direction=" + s.direction); }
+    }
+
+    private final class Section implements Storage<FluidVariant>, StorageView<FluidVariant> {
         final EnumPipePart part;
-
-        int amount = 0;
-
-        int lastSentAmount = 0;
-
-        Dir lastSentDirection = Dir.NONE;
-
-        int currentTime = 0;
-
-        /** Map of [time] -> [amount inserted]. Used to implement the delayed fluid travelling. */
-        int[] incoming = new int[1];
-
-        int incomingTotalCache = 0;
-
-        /** If 0 then fluids can move from this in either direction. If less than 0 then fluids can only move into this
-         * section from other tiles, and outputs to other sections. If greater than 0 then fluids can only move out of
-         * this section into other tiles. */
-        int ticksInDirection = 0;
-
-        // Client side fields
-
-        /** Used to interpolate between {@link #clientAmountThis} and {@link #clientAmountLast} for rendering. */
-        int clientAmountThis, clientAmountLast;
-
-        /** Holds the amount of fluid was last sent to us from the sever */
-        int target = 0;
-
-        Vec3d offsetLast, offsetThis;
-
-        Section(EnumPipePart part) {
-            this.part = part;
+        int amount, time, pending, direction, lastSentAmount, lastSentDirection;
+        int[] incoming = new int[delay];
+        int target, clientAmountThis, clientAmountLast;
+        Vec3d offset = Vec3d.ZERO, offsetLast = Vec3d.ZERO;
+        Section(EnumPipePart part) { this.part = part; }
+        int maxFill() { return Math.max(0, Math.min(capacity-amount, rate-incoming[time])); }
+        int maxDrain() { return Math.max(0, Math.min(amount-pending, rate)); }
+        int fill(int offered, boolean limited) {
+            int filled = Math.max(0, Math.min(offered, limited ? maxFill() : capacity-amount));
+            incoming[time] += filled; pending += filled; amount += filled;
+            return filled;
         }
-
-        void writeToNbt(NbtCompound nbt) {
-            nbt.putShort("capacity", (short) amount);
-            nbt.putShort("lastSentAmount", (short) lastSentAmount);
-            nbt.putShort("ticksInDirection", (short) ticksInDirection);
-
-            for (int i = 0; i < incoming.length; ++i) {
-                nbt.putShort("in[" + i + "]", (short) incoming[i]);
-            }
+        @Override public long insert(FluidVariant resource, long max, TransactionContext tx) {
+            StoragePreconditions.notBlankNotNegative(resource, max);
+            if (max == 0 || !live() || direction > 0 || !pipe.isConnected(part.face)
+                || currentFluid != null && !currentFluid.equals(resource)) return 0;
+            var plug = pipe.getHolder().getPluggable(part.face);
+            if (plug != null && plug.isBlocking()) return 0;
+            var event = new PipeEventFluid.TryInsert(pipe.getHolder(), PipeFlowFluids.this, part.face, resource, max);
+            pipe.getHolder().fireEvent(event);
+            if (event.isCanceled()) return 0;
+            int accepted = (int) Math.min(max, maxFill());
+            if (accepted <= 0) return 0;
+            snapshots.updateSnapshots(tx); currentFluid = resource;
+            fill(accepted, true); direction = -DIRECTION_COOLDOWN;
+            return accepted;
         }
-
-        void readFromNbt(NbtCompound nbt) {
-            this.amount = nbt.getShort("capacity");
-            this.lastSentAmount = nbt.getShort("lastSentAmount");
-            this.ticksInDirection = nbt.getShort("ticksInDirection");
-
-            incomingTotalCache = 0;
-            for (int i = 0; i < incoming.length; ++i) {
-                incomingTotalCache += incoming[i] = nbt.getShort("in[" + i + "]");
-            }
+        @Override public long extract(FluidVariant resource, long max, TransactionContext tx) { StoragePreconditions.notBlankNotNegative(resource, max); return 0; }
+        @Override public boolean supportsExtraction() { return false; }
+        @Override public boolean isResourceBlank() { return !live() || amount == 0 || currentFluid == null; }
+        @Override public FluidVariant getResource() { return isResourceBlank() ? FluidVariant.blank() : currentFluid; }
+        @Override public long getAmount() { return live() ? amount : 0; }
+        @Override public long getCapacity() { return live() ? capacity : 0; }
+        @Override public Iterator<StorageView<FluidVariant>> iterator() { return Collections.<StorageView<FluidVariant>>singleton(this).iterator(); }
+        NbtCompound writeNbt() {
+            var nbt = new NbtCompound(); nbt.putInt("capacity", amount); nbt.putInt("time", time); nbt.putInt("ticksInDirection", direction);
+            for (int i=0;i<delay;i++) nbt.putInt("in["+i+"]", incoming[i]);
+            return nbt;
         }
-
-        /** @return The maximum amount of fluid that can be inserted into this pipe on this tick. */
-        int getMaxFilled() {
-            int availableTotal = capacity - amount;
-            int availableThisTick = fluidTransferInfo.transferPerTick - incoming[currentTime];
-            return Math.min(availableTotal, availableThisTick);
+        void readNbt(NbtCompound nbt, boolean droplets) {
+            amount = savedAmount(nbt.getLong("capacity"), droplets, capacity);
+            time = Math.floorMod(nbt.getInt("time"), delay);
+            direction = MathHelper.clamp(nbt.getInt("ticksInDirection"), -DIRECTION_COOLDOWN, DIRECTION_COOLDOWN);
+            for (int i=0;i<delay;i++) { incoming[i] = savedAmount(nbt.getLong("in["+i+"]"), droplets, amount-pending); pending += incoming[i]; }
         }
-
-        /** @return The maximum amount of fluid that can be extracted out of this pipe this tick. */
-        int getMaxDrained() {
-            return Math.min(amount - incomingTotalCache, fluidTransferInfo.transferPerTick);
-        }
-
-        /** @return The fluid filled */
-        int fill(int maxFill, boolean doFill) {
-            int amountToFill = Math.min(getMaxFilled(), maxFill);
-            if (amountToFill <= 0) {
-                return 0;
-            }
-            if (doFill) {
-                incoming[currentTime] += amountToFill;
-                incomingTotalCache += amountToFill;
-                amount += amountToFill;
-            }
-            return amountToFill;
-        }
-
-        public int fillInternal(int maxFill, boolean doFill) {
-            int amountToFill = Math.min(capacity - amount, maxFill);
-            if (amountToFill <= 0) {
-                return 0;
-            }
-            if (doFill) {
-                incoming[currentTime] += amountToFill;
-                incomingTotalCache += amountToFill;
-                amount += amountToFill;
-            }
-            return amountToFill;
-        }
-
-        /** @param maxDrain
-         * @param doDrain
-         * @return The amount drained */
-        int drainInternal(int maxDrain, boolean doDrain) {
-            maxDrain = Math.min(maxDrain, getMaxDrained());
-            if (maxDrain <= 0) {
-                return 0;
-            } else {
-                if (doDrain) {
-                    amount -= maxDrain;
-                }
-                return maxDrain;
-            }
-        }
-
-        void advanceForMovement() {
-            incomingTotalCache -= incoming[currentTime];
-            incoming[currentTime] = 0;
-        }
-
-        void setTime(int current) {
-            currentTime = current;
-        }
-
-        Dir getCurrentDirection() {
-            Dir dir = ticksInDirection == 0 ? Dir.NONE : ticksInDirection < 0 ? Dir.IN : Dir.OUT;
-            return dir;
-        }
-
-        /** @return True if this still contains fluid, false if not. */
-        boolean tickClient() {
+        void tickClient() {
             clientAmountLast = clientAmountThis;
-
-            if (target != clientAmountThis) {
-                int delta = target - clientAmountThis;
-                long msgDelta = lastMessage - lastMessageMinus1;
-                msgDelta = MathUtil.clamp((int) msgDelta, 1, 60);
-                if (Math.abs(delta) < msgDelta) {
-                    clientAmountThis += delta;
-                } else {
-                    clientAmountThis += delta / (int) msgDelta;
-                }
-            }
-
-            if (offsetThis == null || (clientAmountThis == 0 && clientAmountLast == 0)) {
-                offsetThis = Vec3d.ZERO;
-            }
-            offsetLast = offsetThis;
-
-            if (part.face == null) {
-                Vec3d dir = Vec3d.ZERO;
-                // Firstly find all the outgoing faces
-                for (EnumPipePart p : EnumPipePart.FACES) {
-                    Section s = sections.get(p);
-                    if (s.ticksInDirection > 0) {
-                        dir = dir.add(Vec3d.of(p.face.getVector()));
-                    }
-                }
-                // If that failed then find all of the incoming faces
-                for (EnumPipePart p : EnumPipePart.FACES) {
-                    Section s = sections.get(p);
-                    if (s.ticksInDirection < 0) {
-                        dir = dir.add(Vec3d.of(p.face.getVector()).multiply(-1));
-                    }
-                }
-                dir = new Vec3d(Math.signum(dir.x), Math.signum(dir.y), Math.signum(dir.z));
-                offsetThis = offsetThis.add(dir.multiply(-FLOW_MULTIPLIER));
-            } else {
-                double mult = Math.signum(ticksInDirection);
-                offsetThis = VecUtil.offset(offsetLast, part.face, -FLOW_MULTIPLIER * (mult));
-            }
-
-            double dx = offsetThis.x >= 0.5 ? -1 : offsetThis.x <= 0.5 ? 1 : 0;
-            double dy = offsetThis.y >= 0.5 ? -1 : offsetThis.y <= 0.5 ? 1 : 0;
-            double dz = offsetThis.z >= 0.5 ? -1 : offsetThis.z <= 0.5 ? 1 : 0;
-            if (dx != 0 || dy != 0 || dz != 0) {
-                offsetThis = offsetThis.add(dx, dy, dz);
-                offsetLast = offsetLast.add(dx, dy, dz);
-            }
-            return clientAmountThis > 0 | clientAmountLast > 0;
+            long span = Math.max(1, Math.min(60, lastMessage-lastMessageMinus1));
+            int delta = target-clientAmountThis;
+            clientAmountThis += Math.abs(delta) < span ? delta : delta/(int)span;
+            offsetLast = offset;
+            Vec3d movement = Vec3d.ZERO;
+            if (part.face != null) movement = Vec3d.of(part.face.getVector()).multiply(Integer.signum(direction));
+            else for (var face : EnumPipePart.FACES) movement = movement.add(Vec3d.of(face.face.getVector()).multiply(Integer.signum(sections.get(face).direction)));
+            offset = offset.add(movement.multiply(-FLOW_MULTIPLIER));
+            double dx = offset.x >= 0.5 ? -1 : offset.x <= -0.5 ? 1 : 0;
+            double dy = offset.y >= 0.5 ? -1 : offset.y <= -0.5 ? 1 : 0;
+            double dz = offset.z >= 0.5 ? -1 : offset.z <= -0.5 ? 1 : 0;
+            offset = offset.add(dx,dy,dz); offsetLast = offsetLast.add(dx,dy,dz);
         }
     }
 
-    /** Enum used for the current direction that a fluid is flowing. */
-    enum Dir {
-        IN(-1),
-        NONE(0),
-        OUT(1);
-
-        final byte nbtValue;
-
-        private Dir(int nbtValue) {
-            this.nbtValue = (byte) nbtValue;
-        }
-
-        public boolean isInput() {
-            return this == IN;
-        }
-
-        public boolean canInput() {
-            return this != OUT;
-        }
-
-        public boolean isOutput() {
-            return this == OUT;
-        }
-
-        public boolean canOutput() {
-            return this != IN;
-        }
-
-        public static Dir get(int dir) {
-            if (dir == 0) {
-                return Dir.NONE;
-            } else if (dir < 0) {
-                return IN;
-            } else {
-                return OUT;
-            }
-        }
+    private static int savedAmount(long amount, boolean droplets, int maximum) {
+        if (amount <= 0) return 0;
+        return (int) Math.min(maximum, Math.min(amount, maximum) * (droplets ? 1L : 81L));
     }
 }

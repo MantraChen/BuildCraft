@@ -51,6 +51,7 @@ public final class FullClientSmoke implements ClientModInitializer {
             }
             int variants = checkItemVariants(client, failures) + checkPipeGeometry(client, failures) + checkGateGeometry(client, failures);
             checkWireGeometry(failures);
+            checkFluidPipeGeometry(failures);
             var statements = new java.util.HashSet<>(buildcraft.api.statements.StatementManager.statements.values());
             int transportStatements = 0, coreStatements = 0;
             for (var statement : statements) if (statement.getClass().getPackageName().equals("buildcraft.transport.statements")
@@ -207,6 +208,48 @@ public final class FullClientSmoke implements ClientModInitializer {
             if (probe.vertices != 768 || !probe.valid) failures.add("Wire geometry/UV/light/matrix failure: " + colour + " powered=" + on + " vertices=" + probe.vertices);
         }
         System.out.println("BUILDCRAFT WIRE RENDER: 16 colours, 8 corners + 36 connections, lit/unlit");
+    }
+
+    private static void checkFluidPipeGeometry(ArrayList<String> failures) {
+        int cases=0;
+        var matrices=new net.minecraft.client.util.math.MatrixStack(); matrices.translate(2,3,4);
+        for (var fluid : new net.minecraft.fluid.Fluid[]{net.minecraft.fluid.Fluids.WATER,net.minecraft.fluid.Fluids.LAVA}) {
+            var variant=net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluid);
+            var sprites=net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering.getSprites(variant);
+            var sprite=sprites[sprites.length>1?1:0];
+            for (int mask=0;mask<64;mask++) for (long amount:new long[]{0,81,8100,40500,81000}) {
+                double[] amounts=new double[7],lengths=new double[6]; java.util.Arrays.fill(amounts,amount);
+                for(var side:Direction.values()) if ((mask & (1<<side.ordinal()))!=0) lengths[side.ordinal()]=0.25;
+                var probe=new FluidVertices(sprite,fluid==net.minecraft.fluid.Fluids.LAVA?240:0);
+                buildcraft.transport.client.render.PipeFlowRendererFluids.renderSections(variant,amounts,lengths,81000,matrices,layer -> {
+                    probe.valid &= layer==net.minecraft.client.render.RenderLayer.getEntityTranslucent(net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
+                    return probe;
+                },0);
+                int boxes=Integer.bitCount(mask)+1;
+                if (amount<81000 && (mask & (1<<Direction.UP.ordinal()))!=0 && (mask & 60)!=0) boxes++;
+                if (!probe.valid || probe.vertices!=(amount==0?0:boxes*24)) failures.add("Fluid pipe geometry/UV/light failure: "+fluid+" mask="+mask+" amount="+amount+" vertices="+probe.vertices);
+                cases++;
+            }
+        }
+        System.out.println("BUILDCRAFT FLUID PIPE RENDER: "+cases+" water/lava, connection and fill combinations");
+    }
+
+    private static final class FluidVertices implements net.minecraft.client.render.VertexConsumer {
+        final net.minecraft.client.texture.Sprite sprite; final int blockLight; boolean valid=true; int vertices;
+        FluidVertices(net.minecraft.client.texture.Sprite sprite,int blockLight) { this.sprite=sprite; this.blockLight=blockLight; }
+        public net.minecraft.client.render.VertexConsumer vertex(double x,double y,double z) {
+            valid &= Double.isFinite(x+y+z) && x>=1.9999 && x<=3.0001 && y>=2.9999 && y<=4.0001 && z>=3.9999 && z<=5.0001; return this;
+        }
+        public net.minecraft.client.render.VertexConsumer color(int r,int g,int b,int a) { valid &= a>0; return this; }
+        public net.minecraft.client.render.VertexConsumer texture(float u,float v) {
+            valid &= Float.isFinite(u+v) && u>=sprite.getMinU()-1e-6 && u<=sprite.getMaxU()+1e-6 && v>=sprite.getMinV()-1e-6 && v<=sprite.getMaxV()+1e-6; return this;
+        }
+        public net.minecraft.client.render.VertexConsumer overlay(int u,int v) { return this; }
+        public net.minecraft.client.render.VertexConsumer light(int u,int v) { valid &= u==blockLight && v==0; return this; }
+        public net.minecraft.client.render.VertexConsumer normal(float x,float y,float z) { valid &= Float.isFinite(x+y+z); return this; }
+        public void next() { vertices++; }
+        public void fixedColor(int r,int g,int b,int a) {}
+        public void unfixColor() {}
     }
 
     private static final class WireVertices implements net.minecraft.client.render.VertexConsumer {

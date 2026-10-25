@@ -136,6 +136,14 @@ public class PipeBehaviourWoodDiamond extends PipeBehaviourWood {
         return extracted;
     }
 
+    @Override protected long extractFluid(buildcraft.api.transport.pipe.IFlowFluid flow, Direction dir, long droplets, boolean simulate) {
+        if (filterMode == FilterMode.ROUND_ROBIN) return 0;
+        var samples = new java.util.HashSet<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant>();
+        for (var filter : filters.stacks) samples.addAll(FluidPipeFilters.samples(filter));
+        return flow.tryExtractFluidAdv(droplets, dir, resource -> filterMode == FilterMode.WHITE_LIST
+            ? samples.isEmpty() || samples.contains(resource) : !samples.contains(resource), simulate);
+    }
+
     private void changed() {
         var world = pipe.getHolder().getPipeWorld();
         if (world != null && !world.isClient) {

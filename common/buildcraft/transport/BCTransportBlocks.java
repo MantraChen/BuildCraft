@@ -34,5 +34,10 @@ public class BCTransportBlocks {
             if (tile.isRemoved() || plug != null && plug.isBlocking()) return null;
             return pipe != null && pipe.flow instanceof buildcraft.transport.pipe.flow.PipeFlowItems flow ? flow.getStorage(face) : null;
         }, pipeHolderTile);
+        net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.registerForBlockEntity((tile, face) -> {
+            var pipe = tile.getPipe(); var plug = tile.getPluggable(face);
+            if (tile.isRemoved() || plug != null && plug.isBlocking()) return null;
+            return pipe != null && pipe.flow instanceof buildcraft.transport.pipe.flow.PipeFlowFluids flow ? flow.getStorage(face) : null;
+        }, pipeHolderTile);
     }
 }

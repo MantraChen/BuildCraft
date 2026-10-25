@@ -50,11 +50,17 @@ use sided Fabric storage, including non-consuming sample and capacity checks.
 All 16 wire colours place on pipe corners, connect matching networks and carry gate
 signals. Breaking an attachment preserves the pipe and honours native break protection.
 Gate/wire crafting and the remaining pluggables still need restoration.
+Fluid pipes now expose native transactional storage, retain exact droplets/NBT through
+save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
+clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.
+Their client renderer uses native animated fluid sprites and synchronized fill levels.
+Fluid-pipe crafting and recovery of fluid when breaking a pipe remain unfinished.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
 Add `-Interactions` to create an isolated flat world and exercise real client/server
-wire, gate and whole-pipe breaking, including vanilla prediction acknowledgements.
+wire, gate and whole-pipe breaking, including vanilla prediction acknowledgements,
+then tank-to-pipe fluid transport, native fluid-cache replies and empty-state synchronization.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

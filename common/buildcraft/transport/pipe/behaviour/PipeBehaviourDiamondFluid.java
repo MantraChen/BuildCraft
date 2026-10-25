@@ -8,9 +8,6 @@
 
 package buildcraft.transport.pipe.behaviour;
 
-// STUB(R.Chen): PipeBehaviourDiamondFluid — FluidStack / FluidUtil are Forge and not yet migrated.
-// sideCheck(PipeEventFluid.SideCheck) no-ops until the fluid-filter layer is ported (Phase 4E fluid).
-
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.Direction;
 
@@ -29,6 +26,17 @@ public class PipeBehaviourDiamondFluid extends PipeBehaviourDiamond {
 
     @PipeEventHandler
     public void sideCheck(PipeEventFluid.SideCheck sideCheck) {
-        // STUB(R.Chen): fluid filter matching deferred to Phase 4E — FluidStack/FluidUtil not migrated.
+        for (var side : Direction.values()) {
+            if (!sideCheck.isAllowed(side)) continue;
+            boolean filtered = false, matched = false;
+            for (int slot = 0; slot < FILTERS_PER_SIDE; slot++) {
+                for (var fluid : FluidPipeFilters.samples(filters.getStackInSlot(side.ordinal() * FILTERS_PER_SIDE + slot))) {
+                    filtered = true;
+                    matched |= fluid.equals(sideCheck.fluid);
+                }
+            }
+            if (matched) sideCheck.increasePriority(side, 12);
+            else if (filtered) sideCheck.disallow(side);
+        }
     }
 }

@@ -15,13 +15,11 @@ import net.fabricmc.fabric.api.client.rendereregistry.v1.BlockEntityRendererRegi
 import buildcraft.api.transport.pipe.PipeApiClient;
 
 import buildcraft.transport.client.PipeRegistryClient;
-import buildcraft.transport.client.render.PipeFlowRendererFluids;
 import buildcraft.transport.client.render.PipeFlowRendererPower;
 import buildcraft.transport.client.render.PipeFlowRendererRf;
 import buildcraft.transport.client.render.PipeBehaviourRendererStripes;
 import buildcraft.transport.client.render.RenderPipeHolder;
 import buildcraft.transport.pipe.behaviour.PipeBehaviourStripes;
-import buildcraft.transport.pipe.flow.PipeFlowFluids;
 import buildcraft.transport.pipe.flow.PipeFlowPower;
 import buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux;
 
@@ -51,7 +49,6 @@ public class BCTransportClientInitializer implements ClientModInitializer {
 
         // Register flow renderers
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowPower.class,        PipeFlowRendererPower.INSTANCE);
-        PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowFluids.class,       PipeFlowRendererFluids.INSTANCE);
         PipeRegistryClient.INSTANCE.registerRenderer(PipeFlowRedstoneFlux.class, PipeFlowRendererRf.INSTANCE);
 
         // Register behaviour renderers

@@ -191,6 +191,18 @@ public class BCTransportPipes {
         builder.builder.itemTex(0);
         builder.logic(PipeBehaviourStripes::new, PipeBehaviourStripes::new);
         stripesItem = builder.idTex("stripes_item").flowItem().define();
+
+        // Restore the original material rates in mB/t; the native flow converts these to droplets.
+        int rate = Math.max(1, Math.min(40, BCTransportConfig.baseFlowRate));
+        for (var def : new PipeDefinition[]{cobbleFluid, woodFluid})
+            PipeApi.fluidTransferData.put(def, new PipeApi.FluidTransferInfo(rate, 10));
+        for (var def : new PipeDefinition[]{stoneFluid, sandstoneFluid})
+            PipeApi.fluidTransferData.put(def, new PipeApi.FluidTransferInfo(rate * 2, 10));
+        for (var def : new PipeDefinition[]{clayFluid, ironFluid, quartzFluid})
+            PipeApi.fluidTransferData.put(def, new PipeApi.FluidTransferInfo(rate * 4, 10));
+        for (var def : new PipeDefinition[]{diamondFluid, diaWoodFluid, voidFluid})
+            PipeApi.fluidTransferData.put(def, new PipeApi.FluidTransferInfo(rate * 8, 10));
+        PipeApi.fluidTransferData.put(goldFluid, new PipeApi.FluidTransferInfo(rate * 8, 2));
     }
 
     private static class DefinitionBuilder {

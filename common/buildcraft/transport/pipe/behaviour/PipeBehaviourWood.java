@@ -8,9 +8,6 @@
 
 package buildcraft.transport.pipe.behaviour;
 
-// STUB(R.Chen): PipeBehaviourWood — Forge MjCapabilityHelper (removes with cap layer), FluidStack
-// (Forge fluid, Phase 4E fluid). getCapability → stub null. extractFluid → stub null.
-
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -85,7 +82,9 @@ public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRe
                     }
                 }
             } else if (pipe.getFlow() instanceof IFlowFluid) {
-                // STUB(R.Chen): extractFluid deferred — FluidStack (Forge) not migrated (Phase 4E).
+                long droplets = power / MJ_PER_MILLIBUCKET * 81 + power % MJ_PER_MILLIBUCKET * 81 / MJ_PER_MILLIBUCKET;
+                long extracted = extractFluid((IFlowFluid) pipe.getFlow(), getCurrentDir(), droplets, simulate);
+                return power - (extracted * MJ_PER_MILLIBUCKET + 80) / 81;
             }
         }
         return power;
@@ -94,6 +93,10 @@ public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRe
     protected int extractItems(IFlowItems flow, Direction dir, int count, boolean simulate) {
         // StackFilter.ALL inlined — StackFilter (Forge TileEntityFurnace dep) not yet in libLeaf.
         return flow.tryExtractItems(count, dir, null, stack -> true, simulate);
+    }
+
+    protected long extractFluid(IFlowFluid flow, Direction dir, long droplets, boolean simulate) {
+        return flow.tryExtractFluid(droplets, dir, null, simulate);
     }
 
     // IMjRedstoneReceiver

@@ -272,7 +272,7 @@ public final class Pipe implements IPipe, IDebuggable {
                 continue;
             }
             BlockEntity oTile = getHolder().getNeighbourTile(facing);
-            if (oTile == null) {
+            if (oTile == null && !(flow instanceof buildcraft.transport.pipe.flow.PipeFlowFluids)) {
                 continue;
             }
             IPipe oPipe = getHolder().getNeighbourPipe(facing);

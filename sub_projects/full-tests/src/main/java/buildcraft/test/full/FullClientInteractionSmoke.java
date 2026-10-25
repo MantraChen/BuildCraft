@@ -30,6 +30,8 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
     private long deadline;
     private CompletableFuture<Void> serverWork;
     private TilePipeHolder clientTile;
+    private boolean sawFluid;
+    private net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant testFluid;
 
     @Override public void onInitializeClient() {
         if (!Boolean.getBoolean("buildcraft.fullClientInteractionSmoke")) return;
@@ -51,7 +53,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                 registries -> registries.get(RegistryKeys.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createDimensionsRegistryHolder());
             return;
         }
-        if (stage == 8) return;
+        if (stage == 11) return;
         if (System.nanoTime() > deadline) throw new IllegalStateException("Attachment client smoke timed out at stage " + stage);
         if (client.world == null || client.player == null || client.interactionManager == null || client.getServer() == null) return;
         ticks++;
@@ -116,7 +118,56 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
             if (!serverWork.isDone()) return;
             serverWork.join();
             System.out.println("BUILDCRAFT FULL CLIENT INTERACTIONS: wire break, gate break, whole pipe break; failures=0");
-            stage = 8;
+            advance();
+        } else if (stage == 8) {
+            var tag=new net.minecraft.nbt.NbtCompound(); tag.putString("batch","Remake by FelixMantra");
+            testFluid=net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(net.minecraft.fluid.Fluids.WATER,tag);
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();
+                world.setBlockState(POS.west(),buildcraft.factory.BCFactoryBlocks.tank.getDefaultState());
+                world.setBlockState(POS.east(2),buildcraft.factory.BCFactoryBlocks.tank.getDefaultState());
+                for (int i=0;i<2;i++) {
+                    world.setBlockState(POS.east(i),BCTransportBlocks.pipeHolder.getDefaultState());
+                    var tile=(TilePipeHolder)world.getBlockEntity(POS.east(i));
+                    tile.onPlacedBy(null,new ItemStack(i==0?BCTransportItems.pipeFluidWood:BCTransportItems.pipeFluidStone));
+                }
+                var source=net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.find(world,POS.west(),Direction.EAST);
+                try(var tx=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.openOuter()) {
+                    require(source.insert(testFluid,81037,tx)==81037,"Client fixture tank fill failed"); tx.commit();
+                }
+                var wood=(TilePipeHolder)world.getBlockEntity(POS); wood.tick();
+                ((TilePipeHolder)world.getBlockEntity(POS.east())).tick();
+                var mj=(buildcraft.api.mj.IMjReceiver)buildcraft.api.mj.MjAPI.CONNECTOR.find(world,POS,Direction.UP);
+                require(mj.receivePower(2*buildcraft.api.mj.MjAPI.MJ,false)<2*buildcraft.api.mj.MjAPI.MJ,"Client fixture MJ extraction failed");
+            });
+            advance();
+        } else if (stage == 9 && ready()) {
+            for(int i=0;i<2;i++) if (client.world.getBlockEntity(POS.east(i)) instanceof TilePipeHolder tile
+                    && tile.getPipe()!=null && tile.getPipe().flow instanceof buildcraft.transport.pipe.flow.PipeFlowFluids flow) {
+                var fluid=flow.getFluidStackForRender();
+                if (fluid!=null && !fluid.isBlank()) {
+                    require(fluid.equals(testFluid),"Native fluid object-cache reply lost variant NBT");
+                    sawFluid |= java.util.Arrays.stream(flow.getAmountsForRender(1)).sum()>0;
+                }
+            }
+            if(ticks<300) return;
+            require(sawFluid,"Client never received renderable fluid identity and amounts");
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();
+                var destination=net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.find(world,POS.east(2),Direction.WEST);
+                long total=0; for(var view:destination.nonEmptyViews()) { require(view.getResource().equals(testFluid),"Networked delivery lost NBT"); total+=view.getAmount(); }
+                require(total==81037,"Integrated-server fluid delivery lost exact droplets: "+total);
+            });
+            advance();
+        } else if (stage == 10 && ready()) {
+            for(int i=0;i<2;i++) {
+                var tile=(TilePipeHolder)client.world.getBlockEntity(POS.east(i));
+                var flow=(buildcraft.transport.pipe.flow.PipeFlowFluids)tile.getPipe().flow;
+                require(flow.getFluidStackForRender()==null && java.util.Arrays.stream(flow.getAmountsForRender(1)).sum()==0,
+                    "Client retained a ghost fluid after the server emptied the pipe");
+            }
+            System.out.println("BUILDCRAFT FULL CLIENT FLUIDS: native cache NBT, visible transport, exact 81037 droplets, empty sync; failures=0");
+            stage = 11;
             client.world.disconnect();
             client.disconnect();
             client.scheduleStop();

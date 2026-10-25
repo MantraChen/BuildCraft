@@ -26,8 +26,11 @@ client interaction manager, verifies the same pipe block entity survives server 
 then verifies that targeting the pipe centre still removes the whole block on both sides.
 This covers a prediction bug that server-only tests cannot detect: vanilla previously
 predicted air for an attachment break, losing the pipe before its incremental update.
+The same client then transfers 81,037 droplets of tagged water through wooden and stone
+pipes between native tanks. It requires a renderable client fluid with the original NBT,
+exact delivery on the integrated server and no remaining client fluid after emptying.
 
-The 61 server tests currently verify:
+The 72 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -131,6 +134,17 @@ The 61 server tests currently verify:
   Native player breaking removes only the targeted wire/gate, respects Fabric protection
   cancellation and drops nothing in creative mode.
 
+- Native fluid input shares identity, per-tick budgets and nested rollback across faces,
+  rejects stale views and supports providers without block entities. MJ extraction,
+  simulation, fractional droplets, native save/reconstruction and actual tank-to-pipe
+  delivery preserve amounts/NBT. Partial/full receivers and replaced sinks do not lose
+  fluid; iron direction, clay priority and delayed void consumption use real world ticks.
+- Forced extraction reports exact amounts without double-draining. The earlier Fabric
+  millibucket save format converts once; malformed saved sections and fluid packets
+  are bounded. Diamond bucket samples prioritize matching outputs and permit fallback
+  around full tanks; wooden-diamond whitelist/blacklist queries leave samples intact.
+  Material rates and the shorter gold-pipe delay retain their original differences.
+
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
 129 default item models and 199 explicit item/pipe/gate/wire variants. It rejects missing models,
@@ -146,7 +160,10 @@ all 30 core and 105 transport statements to have valid atlas icons and localized
 descriptions, including direction, paint, wire and power-limit choices. It requires
 all 16 wire item textures to match their NBT colour. The actual wire renderer emits all
 eight corners and 36 connection shapes, lit/unlit, for every colour (1,408 combinations),
-with bounded atlas UVs, correct light and transformed coordinates. It requires
+with bounded atlas UVs, correct light and transformed coordinates. The production fluid
+pipe renderer is checked for water/lava at five fill levels across all 64 connection
+masks (640 combinations), including translucent layers, atlas UVs, transformed bounds
+and lava light. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

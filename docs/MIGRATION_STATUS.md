@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **61 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **72 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -110,6 +110,12 @@ features explicitly as work proceeds.
   Bounded, atomic wire snapshots include power state; malformed NBT/packets and server-side
   injection are rejected. Native partial breaking drops only the selected wire/gate,
   preserves the pipe, honours Fabric protection cancellation and suppresses creative drops.
+  Eleven fluid tests cover native sided transactions, cross-face rollback and rate
+  budgets, exact droplet/NBT conservation, MJ extraction, native save/reconstruction,
+  full/partial/replaced sinks, iron direction, clay priority and delayed void consumption.
+  Forced extraction returns the actual amount; earlier Fabric mB saves convert once,
+  while malformed sections and snapshots are bounded. Diamond and wooden-diamond
+  fluid filters use non-consuming native item providers, and material rates are restored.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -230,7 +236,15 @@ features explicitly as work proceeds.
   combine gate emitters and sync bounded per-tile power snapshots. Partial breaking
   preserves the pipe and honours Fabric protection, with client prediction retaining
   the existing block entity until the server confirms attachment changes.
-  Full fluid/power/RF transport, obsidian/stripes behavior, gate/wire crafting
+  Native fluid transport now preserves seven delayed sections while using exact droplets
+  and one shared transaction snapshot for fluid identity, amounts and travel state.
+  Native storage queries work without a neighboring block entity and respect blocked
+  attachments. The client receives typed fluid-cache replies and renders native flowing
+  sprites through the translucent vertex-consumer path, including lava luminosity.
+  The real GPU fixture checks 640 connection/fill/fluid combinations; a connected client
+  receives tagged fluid, observes its passage and clears it after exact 81,037-droplet
+  delivery. Fluid-pipe crafting and fluid recovery on breaking remain unfinished.
+  Full power/RF transport, obsidian/stripes behavior, gate/wire crafting
   and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
