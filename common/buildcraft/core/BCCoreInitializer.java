@@ -46,8 +46,7 @@ public class BCCoreInitializer implements ModInitializer {
         BuildCraftFabric.LOGGER.info("[BCCore] Depends on {} (lib entrypoint already built)", BCLibInitializer.MODID);
 
         // --- Forge preInit (BCCore.preInit) -----------------------------------
-        // STUB(R.Chen): BCCoreConfig.preInit(cfgFolder) — port to a Fabric config
-        //               directory (FabricLoader.getInstance().getConfigDir()).
+        BCCoreConfig.preInit(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("buildcraft").toFile());
         // STUB(R.Chen): CreativeTabManager.createTab("buildcraft.main") — port to
         //               FabricItemGroup once lib.registry is migrated.
         // STUB(R.Chen): BCCoreBlocks/Items/Statements.preInit() + BCCoreRecipes —

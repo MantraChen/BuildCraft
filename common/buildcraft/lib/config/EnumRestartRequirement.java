@@ -6,7 +6,7 @@
 
 package buildcraft.lib.config;
 
-import net.minecraftforge.common.config.Property;
+import buildcraft.lib.config.Property;
 
 public enum EnumRestartRequirement {
     NONE(false, false),

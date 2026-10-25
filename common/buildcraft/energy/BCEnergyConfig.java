@@ -11,12 +11,13 @@ import java.util.Locale;
 import java.util.Set;
 
 
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.util.Identifier;
 
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import buildcraft.lib.config.Property;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.world.biome.Biome;
 
 import buildcraft.api.core.BCLog;
 
@@ -155,7 +156,7 @@ public class BCEnergyConfig {
             "Biome registry names (e.g. 'minecraft:ocean','minecraft:hills')"
                 + " of biomes that should have slightly increased oil generation rates.");
 
-        String[] _excluded = { "minecraft:hell", "minecraft:sky", };
+        String[] _excluded = { "minecraft:nether_wastes", "minecraft:the_end", };
         propExcludedBiomes = BCCoreConfig.config.get("worldgen.oil", "excludedBiomes", _excluded,
             "Biome registry names (e.g. 'minecraft:hell','minecraft:jungle') of biomes that should never generate oil.");
 
@@ -213,6 +214,8 @@ public class BCEnergyConfig {
 
         reloadConfig(EnumRestartRequirement.GAME);
         BCCoreConfig.addReloadListener(BCEnergyConfig::reloadConfig);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server ->
+            validateBiomeNames(server.getRegistryManager().get(RegistryKeys.BIOME)));
     }
 
     public static void reloadConfig(EnumRestartRequirement restarted) {
@@ -222,7 +225,7 @@ public class BCEnergyConfig {
             addBiomeNames(propExcessiveBiomes, excessiveBiomes);
             addBiomeNames(propSurfaceDepositBiomes, surfaceDepositBiomes);
             excludedDimensions.clear();
-            excludedDimensions.addAll(propExcludedDimensions.getIntList());
+            for (int dimension : propExcludedDimensions.getIntList()) excludedDimensions.add(dimension);
             excludedBiomesIsBlackList = propExcludedBiomesIsBlacklist.getBoolean();
             excludedDimensionsIsBlackList = propExcludedDimensionsIsBlacklist.getBoolean();
 
@@ -248,8 +251,6 @@ public class BCEnergyConfig {
                 largeOilGenProb = propLargeOilGenProb.doubleValue() / 100;
 
                 christmasEventStatus = ConfigUtil.parseEnumForConfig(propChristmasEventType, SpecialEventType.DAY_ONLY);
-            } else {
-                validateBiomeNames();
             }
         }
     }
@@ -261,13 +262,12 @@ public class BCEnergyConfig {
         }
     }
 
-    /** Called in post-init, after all biomes should have been registered. In 1.12 this should be called after the
-     * registry event for biomes has been fired. */
-    public static void validateBiomeNames() {
+    /** Biomes are a dynamic registry, available only after the server loads its data packs. */
+    public static void validateBiomeNames(Registry<Biome> biomes) {
         Set<Identifier> invalids = new HashSet<>();
-        addInvalidBiomeNames(excessiveBiomes, invalids);
-        addInvalidBiomeNames(excludedBiomes, invalids);
-        addInvalidBiomeNames(surfaceDepositBiomes, invalids);
+        addInvalidBiomeNames(biomes, excessiveBiomes, invalids);
+        addInvalidBiomeNames(biomes, excludedBiomes, invalids);
+        addInvalidBiomeNames(biomes, surfaceDepositBiomes, invalids);
 
         if (invalids.isEmpty()) {
             return;
@@ -278,7 +278,7 @@ public class BCEnergyConfig {
         Collections.sort(invalidList, Comparator.comparing(Identifier::toString));
 
         List<Identifier> allValid = new ArrayList<>();
-        allValid.addAll(ForgeRegistries.BIOMES.getKeys());
+        allValid.addAll(biomes.getIds());
         Collections.sort(allValid, Comparator.comparing(Identifier::toString));
 
         BCLog.logger.warn("****************************************************");
@@ -287,23 +287,17 @@ public class BCEnergyConfig {
         BCLog.logger.warn("* (Config file = " + BCCoreConfig.config.getConfigFile().getAbsolutePath() + ")");
         BCLog.logger.warn("*");
         BCLog.logger.warn("* Unknown biomes: ");
-        printList(Level.WARN, invalidList);
+        invalidList.forEach(location -> BCLog.logger.warn("*    - {}", location));
         BCLog.logger.warn("*");
         BCLog.logger.info("* All possible known names: ");
-        printList(Level.INFO, allValid);
+        allValid.forEach(location -> BCLog.logger.info("*    - {}", location));
         BCLog.logger.info("*");
         BCLog.logger.warn("****************************************************");
     }
 
-    private static void printList(Level level, List<Identifier> list) {
-        for (Identifier location : list) {
-            BCLog.logger.log(level, "*    - " + location);
-        }
-    }
-
-    private static void addInvalidBiomeNames(Set<Identifier> toTest, Set<Identifier> invalidDest) {
+    private static void addInvalidBiomeNames(Registry<Biome> biomes, Set<Identifier> toTest, Set<Identifier> invalidDest) {
         for (Identifier test : toTest) {
-            if (!ForgeRegistries.BIOMES.containsKey(test)) {
+            if (!biomes.containsId(test)) {
                 invalidDest.add(test);
             }
         }

@@ -6,7 +6,7 @@
 
 package buildcraft.builders;
 
-import net.minecraftforge.common.config.Property;
+import buildcraft.lib.config.Property;
 
 import buildcraft.lib.config.EnumRestartRequirement;
 import buildcraft.lib.misc.MathUtil;

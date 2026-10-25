@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 218 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 207 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **55 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **68 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **8 world tests passed** after the 55 regression tests.
+- Headless Fabric GameTest: **8 world tests passed** after the 68 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -109,6 +109,13 @@ features explicitly as work proceeds.
   duplication. The `grabAll` flag again means collecting existing nearby items. Temporary
   tools are restored, and machine profile names are safe on Windows. Native fluid probes
   now recognize flowing water and waterlogged blocks.
+- Core, energy and builder configuration entrypoints now read and save settings. The
+  no-op Forge configuration shims were replaced by BuildCraft-owned typed configuration
+  classes, with atomic saves, legacy `.cfg` input, list/string preservation, schema bounds,
+  default recovery, key migration, restart metadata and in-place reloads. Thirteen regression
+  tests cover these paths. Object settings resolve intended namespaced IDs before registration;
+  biome-name validation now uses the server's loaded dynamic registry. Disabled-object
+  registration and complete startup still need integration validation.
 
 Remaining work includes full compilation, block/entity and screen registration, network
 payload routing, renderers, fluid/energy integration, full quarry operation, packaged

@@ -13,9 +13,9 @@ import java.util.Locale;
 import java.util.Queue;
 import java.util.List;
 
-import net.minecraftforge.common.config.ConfigCategory;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
+import buildcraft.lib.config.ConfigCategory;
+import buildcraft.lib.config.Configuration;
+import buildcraft.lib.config.Property;
 
 import buildcraft.api.core.BCLog;
 
@@ -61,7 +61,7 @@ public class ConfigUtil {
             while (iter.hasNext()) {
                 iter.next();
                 char[] name = iterNames.next();
-                if (name.length < i || name[i] != chars[i]) {
+                if (name.length <= i || name[i] != chars[i]) {
                     iter.remove();
                     iterNames.remove();
                 }

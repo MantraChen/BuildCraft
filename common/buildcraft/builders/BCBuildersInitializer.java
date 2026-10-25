@@ -40,9 +40,7 @@ public class BCBuildersInitializer implements ModInitializer {
         );
 
         // --- Forge preInit (BCBuilders.preInit) ----------------------------------
-        // STUB(R.Chen): RegistryConfig.useOtherModConfigFor(MODID, BCCoreInitializer.MODID) — port to
-        //               Fabric config dir once BCCoreConfig is migrated.
-        // STUB(R.Chen): BCBuildersConfig.preInit() — port to Fabric config (FabricLoader.getConfigDir).
+        BCBuildersConfig.preInit();
         // STUB(R.Chen): BCBuildersBlocks.fmlPreInit() — migrate blocks + BlockEntityType registrations to
         //               Registry.register(Registries.BLOCK / BLOCK_ENTITY_TYPE, ...) once lib.block lands:
         //               - TileQuarry → BlockEntityType QUARRY  (chunk-loading tile, EnergyStorage receiver)
@@ -60,5 +58,6 @@ public class BCBuildersInitializer implements ModInitializer {
 
         // --- Forge postInit (BCBuilders.postInit) --------------------------------
         // STUB(R.Chen): BCBuildersStatements.init() / action providers deferred.
+        buildcraft.core.BCCoreConfig.postInit();
     }
 }

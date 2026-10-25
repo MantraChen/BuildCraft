@@ -40,7 +40,7 @@ public class BCEnergyInitializer implements ModInitializer {
         );
 
         // --- Forge preInit (BCEnergy.preInit) ------------------------------------
-        // STUB(R.Chen): BCEnergyConfig.preInit() — port to Fabric config dir once BCCoreConfig lands.
+        BCEnergyConfig.preInit();
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
         // STUB(R.Chen): BCEnergyFluids.preInit() — oil/fuel fluids need Transfer-API FluidVariant.
         // STUB(R.Chen): BCEnergyBlocks.preInit() — migrate engine tile types + dynamo to

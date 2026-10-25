@@ -12,12 +12,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.LoaderState;
+import buildcraft.lib.config.Configuration;
+import buildcraft.lib.config.Property;
 // STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
 
 import buildcraft.api.BCModules;
@@ -86,9 +82,16 @@ public class BCCoreConfig {
     private static Property propPowerMode;
 
     public static void preInit(File cfgFolder) {
+        if (config != null) return;
+        try { java.nio.file.Files.createDirectories(cfgFolder.toPath()); }
+        catch (java.io.IOException e) { throw new java.io.UncheckedIOException("Cannot create BuildCraft config directory", e); }
         configFolder = cfgFolder;
         config = new Configuration(new File(cfgFolder, "main.cfg"));
         objConfig = RegistryConfig.setRegistryConfig(BCCore.MODID, new File(cfgFolder, "objects.cfg"));
+        for (String namespace : new String[] {"buildcraft", "buildcraftlib", "buildcraftbuilders", "buildcraftenergy",
+            "buildcraftfactory", "buildcraftrobotics", "buildcraftsilicon", "buildcrafttransport"}) {
+            RegistryConfig.useOtherModConfigFor(namespace, BCCore.MODID);
+        }
         BCLibConfig.guiConfigFile = new File(cfgFolder, "gui.json");
 
         detailedConfigManager = new FileConfigManager(
@@ -258,25 +261,23 @@ public class BCCoreConfig {
         reloadConfig(game);
         addReloadListener(BCCoreConfig::reloadConfig);
 
-        // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCCoreConfig.class);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server ->
+            notifyReloadListeners(EnumRestartRequirement.WORLD));
     }
 
     public static void addReloadListener(Consumer<EnumRestartRequirement> listener) {
         reloadListeners.add(listener);
     }
 
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    public static void onConfigChange(OnConfigChangedEvent cce) {
-        if (BCModules.isBcMod(cce.getModID())) {
-            EnumRestartRequirement req = EnumRestartRequirement.NONE;
-            if (Loader.instance().isInState(LoaderState.AVAILABLE)) {
-                // The loaders state will be LoaderState.SERVER_STARTED when we are in a world
-                req = EnumRestartRequirement.WORLD;
-            }
-            for (Consumer<EnumRestartRequirement> listener : reloadListeners) {
-                listener.accept(req);
-            }
-        }
+    public static void reloadFromDisk() {
+        config.load();
+        objConfig.load();
+        notifyReloadListeners(EnumRestartRequirement.NONE);
+    }
+
+    private static void notifyReloadListeners(EnumRestartRequirement requirement) {
+        for (Consumer<EnumRestartRequirement> listener : reloadListeners) listener.accept(requirement);
+        saveConfigs();
     }
 
     public static void postInit() {

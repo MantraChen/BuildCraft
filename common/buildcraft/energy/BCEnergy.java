@@ -64,7 +64,7 @@ public class BCEnergy {
     @Mod.EventHandler
     public static void postInit(FMLPostInitializationEvent evt) {
         BCEnergyProxy.getProxy().fmlPostInit();
-        BCEnergyConfig.validateBiomeNames();
+        // Biome validation runs on SERVER_STARTING, after native data-pack registry loading.
         registerMigrations();
     }
 

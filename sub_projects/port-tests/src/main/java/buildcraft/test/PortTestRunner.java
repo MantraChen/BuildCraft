@@ -12,6 +12,7 @@ import buildcraft.test.lib.inventory.ScriptResourceRootsTest;
 import buildcraft.test.lib.inventory.ListHandlerTest;
 import buildcraft.test.lib.misc.data.CompactingBitSetTest;
 import buildcraft.test.lib.mj.MjConnectionTest;
+import buildcraft.test.lib.config.ConfigurationTest;
 
 /** Runs regression tests in Fabric's real transformed class loader. */
 public final class PortTestRunner implements DedicatedServerModInitializer {
@@ -19,7 +20,7 @@ public final class PortTestRunner implements DedicatedServerModInitializer {
     public void onInitializeServer() {
         Result result = JUnitCore.runClasses(StorageItemTransactorTest.class, CompactingBitSetTest.class,
             ItemHandlerManagerTest.class, IngredientNBTBCTest.class, ScriptResourceRootsTest.class, ListHandlerTest.class,
-            MjConnectionTest.class);
+            MjConnectionTest.class, ConfigurationTest.class);
         for (Failure failure : result.getFailures()) {
             System.err.println(failure.getTestHeader());
             System.err.println(failure.getTrace());
