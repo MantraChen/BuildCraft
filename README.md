@@ -76,6 +76,13 @@ consumes the markers after checking protection and rebuilds the plan at each pat
 position. The screen shows path progress; materials, MJ and paid work survive reloads.
 Use `./scripts/full-smoke.ps1 -Builder` for native path interactions, persistent
 marker connections, two world restarts, engine supply and exact build/mining results.
+Blueprints also capture rule-selected armor stands, paintings, item/glow frames,
+boats and minecarts, including their equipment, displayed items and cargo. Supply
+the exact saved item data, including custom names. Entity construction starts after
+block work with a full 16,000 MJ battery; this original entity stage does not spend
+additional MJ. Existing matching entities are retained across saves. Riding groups
+are excluded. Use `./scripts/full-smoke.ps1 -Entities` for native capture, rotated
+reconstruction, missing-material recovery and three complete world restarts.
 Diamond filter screens, weighted routing, colour routing and iron-pipe direction
 changes are covered as well. Wooden diamond pipes support whitelist, blacklist and
 ordered round-robin item extraction, with native ghost filters and persisted settings.

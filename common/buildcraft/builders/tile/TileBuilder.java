@@ -97,6 +97,8 @@ public class TileBuilder extends TileBC_Neptune
             getBuilder().deserializeNBT(savedWork);
             savedWork = null;
         }
+        // Re-survey the current plan after load; material/entity counters are derived from the world.
+        if(getBuilder()!=null)finished=false;
     }
     @Override public void onPlacedBy(LivingEntity placer, ItemStack stack) {
         super.onPlacedBy(placer, stack);
@@ -350,6 +352,7 @@ public class TileBuilder extends TileBC_Neptune
     }
     @Override public Template.BuildingInfo getTemplateBuildingInfo() { return templateInfo; }
     @Override public Blueprint.BuildingInfo getBlueprintBuildingInfo() { return blueprintInfo; }
+    @Override public boolean isBlueprintWorkValid(){return !snapshotChanged && isStorageAvailable();}
     @Override public IItemTransactor getInvResources() { return resources; }
     @Override public Storage<ItemVariant> getResourceStorage() { return resourceStorage; }
     @Override public TankManager getTankManager() { return tankManager; }

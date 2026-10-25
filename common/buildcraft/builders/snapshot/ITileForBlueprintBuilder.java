@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 
 public interface ITileForBlueprintBuilder extends ITileForSnapshotBuilder {
+    default boolean isBlueprintWorkValid(){return true;}
     Blueprint.BuildingInfo getBlueprintBuildingInfo();
 
     IItemTransactor getInvResources();

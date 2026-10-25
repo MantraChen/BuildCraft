@@ -1,19 +1,68 @@
 [
   {
-    "selectors": ["minecraft:furnace", "minecraft:blast_furnace", "minecraft:smoker"],
-    "ignoredProperties": ["lit"],
-    "replaceNbt": {"BurnTime": 0, "CookTime": 0, "RecipesUsed": null}
+    "selectors": [
+      "minecraft:furnace",
+      "minecraft:blast_furnace",
+      "minecraft:smoker"
+    ],
+    "ignoredProperties": [
+      "lit"
+    ],
+    "replaceNbt": {
+      "BurnTime": 0,
+      "CookTime": 0,
+      "RecipesUsed": null
+    }
   },
   {
-    "selectors": ["minecraft:brewing_stand"],
-    "replaceNbt": {"BrewTime": 0, "Fuel": 0}
+    "selectors": [
+      "minecraft:brewing_stand"
+    ],
+    "replaceNbt": {
+      "BrewTime": 0,
+      "Fuel": 0
+    }
   },
   {
-    "selectors": ["minecraft:oak_door", "minecraft:mangrove_door", "minecraft:cherry_door", "minecraft:bamboo_door", "minecraft:crimson_door", "minecraft:warped_door"],
-    "ignoredProperties": ["powered", "open"]
+    "selectors": [
+      "minecraft:oak_door",
+      "minecraft:mangrove_door",
+      "minecraft:cherry_door",
+      "minecraft:bamboo_door",
+      "minecraft:crimson_door",
+      "minecraft:warped_door"
+    ],
+    "ignoredProperties": [
+      "powered",
+      "open"
+    ]
   },
   {
-    "selectors": ["minecraft:redstone_ore", "minecraft:deepslate_redstone_ore", "minecraft:redstone_lamp"],
-    "ignoredProperties": ["lit"]
+    "selectors": [
+      "minecraft:redstone_ore",
+      "minecraft:deepslate_redstone_ore",
+      "minecraft:redstone_lamp"
+    ],
+    "ignoredProperties": [
+      "lit"
+    ]
+  },
+  {
+    "selectors": [
+      "minecraft:furnace_minecart"
+    ],
+    "replaceNbt": {
+      "Fuel": 0,
+      "PushX": 0.0,
+      "PushZ": 0.0
+    }
+  },
+  {
+    "selectors": [
+      "minecraft:tnt_minecart"
+    ],
+    "replaceNbt": {
+      "TNTFuse": -1
+    }
   }
 ]

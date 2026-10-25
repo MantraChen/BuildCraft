@@ -39,6 +39,7 @@ sourceSets.main.java {
     include 'buildcraft/builders/snapshot/BuildingExecutor.java'
     include 'buildcraft/builders/snapshot/BlueprintMaterials.java'
     include 'buildcraft/builders/snapshot/BlueprintBuilder.java'
+    include 'buildcraft/builders/snapshot/BlueprintEntities.java'
     include 'buildcraft/builders/snapshot/TemplateBuilder.java'
     include 'buildcraft/builders/snapshot/TemplateRegistry.java'
     include 'buildcraft/api/template/TemplateApi.java'

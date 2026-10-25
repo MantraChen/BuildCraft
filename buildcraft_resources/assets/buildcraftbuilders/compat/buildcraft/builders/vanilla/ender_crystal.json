@@ -1,13 +1,13 @@
 [
     {
-        "selectors": ["minecraft:ender_crystal"],
+        "selectors": ["minecraft:end_crystal"],
         "capture": true,
         "requiredExtractors": [
             {
                 "type": "constant",
                 "items": [
                     {
-                        "item": "minecraft:ender_crystal"
+                        "item": "minecraft:end_crystal"
                     }
                 ]
             }

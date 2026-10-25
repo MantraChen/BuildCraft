@@ -36,6 +36,7 @@ import buildcraft.lib.misc.NBTUtilBC;
 import net.minecraft.nbt.NbtElement;
 
 public class Blueprint extends Snapshot {
+    public static final int MAX_ENTITIES=4096;
     public final List<ISchematicBlock> palette = new ArrayList<>();
     public int[] data;
     public final List<ISchematicEntity> entities = new ArrayList<>();
@@ -121,9 +122,13 @@ public class Blueprint extends Snapshot {
             if (entry < 0 || entry >= palette.size()) throw new InvalidInputDataException("Invalid blueprint palette index: " + entry);
         }
         entities.clear();
+        if(nbt.contains("entities") && !(nbt.get("entities") instanceof NbtList))throw new InvalidInputDataException("Invalid blueprint entity list");
+        if(nbt.get("entities") instanceof NbtList list && (list.size()>MAX_ENTITIES || !list.isEmpty() && list.getHeldType()!=NbtElement.COMPOUND_TYPE))throw new InvalidInputDataException("Invalid blueprint entity count/type");
         for (NbtCompound schematicEntityTag :
             NBTUtilBC.readCompoundList(nbt.get("entities")).collect(Collectors.toList())) {
-            entities.add(SchematicEntityManager.readFromNBT(schematicEntityTag));
+            var entity=SchematicEntityManager.readFromNBT(schematicEntityTag);var p=entity.getPos();
+            if(p==null || !Double.isFinite(p.x)||!Double.isFinite(p.y)||!Double.isFinite(p.z)||p.x<0||p.y<0||p.z<0||p.x>=size.getX()||p.y>=size.getY()||p.z>=size.getZ())throw new InvalidInputDataException("Entity outside blueprint volume");
+            entities.add(entity);
         }
     }
 

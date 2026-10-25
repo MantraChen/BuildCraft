@@ -55,6 +55,7 @@ public abstract class BuildingExecutor {
     protected abstract boolean hasEnoughToPlaceItems(BlockPos pos);
     protected abstract boolean executePlacement(BlockPos pos);
     protected boolean additionalWorkFinished() { return true; }
+    protected void tickAdditionalWork(boolean blocksFinished) {}
     protected void workReset() {}
     protected void workStateChanged(int index, boolean correct) {}
     protected abstract void acceptDrops(List<ItemStack> drops);
@@ -140,6 +141,7 @@ public abstract class BuildingExecutor {
             setState(entry.getKey(), classify(task.pos));
             workChanged();
         }
+        tickAdditionalWork(states.length>0 && unknown==0 && blocked==0 && leftToBreak==0 && leftToPlace==0 && tasks.isEmpty());
         return isBuildFinished();
     }
 

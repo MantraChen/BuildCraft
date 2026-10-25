@@ -16,7 +16,7 @@
     "hidden": false
   },
   "criteria": {
-    "architect": {
+    "code_trigger": {
       "trigger": "minecraft:impossible"
     }
   }

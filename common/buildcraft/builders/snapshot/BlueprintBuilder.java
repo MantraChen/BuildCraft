@@ -16,6 +16,7 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
     public record Material(ItemStack stack, long count) {}
     private final Map<ItemVariant, Long> remainingItems = new LinkedHashMap<>();
     private boolean[] needed = new boolean[0];
+    private final BlueprintEntities entityWork=new BlueprintEntities(this);
     public BlueprintBuilder(ITileForBlueprintBuilder tile) { super(tile); }
     @Override protected Blueprint.BuildingInfo getBuildingInfo() { return tile.getBlueprintBuildingInfo(); }
 
@@ -77,7 +78,7 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
                         net.minecraft.util.math.Direction.UP,pos,false);
                     var result=net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(player,world,net.minecraft.util.Hand.MAIN_HAND,hit);
                     if (result==net.minecraft.util.ActionResult.FAIL) return false;
-                    if (getBuildingInfo()!=info || !world.isChunkLoaded(pos) || !world.canPlayerModifyAt(player,pos)) return false;
+                    if (getBuildingInfo()!=info || !tile.isBlueprintWorkValid() || !world.isChunkLoaded(pos) || !world.canPlayerModifyAt(player,pos)) return false;
                     if (result.isAccepted()) return schematic(pos).isBuilt(world,pos);
                     return world.getBlockState(pos)==before && canPlace(pos) && isReadyToPlace(pos) && schematic(pos).build(world,pos);
                 } finally {player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,held);}
@@ -91,11 +92,12 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
             .findFirst().map(stack -> new ItemStack(stack.getItem())).orElse(ItemStack.EMPTY);
     }
     @Override protected boolean additionalWorkFinished() {
-        // Entity reconstruction is not ported yet: never silently report a partial blueprint as finished.
-        return getBuildingInfo() != null && getBuildingInfo().entities.isEmpty();
+        return entityWork.isFinished();
     }
-    public int pendingEntities() { return getBuildingInfo() == null ? 0 : getBuildingInfo().entities.size(); }
+    @Override protected void tickAdditionalWork(boolean blocksFinished){entityWork.tick(blocksFinished);}
+    public int pendingEntities() { return entityWork.pending(); }
     @Override protected void workReset() {
+        entityWork.reset();
         remainingItems.clear();
         needed = new boolean[workSize()];
         Arrays.fill(needed, true);
@@ -120,7 +122,9 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
     /** Bounded UI view; these are display entries, never inventory slots. */
     public List<Material> getRemainingMaterials(int limit) {
         List<Material> result = new ArrayList<>();
-        for (var entry : remainingItems.entrySet()) {
+        var combined=new LinkedHashMap<>(remainingItems);
+        for(var stack:entityWork.materials())if(!stack.isEmpty())combined.merge(ItemVariant.of(stack),(long)stack.getCount(),Long::sum);
+        for (var entry : combined.entrySet()) {
             if (result.size() >= limit) break;
             result.add(new Material(entry.getKey().toStack(), entry.getValue()));
         }

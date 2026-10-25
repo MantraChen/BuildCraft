@@ -148,10 +148,12 @@ public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib
     private void finishScanning() {
         // A completed scan never consumes the item until its content-addressed file is durable.
         if (scanning instanceof Blueprint blueprint) {
+            for(int x=box.min().getX()>>4;x<=box.max().getX()>>4;x++)for(int z=box.min().getZ()>>4;z<=box.max().getZ()>>4;z++)if(!world.isChunkLoaded(x,z) || world instanceof net.minecraft.server.world.ServerWorld server && !server.isChunkLoaded(ChunkPos.toLong(x,z))){status=3;return;}
             blueprint.entities.clear();
-            world.getEntitiesByClass(Entity.class,box.getBoundingBox(),entity -> true).stream()
+            world.getEntitiesByClass(Entity.class,box.getBoundingBox(),entity -> box.getBoundingBox().contains(entity.getPos())).stream()
                 .map(entity -> SchematicEntityManager.getSchematicEntity(new SchematicEntityContext(world,box.min(),entity)))
-                .filter(Objects::nonNull).forEach(blueprint.entities::add);
+                .filter(Objects::nonNull).limit(Blueprint.MAX_ENTITIES+1).forEach(blueprint.entities::add);
+            if(blueprint.entities.size()>Blueprint.MAX_ENTITIES){status=4;retryTicks=20;return;}
         }
         scanning.computeKey();
         if (!GlobalSavedDataSnapshots.get(world).addSnapshot(scanning)) { status=4; retryTicks=20; return; }
@@ -164,7 +166,7 @@ public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib
         invSnapshotIn.setStackInSlot(0,remaining);
         invSnapshotOut.setStackInSlot(0,output);
         status=5; markDirty();
-        AdvancementUtil.unlockAdvancement(getOwner().getId(),ADVANCEMENT);
+        if(world instanceof net.minecraft.server.world.ServerWorld server)AdvancementUtil.unlockAdvancement(server,getOwner().getId(),ADVANCEMENT);
     }
     @Override public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
         super.writePayload(id,buffer,side);

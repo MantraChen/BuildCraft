@@ -112,7 +112,7 @@ public final class ObsidianGameTests implements FabricGameTest {
         var tile=pipe(c,Direction.WEST);var p=Vec3d.ofCenter(tile.getPos()).add(2,0,0);var cart=new ChestMinecartEntity(c.getWorld(),p.x,p.y,p.z);cart.setNoGravity(true);cart.setStack(0,sample(3));cart.setStack(1,sample(2));c.getWorld().spawnEntity(cart);
         try(var tx=Transaction.openOuter()){behavior(tile).receivePower(4*cost(2),tx);}
         c.assertTrue(cart.getStack(0).getCount()==3 && cart.getStack(1).getCount()==2 && contents(tile)==0,"Minecart abort lost source");
-        behavior(tile).receivePower(4*cost(2),false);c.assertTrue(cart.getStack(0).isEmpty() && cart.getStack(1).getCount()==1 && contents(tile)==4 && !cart.isRemoved(),"Minecart extraction count wrong");cart.clear();cart.discard();c.complete();
+        behavior(tile).receivePower(4*cost(2),false);c.assertTrue(cart.getStack(0).isEmpty() && cart.getStack(1).getCount()==1 && contents(tile)==4 && !cart.isRemoved(),"Minecart extraction count wrong: slots="+cart.getStack(0)+","+cart.getStack(1)+" pipe="+contents(tile)+" nearby="+c.getWorld().getOtherEntities(null,new Box(tile.getPos()).expand(5)).stream().map(e->e.getType()+" at "+e.getPos()).toList());cart.clear();cart.discard();c.complete();
     }
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void tippedSpectralArrowsAndDamagedEnchantedTridentsKeepNativePickupStacks(TestContext c){

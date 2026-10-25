@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **460 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **473 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -372,8 +372,8 @@ features explicitly as work proceeds.
   control, snapshot block-state changes and the working-volume outline are connected.
   The later native architect and builder milestones below validate these machine,
   UI and path integrations in the packaged mod and a complete client world.
-  Entity reconstruction remains unimplemented, and blueprints containing entities are
-  deliberately not reported as finished after only their blocks have been built.
+  The native entity milestone below also restores rule-selected entity reconstruction;
+  plans finish only when both block and entity work have been reconciled.
 - Snapshot items now encode blueprint/template and used/blank kinds in NBT, retain
   legacy damage/header-only reads, use native names/tooltips and have item-model predicates.
   Three real-Fabric item tests cover stack serialization, old formats and malformed input;
@@ -396,9 +396,8 @@ features explicitly as work proceeds.
   snapshot dimension/facing/palette validation, repeated blueprint entity reads, missing
   filler facing/hash, and statement parameter-zero/max-count handling. Five snapshot
   tests exercise the actual serialization, hashing, copying, rotation and malformed inputs.
-  Build volumes are currently bounded to 1,048,576 positions. Entity reconstruction
-  remains unfinished. Filler work visuals are restored below; builder work animation
-  still requires integration and validation.
+  Build volumes are currently bounded to 1,048,576 positions. Native entity reconstruction
+  and filler/builder work visuals are restored and validated in later milestones below.
 - Registered the native Brigadier `/buildcraft` command tree: installed version and
   remake credit, a link to this repository's real commit history, and operator-only
   data-registry reload with error reporting. Native client resource access now supplies
@@ -1439,8 +1438,8 @@ Remake by FelixMantra.
   All 444 required GameTests pass in `verification/architect-full-client-8.log`.
   The new tests use a separate elevation to avoid connecting their marker fixtures
   to older filler tests; the complete filler suite also passes.
-- Entity schematics, complete builder path/work rendering, library/replacer screens
-  and the broader migration backlog remain unfinished. This milestone validates
+- At this milestone, entity schematics, complete builder path/work rendering,
+  library/replacer screens and the broader migration backlog remained unfinished. It validates
   the block capture/reconstruction workflow; it does not mark the entire port complete.
 - The final connected client also passes with `failures=0` and a clean 44-second
   exit in `verification/architect-full-client-8.log`, using the same packaged jar
@@ -1481,8 +1480,8 @@ Remake by FelixMantra.
   exact material/energy costs, persistent marker files, malformed saved paths and
   messages, work previews and the native GUI envelope. Elevated test fixtures
   explicitly clear their targets so repeated runs do not reuse prior placed blocks.
-- Entity reconstruction, library/replacer screens and the remaining migration
-  backlog are still unfinished. This milestone continues the existing implementation.
+- At this milestone, entity reconstruction, library/replacer screens and the remaining
+  migration backlog were still unfinished. The work continues the existing implementation.
 - The final packaged server passes all 460 required tests in
   `verification/builder-full-client-6.log`. The same jar passes the native client
   with `failures=0` and a clean one-minute exit. The client uses actual connector,
@@ -1499,3 +1498,56 @@ Remake by FelixMantra.
   texture-animation/mipmap warnings remain outside this milestone.
 - Shared construction regression also passes: 148 unit tests and 69 subsystem world
   tests in `verification/builder-shared-tests.log`.
+
+### Native blueprint entity capture and reconstruction
+
+- Architect tables now capture eligible entities whose centres lie inside the scan
+  volume. Capture and reconstruction wait for both block chunks and native entity
+  sections to load. Plans contain at most 4,096 entities; invalid lists, positions,
+  angles, factory identifiers and disallowed entity types are rejected on read.
+- Entity schematics preserve native equipment, displayed items, poses, painting
+  variants and cargo. All four horizontal rotations transform position, yaw and
+  attachment direction; item frames support all six native faces. New construction
+  creates fresh UUIDs, while matching existing entities retain their identities.
+  Motion, fire, passengers, leash and unopened loot-table references are not copied.
+  Players, unlisted mobs, loose items and riding groups are excluded from capture.
+- Updated rules cover all nine 1.20.1 boat/chest-boat wood types, including bamboo
+  rafts, distinct glow frames and the native end-crystal identifier. Furnace-cart
+  fuel/push and TNT-cart fuse are reset rather than copying active runtime state.
+  Native attachment, rail, crystal support, collision and world-border checks gate
+  placement. Rules still determine item and fluid requirements.
+- The builder reconciles entities one-to-one after block surveying, reports missing
+  exact-NBT materials and reserves all placement items/fluids in one transaction.
+  It preserves the original full-battery requirement: the entity stage requires
+  16,000 MJ and does not deduct additional MJ. At most sixteen entity removals or
+  placements are attempted per tick. Owner-aware native use/attack protection and
+  post-callback plan checks prevent denied or stale operations from spending inputs.
+  Excavation removes only eligible extras and returns their required items; turning
+  excavation off preserves extras. Custom entity rules with recoverable fluids are
+  not yet supported for removal and leave that work pending.
+- Reloading a completed builder now surveys its current plan again to reconstruct
+  derived material/entity counters. Waiting for entity sections is essential here:
+  block chunks can be available before their saved entities. The architect's native
+  advancement also uses the actual server and its restored `code_trigger` criterion.
+- Thirteen additional packaged-mod tests cover eligibility, rotations, exact item
+  data, painting/frame support, boat costs, minecart cargo/rails, end crystals,
+  missing-material rollback, the full-battery threshold, existing-entity reuse,
+  reloads, native protection, excavation, malformed input and actual architect capture.
+  All 473 required tests pass in `verification/entities-full-client-3.log`.
+- The same packaged jar passes the native client with `failures=0` and a clean
+  one-minute exit in that log. Actual marker/architect/inventory interactions capture
+  25 blocks plus an armor stand, painting, item frame and glow frame. A rotated build
+  waits for a missing named helmet, resumes after supplying it, and preserves all
+  reconstructed UUIDs across three complete world restarts. Equipment/pose, displayed
+  items, material consumption, final client rendering and empty remaining requirements
+  are checked. Six screenshots were reviewed, including the remake credit in both GUIs.
+- The first client run exposed stale completed-plan counters after reload; the final
+  run verifies their repair. An earlier full run failed the existing obsidian minecart
+  extraction test; diagnostics were improved and both subsequent full runs passed.
+  No obsidian production fix or confirmed root cause is claimed for that transient failure.
+  Shared regression also passes: 148 unit tests and 69 world tests in
+  `verification/entities-shared-tests.log`.
+- Riding relationships, broader modded-entity compatibility, library/replacer screens
+  and the remaining migration backlog still need work. Existing guide-recipe and
+  texture-animation/mipmap warnings remain; this milestone does not declare the entire
+  port complete or free of issues.
