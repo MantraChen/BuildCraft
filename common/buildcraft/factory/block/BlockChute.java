@@ -44,6 +44,7 @@ public class BlockChute extends BlockBCTile_Neptune implements IBlockWithFacing 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, BlockState state, PlayerEntity player, Hand hand,
         Direction side, float hitX, float hitY, float hitZ) {
+        if (player.getStackInHand(hand).getItem() instanceof buildcraft.api.tools.IToolWrench) return false;
         if (!world.isClient) {
             BCFactoryGuis.CHUTE.openGUI(player, pos);
         }

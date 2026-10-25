@@ -19,6 +19,10 @@ public enum BCFactoryGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
+        if (this == CHUTE && player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileChute chute) {
+            BCFactoryScreens.openChute(player, chute);
+            return;
+        }
         if (this == TANK && player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileTank tank) {
             BCFactoryScreens.openTank(player, tank);
             return;

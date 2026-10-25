@@ -36,7 +36,8 @@ supported validation entrypoint. Use the fixtures below.
 
 `./scripts/full-smoke.ps1` builds the complete jar and loads that exact artifact in a
 separate Fabric GameTest project. It verifies the registered block entities, native
-tank placement and transactional MJ Dynamo output. See [the full-mod fixture](sub_projects/full-tests/README.md).
+tank placement, transactional MJ Dynamo output and chute collection, output, screens,
+save data and crafting. See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
 Use `./gradlew runClient` for a development client. Finish compilation before starting

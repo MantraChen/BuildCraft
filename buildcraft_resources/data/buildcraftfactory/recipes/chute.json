@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["ici", "igi", " i "],
+  "key": {
+    "i": {"item": "minecraft:iron_ingot"},
+    "c": {"item": "minecraft:chest"},
+    "g": {"item": "buildcraftcore:gear_stone"}
+  },
+  "result": {"item": "buildcraftfactory:chute"}
+}

@@ -8,6 +8,19 @@
 package buildcraft.factory.tile;
 
 import java.util.List;
+import java.util.HashSet;
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.util.math.Box;
+import buildcraft.api.core.EnumPipePart;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -29,35 +42,29 @@ import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.item.ItemHandlerManager.EnumAccess;
 import buildcraft.lib.tile.item.ItemHandlerSimple;
 
-// Forge→Fabric migration notes (R.Chen):
-//   ITickable.update()         → tick() + static ticker()
-//   ItemEntity                 → ItemEntity
-//   LivingEntity           → LivingEntity
-//   Direction                 → Direction
-//   NbtCompound             → NbtCompound
-//   Box              → Box
-//   BlockView               → BlockView
-//   world.getTileEntity        → world.getBlockEntity
-//   EntitySelectors.IS_ALIVE   → EntityPredicates.VALID_ENTITY
-//   Identifier           → Identifier
-//   ICapabilityProvider        → Object
-//   pickupItems/putInNearInventories: TransactorEntityItem + BoundingBoxUtil not in libLeaf — STUBbed.
-//   TilesAPI.CAP_HAS_WORK      → deferred (Phase 4F)
+/** Native item collection and transactional output. Remake by FelixMantra. */
 public class TileChute extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
     private static final Identifier ADVANCEMENT_DID_INSERT = new Identifier("buildcraftfactory", "retired_hopper");
 
-    @SuppressWarnings("unused")
     private static final int PICKUP_MAX = 3;
+    private static final int PICKUP_WORK = 100_000;
+    private static final int GRAVITY_WORK = 1_000;
 
-    // STUB(R.Chen): per-face pipe-part capability registration deferred — use 3-arg form.
-    public final ItemHandlerSimple inv = itemManager.addInvHandler("inv", 4, EnumAccess.INSERT);
+    public final ItemHandlerSimple inv = itemManager.addInvHandler("inv", 4, EnumAccess.INSERT, EnumPipePart.VALUES);
+    private final Storage<ItemVariant> internalInventory = inv.asStorage(true, true);
 
     private final MjBattery battery = new MjBattery(1 * MjAPI.MJ);
     private int progress = 0;
 
     public TileChute(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery)));
+        caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery) {
+            @Override public long receivePower(long amount, boolean simulate) {
+                long remainder = super.receivePower(amount, simulate);
+                if (!simulate && remainder < amount) markChunkDirty();
+                return remainder;
+            }
+        }));
     }
 
     public static boolean hasInventoryAtPosition(BlockView world, BlockPos pos, Direction side) {
@@ -65,57 +72,98 @@ public class TileChute extends TileBC_Neptune implements buildcraft.lib.tile.Tic
             && net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.find(level, pos, side.getOpposite()) != null;
     }
 
-    /** STUB(R.Chen): BoundingBoxUtil.extrudeFace + TransactorEntityItem not yet in libLeaf.
-     *               Item entity pickup deferred to Phase 4E. */
-    @SuppressWarnings("unused")
     private void pickupItems(Direction currentSide) {
-        // STUB(R.Chen): deferred — BoundingBoxUtil / TransactorEntityItem not in libLeaf.
+        int remaining = PICKUP_MAX;
+        Box mouth = switch (currentSide) {
+            case DOWN -> new Box(0, -0.25, 0, 1, 0, 1);
+            case UP -> new Box(0, 1, 0, 1, 1.25, 1);
+            case NORTH -> new Box(0, 0, -0.25, 1, 1, 0);
+            case SOUTH -> new Box(0, 0, 1, 1, 1, 1.25);
+            case WEST -> new Box(-0.25, 0, 0, 0, 1, 1);
+            case EAST -> new Box(1, 0, 0, 1.25, 1, 1);
+        };
+        for (ItemEntity entity : world.getEntitiesByClass(ItemEntity.class, mouth.offset(pos), Entity::isAlive)) {
+            // This view is used by one complete transfer. Simulation/rollback never changes
+            // the entity; final commit publishes its remaining stack or removes it.
+            var source = new SingleVariantStorage<ItemVariant>() {
+                { variant = ItemVariant.of(entity.getStack()); amount = entity.getStack().getCount(); }
+                @Override protected ItemVariant getBlankVariant() { return ItemVariant.blank(); }
+                @Override protected long getCapacity(ItemVariant resource) { return resource.getItem().getMaxCount(); }
+                @Override protected boolean canInsert(ItemVariant resource) { return false; }
+                @Override public boolean supportsInsertion() { return false; }
+                @Override protected void onFinalCommit() {
+                    if (amount == 0) entity.discard();
+                    else entity.setStack(variant.toStack((int) amount));
+                }
+            };
+            remaining -= (int) StorageUtil.move(source, internalInventory, resource -> true, remaining, null);
+            if (remaining == 0) break;
+        }
     }
 
-    /** STUB(R.Chen): ItemTransactorHelper.move() not in migrated libLeaf. Deferred to Phase 4E. */
-    @SuppressWarnings("unused")
     private void putInNearInventories(Direction currentSide) {
-        // STUB(R.Chen): item insertion into adjacent inventories deferred to Phase 4E.
-        // Full algorithm:
-        //   for each Direction != currentSide: getTransactor(world.getBlockEntity(pos.offset(side)))
-        //   then ItemTransactorHelper.move(inv, transactor, 1) — move method not yet in libLeaf.
-        //   Entity targets (TransactorEntityItem) also deferred.
+        if (inv.stacks.stream().allMatch(stack -> stack.isEmpty())) return;
+        Direction[] sides = Direction.values();
+        for (int i = sides.length - 1; i > 0; i--) {
+            int j = world.random.nextInt(i + 1);
+            Direction swap = sides[i]; sides[i] = sides[j]; sides[j] = swap;
+        }
+        long moved = 0;
+        for (Direction side : sides) if (side != currentSide && world.isChunkLoaded(pos.offset(side))) {
+            var destination = ItemStorage.SIDED.find(world, pos.offset(side), side.getOpposite());
+            moved += StorageUtil.move(internalInventory, destination, resource -> true, 1, null);
+        }
+        var visited = new HashSet<Entity>();
+        for (Direction side : sides) if (side != currentSide && world.isChunkLoaded(pos.offset(side))) {
+            for (Entity entity : world.getOtherEntities(null, new Box(pos.offset(side)),
+                    entity -> entity.isAlive() && !(entity instanceof LivingEntity) && entity instanceof Inventory)) {
+                // A large minecart/boat can overlap several faces; visit it once per tick.
+                if (!visited.add(entity)) continue;
+                moved += StorageUtil.move(internalInventory, InventoryStorage.of((Inventory) entity, side.getOpposite()),
+                    resource -> true, 1, null);
+            }
+        }
+        if (moved > 0 && hasOwner() && world instanceof net.minecraft.server.world.ServerWorld server) {
+            var player = server.getServer().getPlayerManager().getPlayer(getOwner().getId());
+            if (player != null) buildcraft.lib.misc.AdvancementUtil.unlockAdvancement(player, ADVANCEMENT_DID_INSERT);
+        }
     }
 
-    /** BlockEntityTicker wired in BlockChute.getTicker(). Replaces ITickable.update(). */
-    @SuppressWarnings("unchecked")
+    /** Compatibility factory; native registration also delegates through TickingBlockEntity. */
     public static <T extends TileChute> BlockEntityTicker<T> ticker() {
         return (world, pos, state, be) -> be.tick();
     }
 
     public void tick() {
-        if (world.isClient) {
+        if (world == null || world.isClient || isRemoved()
+            || !(world.getBlockState(pos).getBlock() instanceof buildcraft.factory.block.BlockChute)) {
             return;
         }
 
-        // STUB(R.Chen): instanceof BlockChute check removed — BlockChute not in libLeaf.
+        long energyBefore = battery.getStored();
+        int workBefore = progress;
         battery.tick(getWorld(), getPos());
 
         Direction currentSide = world.getBlockState(pos).get(BlockBCBase_Neptune.BLOCK_FACING_6);
 
-        int target = 100000;
         if (currentSide == Direction.UP) {
-            progress += 1000;
+            progress = Math.min(PICKUP_WORK, progress + GRAVITY_WORK);
         }
-        progress += battery.extractPower(0, target - progress);
+        progress += (int) battery.extractPower(0, PICKUP_WORK - progress);
 
-        if (progress >= target) {
+        if (progress >= PICKUP_WORK) {
             progress = 0;
             pickupItems(currentSide);
         }
 
         putInNearInventories(currentSide);
+        if (workBefore != progress || energyBefore != battery.getStored()) markChunkDirty();
     }
 
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        progress = nbt.getInt("progress");
+        progress = Math.max(0, Math.min(PICKUP_WORK, nbt.getInt("progress")));
         battery.readFromNbt(nbt.getCompound("battery"));
     }
 

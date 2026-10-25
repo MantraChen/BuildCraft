@@ -59,6 +59,9 @@ public class ItemWrench_Neptune extends ItemBC_Neptune implements IToolWrench {
         Hand hand = context.getHand();
         Direction side = context.getSide();
         if (!world.canPlayerModifyAt(player, pos)) return ActionResult.FAIL;
+        if (world.getBlockEntity(pos) instanceof buildcraft.lib.tile.TileBC_Neptune tile && !tile.canInteractWith(player)) {
+            return ActionResult.FAIL;
+        }
         BlockState state = world.getBlockState(pos);
         ActionResult result = CustomRotationHelper.INSTANCE.attemptRotateBlock(world, pos, state, side);
         if (result.isAccepted()) {

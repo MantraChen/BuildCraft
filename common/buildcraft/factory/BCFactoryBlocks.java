@@ -54,7 +54,9 @@ public class BCFactoryBlocks {
         tank = HELPER.addBlockAndItem("block.tank", () -> new BlockTank(
             AbstractBlock.Settings.create().mapColor(net.minecraft.block.MapColor.IRON_GRAY)
                 .strength(0.5f).sounds(net.minecraft.sound.BlockSoundGroup.GLASS), "block.tank"));
-        chute = HELPER.addBlockAndItem("block.chute", () -> new BlockChute(MaterialBC.IRON, "block.chute"));
+        chute = HELPER.addBlockAndItem("block.chute", () -> new BlockChute(AbstractBlock.Settings.create()
+            .mapColor(net.minecraft.block.MapColor.IRON_GRAY).nonOpaque().strength(5.0f, 10.0f)
+            .sounds(net.minecraft.sound.BlockSoundGroup.METAL), "block.chute"));
         distiller = HELPER.addBlockAndItem("block.distiller", () -> new BlockDistiller(MaterialBC.IRON, "block.distiller"));
         heatExchange = HELPER.addBlockAndItem("block.heat_exchange", () -> new BlockHeatExchange(MaterialBC.IRON, "block.heat_exchange"));
         waterGel = HELPER.addBlock("block.water_gel", () -> new BlockWaterGel(MaterialBC.CLAY, "block.water_gel"));

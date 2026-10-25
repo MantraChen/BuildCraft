@@ -48,6 +48,14 @@ public final class FullClientSmoke implements ClientModInitializer {
                 } catch (Exception | LinkageError error) { failures.add(id + ": " + error); }
             }
             int variants = checkItemVariants(client, failures);
+            for (var item : new net.minecraft.item.Item[] {buildcraft.factory.BCFactoryBlocks.chute.asItem(), buildcraft.factory.BCFactoryBlocks.tank.asItem(),
+                    buildcraft.core.BCCoreItems.gearWood, buildcraft.core.BCCoreItems.gearStone, buildcraft.core.BCCoreItems.wrench}) {
+                var stack = new ItemStack(item);
+                if (stack.getName().getString().equals(stack.getTranslationKey())) failures.add(stack.getTranslationKey() + ": missing localized name");
+            }
+            for (var key : java.util.List.of("command.buildcraft.reload.success", "command.buildcraft.reload.failure")) {
+                if (!net.minecraft.client.resource.language.I18n.hasTranslation(key)) failures.add(key + ": missing localized command text");
+            }
             System.out.println("BUILDCRAFT FULL CLIENT: " + states + " states, " + items + " items, "
                 + variants + " item variants, failures=" + failures.size());
             failures.forEach(message -> System.err.println("MODEL FAILURE: " + message));

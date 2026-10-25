@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **10 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **20 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -77,6 +77,9 @@ features explicitly as work proceeds.
   six supporting faces, and decorative variants survive picking, saving and placing.
   Frame/quarry/chute native connections, partial frame collision, wrench rotation,
   structure rotation/mirroring and block-entity preservation also pass.
+  Chute pickup/output, capacity and NBT conservation, minecart destinations, insert-only
+  external storage, save reconstruction, drops, owner advancement, native screens and
+  the gear/wrench/chute crafting chain are covered by ten additional world tests.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -88,6 +91,11 @@ features explicitly as work proceeds.
   light cache until removed. After the resource migration, that saved world loaded
   again; a newly placed quarry displayed its authored textures, and a volume marker
   rendered on its upper face. The world saved and the client exited cleanly.
+  The chute screen opens with its authored background and translated title. Eight
+  diamonds placed through that screen reached the barrel below; five more collected
+  from the mouth increased the barrel contents to exactly 13. The owner advancement
+  appeared, and an F3+T resource reload retained the working screen and world rendering.
+  That world saved successfully and the client exited with code zero.
 - Packaged GPU client: **928 visible block states, 81 items and 20 item variants pass**
   missing-model, particle/quad-texture and expected-variant checks. It reaches the title
   screen and exits cleanly. The latest run has no invalid resource paths, JSON-model
@@ -116,7 +124,15 @@ features explicitly as work proceeds.
   Quarries/chutes query sided Fabric item storage, including providers without block
   entities. Frame collision follows its connected arms; frame/chute rotation and
   mirroring preserve those arms. Chute rotation refreshes connections without replacing
-  its inventory. Actual chute pickup/transfer and complete quarry mining remain open.
+  its inventory. Complete quarry mining remains open.
+- Chutes now collect at most three items per work cycle from the quarter-block mouth
+  region, using gravity when facing up or MJ on any face. Transactional output moves
+  one item per destination per tick, excludes the mouth and visits overlapping inventory
+  entities once. External item storage permits insertion only. Inventory, partial work
+  and MJ persist; native loot drops the block and contents without duplication.
+  The native four-slot screen supports manual transfers and shift-clicks, validates
+  distance/use and leaves wrench rotation accessible. Native wood/stone gears, wrench
+  and chute recipes, owner advancement and English/Chinese names are restored.
 - Restored the missing common transport entrypoint and native pipe-holder block/entity
   registration. Pipe pluggable render methods are client-only, including their API base
   declaration, so dedicated servers can load the common pipe definitions. Full pipe

@@ -1,4 +1,7 @@
 {
   "command.buildcraft.reload.success": "BuildCraft data registries reloaded.",
-  "command.buildcraft.reload.failure": "BuildCraft registry reload failed. See the server log."
+  "command.buildcraft.reload.failure": "BuildCraft registry reload failed. See the server log.",
+  "item.buildcraftcore.gear_wood": "Wooden Gear",
+  "item.buildcraftcore.gear_stone": "Stone Gear",
+  "item.buildcraftcore.wrench": "Wrench"
 }

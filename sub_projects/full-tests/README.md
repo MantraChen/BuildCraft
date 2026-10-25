@@ -19,7 +19,7 @@ the dependencies bundled in that exact artifact into `verification/full-test-lib
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
 
-The ten server tests currently verify:
+The twenty server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -40,12 +40,28 @@ The ten server tests currently verify:
 - Chutes detect neighboring inventories, exclude their mouth and refresh connections
   after wrench rotation/removal without replacing the existing block entity.
 - Native structure rotation and mirroring preserve frame/chute connection directions.
+- Chutes collect at most three items from the correct quarter-block mouth region,
+  with upward gravity work and MJ on all six faces; full/partial inventories preserve
+  item counts and NBT, and energy simulation does not charge the battery.
+- Output moves one item per adjacent inventory, excludes the mouth and visits a
+  minecart overlapping several faces only once per tick.
+- All six external storage views permit insertion but reject extraction, transactions
+  roll back correctly, and breaking a chute drops its block and contents once.
+- Native block-entity reconstruction retains inventory, MJ and partial gravity work;
+  invalid saved progress is clamped safely.
+- Successful output grants the owner's advancement. The native four-slot screen opens
+  with the correct handler and sync ID, supports shift-clicks and rejects distant use;
+  a wrench rotates the chute without opening the screen.
+- A real crafting screen/recipe manager crafts wooden and stone gears, the wrench and
+  chute from the restored native recipes.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 After reaching the title screen, it checks all 928 registered visible block states,
 81 default item models and 20 explicit item variants. It rejects missing models,
 particle sprites and quad textures, and checks the expected variant textures for map
-locations, decorated blocks, lists, snapshots and single-block schematics. It requires
+locations, decorated blocks, lists, snapshots and single-block schematics. It also
+checks that the chute, tank and gear/wrench crafting chain have translated names and
+that registry-reload command text remains available. It requires
 a working graphical desktop and GPU; it is not a headless test. Run it separately with
 `./scripts/gradle.ps1 -p sub_projects/full-tests runFullClientSmoke` after preparing the
 artifact/config through `full-smoke.ps1 -Client`.

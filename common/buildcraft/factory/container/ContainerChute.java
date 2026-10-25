@@ -15,7 +15,11 @@ import buildcraft.factory.tile.TileChute;
 
 public class ContainerChute extends ContainerBCTile<TileChute> {
     public ContainerChute(PlayerEntity player, TileChute tile) {
-        super(player, tile);
+        this(player, 0, tile);
+    }
+
+    public ContainerChute(PlayerEntity player, int syncId, TileChute tile) {
+        super(buildcraft.factory.BCFactoryScreens.CHUTE, player, syncId, tile);
         addFullPlayerInventory(71);
 
         addSlot(new SlotBase(tile.inv, 0, 62, 18));
