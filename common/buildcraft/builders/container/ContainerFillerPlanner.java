@@ -32,24 +32,19 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
         (statement, paramIndex) -> onStatementChange()
     );
 
-    public ContainerFillerPlanner(PlayerEntity player) {
-        this(player, 0);
+    public ContainerFillerPlanner(PlayerEntity player){this(player,0,selected(player));}
+    public ContainerFillerPlanner(PlayerEntity player,int syncId){this(player,syncId,selected(player));}
+    public ContainerFillerPlanner(PlayerEntity player,int syncId,AddonFillerPlanner addon){
+        super(buildcraft.builders.BCBuildersScreens.PLANNER,player,syncId);this.addon=addon;
+        patternStatementClient.set(addon.patternStatement.get(),addon.patternStatement.getParameters());init();
     }
-
-    public ContainerFillerPlanner(PlayerEntity player, int syncId) {
-        super(player, syncId);
-        Pair<VolumeBox, EnumAddonSlot> selectingVolumeBoxAndSlot = EnumAddonSlot.getSelectingVolumeBoxAndSlot(
-            player,
-            player.getWorld().isClient ? buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.volumeBoxes
-                : WorldSavedDataVolumeBoxes.get(player.getWorld()).volumeBoxes
-        );
-        addon = Optional.ofNullable(selectingVolumeBoxAndSlot.getLeft())
-            .map(volumeBox -> volumeBox.addons.get(selectingVolumeBoxAndSlot.getRight()))
-            .map(AddonFillerPlanner.class::cast)
-            .orElseThrow(IllegalStateException::new);
-        init();
+    private static AddonFillerPlanner selected(PlayerEntity player){
+        var selected=EnumAddonSlot.getSelectingVolumeBoxAndSlot(player,player.getWorld().isClient
+            ?buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.volumeBoxes:WorldSavedDataVolumeBoxes.get(player.getWorld()).volumeBoxes);
+        if(selected.getLeft()==null||!(selected.getLeft().addons.get(selected.getRight()) instanceof AddonFillerPlanner addon))throw new IllegalArgumentException("No selected filler planner");
+        return addon;
     }
-
+    @Override public boolean isLocked(){return !addon.volumeBox.addons.containsValue(addon)||addon.volumeBox.isAddonLocked(addon.getSlot());}
     @Override
     public PlayerEntity getPlayer() {
         return player;
@@ -85,6 +80,7 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
 
     @Override
     public void readMessage(int id, PacketBufferBC buffer, boolean isClient, Object ctx) throws IOException {
+        if(!isClient&&!canUse(player)){buffer.skipBytes(buffer.readableBytes());return;}
         super.readMessage(id, buffer, isClient, ctx);
         IContainerFilling.super.readMessage(id, buffer, isClient, ctx);
     }
@@ -92,6 +88,8 @@ public class ContainerFillerPlanner extends ContainerBC_Neptune implements ICont
     @Override
     public boolean canUse(PlayerEntity player) {
         VolumeBox volume = addon.volumeBox;
+        var volumes=player.getWorld().isClient?buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.volumeBoxes:WorldSavedDataVolumeBoxes.get(player.getWorld()).volumeBoxes;
+        if(volumes.stream().noneMatch(candidate->candidate==volume))return false;
         if (player.getWorld() != volume.world || player.isSpectator() || !volume.addons.containsValue(addon)
             || volume.isEditing() && !volume.isEditingBy(player)) return false;
         var bounds = addon.getBoundingBox();

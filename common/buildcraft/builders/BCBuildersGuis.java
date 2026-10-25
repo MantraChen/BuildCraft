@@ -16,7 +16,12 @@ public enum BCBuildersGuis {
     FILLER_PLANNER;
 
     public void openGUI(PlayerEntity player) {
-        // STUB(R.Chen): Forge player.openGui → Fabric ScreenHandler, deferred — Phase 10
+        if(this==FILLER_PLANNER&&!player.getWorld().isClient){
+            var selection=buildcraft.core.marker.volume.EnumAddonSlot.getSelectingVolumeBoxAndSlot(player,
+                buildcraft.core.marker.volume.WorldSavedDataVolumeBoxes.get(player.getWorld()).volumeBoxes);
+            if(selection.getLeft()!=null&&selection.getLeft().addons.get(selection.getRight()) instanceof buildcraft.builders.addon.AddonFillerPlanner addon)
+                BCBuildersScreens.openPlanner(player,addon);
+        }
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {

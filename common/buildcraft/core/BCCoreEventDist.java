@@ -1,47 +1,28 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Remake by FelixMantra */
 package buildcraft.core;
-
+import buildcraft.core.marker.volume.*;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-// STUB(R.Chen): // @SubscribeEvent — TODO(R.Chen): port to Fabric event removed — port to Fabric events
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import buildcraft.lib.misc.MessageUtil;
-import buildcraft.lib.net.MessageManager;
-
-import buildcraft.core.marker.volume.MessageVolumeBoxes;
-import buildcraft.core.marker.volume.VolumeBox;
-import buildcraft.core.marker.volume.WorldSavedDataVolumeBoxes;
-
-public enum BCCoreEventDist {
-    INSTANCE;
-
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    public void onWorldTick(TickEvent.WorldTickEvent event) {
-        if (event.getWorld() instanceof net.minecraft.server.world.ServerWorld) {
-            WorldSavedDataVolumeBoxes.get(event.getWorld()).tick();
-        }
+public final class BCCoreEventDist {
+    private BCCoreEventDist(){}
+    public static void register(){
+        ServerTickEvents.END_WORLD_TICK.register(world->WorldSavedDataVolumeBoxes.get(world).tick());
+        ServerPlayConnectionEvents.JOIN.register((handler,sender,server)->joined(handler.player));
+        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player,origin,destination)->joined(player));
     }
-
-    // @SubscribeEvent — TODO(R.Chen): port to Fabric event
-    public void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof ServerPlayerEntity) {
-            // Delay sending join messages to player as it makes it work when in single-player
-            MessageUtil.doDelayedServer(event.getEntity().getServer(), () ->
-                MessageManager.sendTo(
-                    MessageVolumeBoxes.of(WorldSavedDataVolumeBoxes.get(event.getEntity().getWorld()).volumeBoxes),
-                    (ServerPlayerEntity) event.getEntity()
-                )
-            );
-            WorldSavedDataVolumeBoxes.get(((ServerPlayerEntity) event.getEntity()).getWorld()).volumeBoxes.stream()
-                .filter(volumeBox -> volumeBox.isPausedEditingBy((ServerPlayerEntity) event.getEntity()))
-                .forEach(VolumeBox::resumeEditing);
-        }
+    private static void joined(ServerPlayerEntity player){
+        var data=WorldSavedDataVolumeBoxes.get(player.getWorld());
+        boolean resumed=false;
+        for(var volume:data.volumeBoxes)if(volume.isPausedEditingBy(player)){volume.resumeEditing();resumed=true;}
+        if(resumed)data.markDirty();
+        // Wait for the client to install its new world before applying that dimension's collection.
+        buildcraft.lib.misc.MessageUtil.doDelayedServer(player.getServer(),()->{
+            if(player.isDisconnected())return;
+            MessageVolumeBoxes.send(player.getServerWorld(),java.util.List.of(player));
+        });
     }
 }

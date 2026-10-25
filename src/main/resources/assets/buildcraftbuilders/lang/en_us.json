@@ -59,5 +59,8 @@
   "gui.buildcraftbuilders.library.status.7": "Save failed; input retained",
   "gui.buildcraftbuilders.library.status.8": "Library is in use by another player",
   "gui.buildcraftbuilders.library.status.9": "Transfer timed out; input retained",
-  "gui.buildcraftbuilders.library.status.10": "Could not delete local file"
+  "gui.buildcraftbuilders.library.status.10": "Could not delete local file",
+  "gui.buildcraftbuilders.filler_planner": "Filler Planner",
+  "gui.buildcraftbuilders.planner.blocks": "Preview: %s blocks",
+  "gui.buildcraftbuilders.planner.locked": "Locked by a machine"
 }

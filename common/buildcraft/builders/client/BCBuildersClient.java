@@ -30,6 +30,8 @@ public final class BCBuildersClient {
             (handler,inventory,title)->new buildcraft.builders.gui.GuiReplacer((buildcraft.builders.container.ContainerReplacer)handler,inventory,title));
         HandledScreens.<ContainerBC_Neptune,buildcraft.builders.gui.GuiElectronicLibrary>register(BCBuildersScreens.LIBRARY,
             (handler,inventory,title)->new buildcraft.builders.gui.GuiElectronicLibrary((buildcraft.builders.container.ContainerElectronicLibrary)handler,inventory,title));
+        HandledScreens.<ContainerBC_Neptune,buildcraft.builders.gui.GuiFillerPlanner>register(BCBuildersScreens.PLANNER,
+            (handler,inventory,title)->new buildcraft.builders.gui.GuiFillerPlanner((buildcraft.builders.container.ContainerFillerPlanner)handler,inventory,title));
         HandledScreens.<ContainerBC_Neptune, buildcraft.builders.gui.GuiArchitectTable>register(BCBuildersScreens.ARCHITECT,
             (handler, inventory, title) -> new buildcraft.builders.gui.GuiArchitectTable(
                 (buildcraft.builders.container.ContainerArchitectTable)handler, inventory, title));

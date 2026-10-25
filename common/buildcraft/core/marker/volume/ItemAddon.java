@@ -35,7 +35,7 @@ public abstract class ItemAddon extends ItemBC_Neptune {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         if (world.isClient) {
-            return TypedActionResult.pass(player.getStackInHand(hand));
+            return TypedActionResult.success(player.getStackInHand(hand));
         }
 
         WorldSavedDataVolumeBoxes volumeBoxes = WorldSavedDataVolumeBoxes.get(world);
@@ -46,6 +46,10 @@ public abstract class ItemAddon extends ItemBC_Neptune {
         VolumeBox volumeBox = selectingVolumeBoxAndSlot.getLeft();
         EnumAddonSlot slot = selectingVolumeBoxAndSlot.getRight();
         if (volumeBox != null && slot != null) {
+            var at=net.minecraft.util.math.BlockPos.ofFloored(slot.getBoundingBox(volumeBox).getCenter());
+            if(!volumeBox.canEdit(player,at)||volumeBox.isAddonLocked(slot)
+                ||net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe()!=null)
+                return TypedActionResult.fail(player.getStackInHand(hand));
             if (!volumeBox.addons.containsKey(slot)) {
                 Addon addon = createAddon();
                 if (addon.canBePlaceInto(volumeBox)) {

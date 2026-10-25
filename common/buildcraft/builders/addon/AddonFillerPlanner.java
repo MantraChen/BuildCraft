@@ -83,7 +83,7 @@ public class AddonFillerPlanner extends Addon implements ISingleAddon, IFillerSt
     @Override
     public void onPlayerRightClick(PlayerEntity player) {
         super.onPlayerRightClick(player);
-        BCBuildersGuis.FILLER_PLANNER.openGUI(player);
+        buildcraft.builders.BCBuildersScreens.openPlanner(player,this);
     }
 
     @Override

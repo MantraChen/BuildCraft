@@ -21,6 +21,13 @@ import net.minecraft.util.math.BlockPos;
 
 public final class BCBuildersScreens {
     private BCBuildersScreens() {}
+    public static final ScreenHandlerType<ContainerBC_Neptune> PLANNER=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
+        var tag=data.readNbt();var slot=data.readEnumConstant(buildcraft.core.marker.volume.EnumAddonSlot.class);
+        if(tag==null)throw new IllegalStateException("Missing planner volume");
+        var volume=buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.upsert(inventory.player.getWorld(),tag);
+        if(!(volume.addons.get(slot) instanceof buildcraft.builders.addon.AddonFillerPlanner addon))throw new IllegalStateException("Missing planner addon");
+        return new buildcraft.builders.container.ContainerFillerPlanner(inventory.player,syncId,addon);
+    });
     public static final ScreenHandlerType<ContainerBC_Neptune> LIBRARY=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
         BlockPos pos=data.readBlockPos();
         if(!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.builders.tile.TileElectronicLibrary tile))
@@ -52,6 +59,7 @@ public final class BCBuildersScreens {
         return new ContainerBuilder(inventory.player, syncId, tile);
     });
     public static void register() {
+        Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftbuilders","filler_planner"),PLANNER);
         Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftbuilders","library"),LIBRARY);
         Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftbuilders","replacer"),REPLACER);
         Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftbuilders", "architect"), ARCHITECT);
@@ -77,6 +85,20 @@ public final class BCBuildersScreens {
             public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf buffer){buffer.writeBlockPos(pos);}
             public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user){
                 return tile.canInteractWith(user)?new buildcraft.builders.container.ContainerElectronicLibrary(user,syncId,tile):null;
+            }
+        });
+    }
+    public static void openPlanner(PlayerEntity player,buildcraft.builders.addon.AddonFillerPlanner addon){
+        if(!(player instanceof ServerPlayerEntity)||addon.volumeBox.world!=player.getWorld()
+            ||!addon.volumeBox.addons.containsValue(addon))return;
+        var probe=new buildcraft.builders.container.ContainerFillerPlanner(player,0,addon);
+        if(!probe.canUse(player)||probe.isLocked())return;
+        var slot=addon.getSlot();
+        player.openHandledScreen(new ExtendedScreenHandlerFactory(){
+            public Text getDisplayName(){return Text.translatable("gui.buildcraftbuilders.filler_planner");}
+            public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf buffer){buffer.writeNbt(addon.volumeBox.writeToNBT());buffer.writeEnumConstant(slot);}
+            public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user){
+                return probe.canUse(user)&&!probe.isLocked()?new buildcraft.builders.container.ContainerFillerPlanner(user,syncId,addon):null;
             }
         });
     }

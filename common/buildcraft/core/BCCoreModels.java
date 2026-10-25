@@ -56,6 +56,10 @@ public final class BCCoreModels {
             if (marker != null) net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE
                 .putBlock(marker, RenderLayer.getCutout());
         buildcraft.lib.client.render.DetachedRenderer.register(buildcraft.lib.client.render.MarkerRenderer.INSTANCE);
+        buildcraft.lib.client.render.DetachedRenderer.register(buildcraft.core.client.render.RenderVolumeBoxes.INSTANCE);
+        buildcraft.core.marker.volume.MessageVolumeBoxes.registerClientHandler();
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.clear());
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.START_CLIENT_TICK.register(client->buildcraft.core.marker.volume.ClientVolumeBoxes.INSTANCE.worldChanged(client.world));
         if (BCCoreBlocks.markerVolume != null) BlockEntityRendererFactories.register(
             BlockEntityRegistry.type(buildcraft.core.tile.TileMarkerVolume.class), buildcraft.core.client.render.RenderMarkerVolume::new);
         if (BCCoreBlocks.engine == null) return;

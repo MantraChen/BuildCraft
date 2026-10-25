@@ -62,6 +62,19 @@ The original dye/marker/workbench/gold-gear/chest recipe is available in surviva
 Paid construction survives saves, and continuous gate actions preserve progress.
 Use `./scripts/full-smoke.ps1 -Filler` to verify its screen, work visuals, full world
 restart, engine-powered filling and native mined-item inventory.
+Editable volume boxes now support the filler planner. Use a volume-box tool on a
+block to create a one-block region. Aim the marker connector at a corner block and
+right-click to start dragging; move/look to resize, then click to confirm or sneak-click
+to cancel. Use a planner on an outer corner node, then use the connector on that node
+to open its pattern, direction and inversion controls. White ghost faces preview the
+plan without placing blocks. Place a filler against the region with its working side
+toward it, then provide materials and MJ. The machine locks the linked plan until
+removed. Tools are reusable; sneak-use the connector on an unlocked addon to remove
+it, or on an unlocked volume face to remove the region. Bounds and settings survive
+world restarts and synchronize only within their dimension.
+New survival recipes are available: glass + lapis + area marker for the volume tool,
+stick + redstone + lapis for the connector, and paper + gold gear + compass for the
+planner. Use `./scripts/full-smoke.ps1 -Planner` for the connected-client workflow.
 Architect tables now have a native naming screen and survival recipes for blank
 blueprints/templates. Place the table beside connected area markers, name the plan,
 then insert a blueprint to capture block states or a template to capture occupancy.

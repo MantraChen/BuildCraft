@@ -4,7 +4,6 @@
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-// TODO(R.Chen): blocked by lib.marker.MarkerCache / MarkerSubCache (not yet migrated to Fabric 1.20.1)
 package buildcraft.core.item;
 
 import java.util.Iterator;
@@ -57,6 +56,7 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
     @SuppressWarnings("NullableProblems")
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        if(player.isSpectator()||net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe()!=null)return TypedActionResult.fail(player.getStackInHand(hand));
         if (!world.isClient) {
             for (MarkerCache<?> cache : MarkerCache.CACHES) {
                 if (interactCache(cache.getSubCache(world), player)) {
@@ -113,6 +113,14 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
 
         VolumeBox currentEditing = volumeBoxes.getCurrentEditing(player);
 
+        // Completing a drag takes priority over any addon beneath the crosshair.
+        if (currentEditing != null) {
+            if (player.isSneaking()) currentEditing.cancelEditing();
+            else currentEditing.confirmEditing();
+            volumeBoxes.markDirty();
+            return ActionResult.SUCCESS;
+        }
+
         Vec3d start = player.getEyePos();
         Vec3d end = start.add(player.getRotationVec(1.0f).multiply(4));
 
@@ -123,6 +131,7 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
         VolumeBox addonVolumeBox = selectingVolumeBoxAndSlot.getLeft();
         EnumAddonSlot addonSlot = selectingVolumeBoxAndSlot.getRight();
         if (addonVolumeBox != null && addonSlot != null) {
+            if(!addonVolumeBox.canEdit(player,BlockPos.ofFloored(addonSlot.getBoundingBox(addonVolumeBox).getCenter())))return ActionResult.FAIL;
             if (addonVolumeBox.addons.containsKey(addonSlot) &&
                 addonVolumeBox.getLockTargetsStream().noneMatch(target ->
                     target instanceof Lock.Target.TargetAddon && ((Lock.Target.TargetAddon) target).slot == addonSlot
@@ -131,9 +140,11 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
                     addonVolumeBox.addons.get(addonSlot).onRemoved();
                     addonVolumeBox.addons.remove(addonSlot);
                     volumeBoxes.markDirty();
+                    return ActionResult.SUCCESS;
                 } else {
                     addonVolumeBox.addons.get(addonSlot).onPlayerRightClick(player);
                     volumeBoxes.markDirty();
+                    return ActionResult.SUCCESS;
                 }
             }
         } else if (player.isSneaking()) {
@@ -141,7 +152,9 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
                 for (Iterator<VolumeBox> iterator = volumeBoxes.volumeBoxes.iterator(); iterator.hasNext();) {
                     VolumeBox volumeBox = iterator.next();
                     if (volumeBox.box.getBoundingBox().raycast(start, end).isPresent()) {
-                        if (volumeBox.getLockTargetsStream().noneMatch(Lock.Target.TargetResize.class::isInstance)) {
+                        var hit=volumeBox.box.getBoundingBox().raycast(start,end).orElseThrow();
+                        if(!volumeBox.canEdit(player,BlockPos.ofFloored(hit)))return ActionResult.FAIL;
+                        if (volumeBox.getLockTargetsStream().noneMatch(Lock.Target.TargetRemove.class::isInstance)) {
                             volumeBox.addons.values().forEach(Addon::onRemoved);
                             iterator.remove();
                             volumeBoxes.markDirty();
@@ -171,6 +184,7 @@ public class ItemMarkerConnector extends ItemBC_Neptune {
                         .collect(Collectors.toList())
                     ) {
                     for (BlockPos p : PositionUtil.getCorners(volumeBox.box.min(), volumeBox.box.max())) {
+                        if(!volumeBox.canEdit(player,p))continue;
                         java.util.Optional<Vec3d> ray = new Box(p).raycast(start, end);
                         if (ray.isPresent()) {
                             double dist = ray.get().distanceTo(start);

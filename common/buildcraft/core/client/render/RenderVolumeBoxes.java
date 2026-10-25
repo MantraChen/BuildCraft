@@ -1,68 +1,24 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Remake by FelixMantra */
 package buildcraft.core.client.render;
-
-import org.lwjgl.opengl.GL11;
-
-import net.minecraft.client.render.BufferBuilder;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
 import net.minecraft.entity.player.PlayerEntity;
-
 import buildcraft.lib.client.render.DetachedRenderer;
 import buildcraft.lib.client.render.laser.LaserBoxRenderer;
-import buildcraft.lib.client.render.laser.LaserData_BC8.LaserType;
-
 import buildcraft.core.client.BuildCraftLaserManager;
-import buildcraft.core.marker.volume.Addon;
-import buildcraft.core.marker.volume.ClientVolumeBoxes;
-import buildcraft.core.marker.volume.IFastAddonRenderer;
-import buildcraft.core.marker.volume.Lock;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.render.VertexFormat;
-
+import buildcraft.core.marker.volume.*;
 public enum RenderVolumeBoxes implements DetachedRenderer.IDetachedRenderer {
     INSTANCE;
-
     @SuppressWarnings("unchecked")
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void render(PlayerEntity player, float partialTicks) {
-        RenderSystem.enableBlend();
-
-        BufferBuilder bb = Tessellator.getInstance().getBuffer();
-
-        bb.begin(VertexFormat.DrawMode.QUADS, DefaultVertexFormats.BLOCK);
-
-        ClientVolumeBoxes.INSTANCE.volumeBoxes.forEach(volumeBox -> {
-            LaserType type;
-            if (volumeBox.isEditingBy(player)) {
-                type = BuildCraftLaserManager.MARKER_VOLUME_SIGNAL;
-            } else {
-                type = volumeBox.getLockTargetsStream()
-                    .filter(Lock.Target.TargetUsedByMachine.class::isInstance)
-                    .map(Lock.Target.TargetUsedByMachine.class::cast)
-                    .map(target -> target.type)
-                    .map(Lock.Target.TargetUsedByMachine.EnumType::getLaserType)
-                    .findFirst()
-                    .orElse(BuildCraftLaserManager.MARKER_VOLUME_CONNECTED);
-            }
-            LaserBoxRenderer.renderLaserBoxDynamic(volumeBox.box, type, bb, false);
-
-            volumeBox.addons.values().forEach(addon ->
-                ((IFastAddonRenderer<Addon>) addon.getRenderer()).renderAddonFast(addon, player, partialTicks, bb)
-            );
-        });
-
-        Tessellator.getInstance().draw();
-
-        RenderSystem.disableBlend();
+    public void render(PlayerEntity player,float delta){
+        var context=DetachedRenderer.context();
+        for(var volume:ClientVolumeBoxes.INSTANCE.volumeBoxes){
+            if(volume.world!=player.getWorld()||context.frustum()!=null&&!context.frustum().isVisible(volume.box.getBoundingBox().expand(.2)))continue;
+            var type=volume.isEditingBy(player)?BuildCraftLaserManager.MARKER_VOLUME_SIGNAL:volume.getLockTargetsStream()
+                .filter(Lock.Target.TargetUsedByMachine.class::isInstance).map(Lock.Target.TargetUsedByMachine.class::cast)
+                .map(target->target.type.getLaserType()).findFirst().orElse(BuildCraftLaserManager.MARKER_VOLUME_CONNECTED);
+            LaserBoxRenderer.renderLaserBoxStatic(volume.box,type,false);
+            for(var addon:volume.addons.values())((IFastAddonRenderer<Addon>)addon.getRenderer()).renderAddonFast(addon,player,delta,null);
+        }
     }
-
-    @Override
-    public void render(float partialTicks) { /* STUB */ }
+    @Override public void render(float delta){var player=net.minecraft.client.MinecraftClient.getInstance().player;if(player!=null)render(player,delta);}
 }

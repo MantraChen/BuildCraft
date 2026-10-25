@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **501 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **513 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1105,7 +1105,7 @@ than being advertised as a functioning production table. A new charging system
 would be a separately designed feature, not a restoration of this baseline.
 
 Remaining work includes remaining resource/model/recipe migration and other pluggable
-items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
+items and placement, remaining machine screens, robotics, fluid/energy
 integration, larger quarry/third-party compatibility scenarios, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is
 ready for a survival world.
@@ -1656,7 +1656,66 @@ Remake by FelixMantra.
   complete restart, native builder interaction consumes exact materials and recreates
   the chest with identical contents. All seven final screenshots were reviewed in
   `verification/library-client-run/screenshots`.
-- The filler planner, riding relationships, broader modded-schematic compatibility
-  and remaining migration work are still unfinished. Existing guide-recipe and
+- At the library milestone, the filler planner, riding relationships, broader
+  modded-schematic compatibility and remaining migration work were still unfinished. Existing guide-recipe and
   texture-animation/mipmap warnings remain. This milestone verifies the library
   workflow and does not declare the entire port complete.
+
+
+### Native editable volumes and filler planner
+
+- Replaced the inactive legacy volume events with Fabric world ticks, login and
+  dimension-change synchronization. A volume retains its UUID, bounds, editing
+  state, addons and machine locks in native persistent state. Unsupported legacy
+  entries are retained verbatim for repair instead of being silently erased.
+- Volume-box and planner items remain reusable tools, matching the original
+  implementation. The connector starts a drag at a corner block, confirms with a
+  click and cancels with sneak-click. Completing a drag takes priority over an
+  addon beneath the crosshair, so cancellation cannot accidentally remove it.
+  Addons attach to outer corner nodes; the connector opens or sneak-removes them.
+  Spectators, distant players, other active editors, protected positions and
+  foreign Fabric transactions cannot mutate the selected volume. Machine locks
+  separately guard resizing, removal and the addon, and unloaded machine chunks
+  retain their locks without forced loads.
+- Immutable, dimension-scoped batches use bounded NBT data and retain the live
+  client collection until a complete ordered batch arrives. World changes clear
+  the previous collection. Existing addon objects are updated in place so open
+  screens remain attached to their actual volume. Native screens carry explicit
+  volume/addon identity instead of repeating a ray selection during opening.
+- The native planner screen cycles all 19 enabled patterns, four parameter slots
+  where applicable, and inversion. It displays planned block count and
+  `Remake by FelixMantra`; English and Chinese labels are included. Stale screens
+  close or reject writes, and machines cannot be reconfigured through a stale plan.
+  Historical disabled horizon/flatten patterns remain disabled.
+- Native world rendering shows volume lasers, the addon and translucent planned
+  blocks. It draws exposed ghost faces in loaded chunks within render distance,
+  with frustum checks and cached meshes; it does not place blocks. A confirmed
+  volume can be adopted by a native filler, which consumes real materials and MJ
+  and locks the plan until the machine is removed. Active drags cannot be adopted.
+- New shapeless survival recipes and unlock advancements provide the tools:
+  glass/lapis/area marker for the volume box, stick/redstone/lapis for the marker
+  connector, and paper/gold gear/compass for the planner. These are newly supplied
+  native recipes, not a claim that these recipes existed in the old branch.
+- Twelve additional packaged-mod GameTests cover reusable tools, singleton addon
+  placement, world-tick dragging and cancellation, explicit screen identity,
+  pattern/inversion updates, stale and locked screens, persistent editing/addon
+  identity, invalid-bound preservation, multipart network limits, malformed
+  packet rollback, transaction/spectator restrictions, real filler payment/unlock
+  and recipe registration. The creative GameTest mock hard-codes its mode, so the
+  spectator check uses an actual server player with spectator mode instead. Reused world fixtures clear their planned construction
+  cells before checking exact material payment.
+- The complete fixture passes **513 GameTests** and the connected planner client
+  against the packaged artifact in `verification/planner-full-client-5.log`.
+  The client uses actual item/screen packets to create and drag a volume, attach
+  the planner, switch patterns, change direction and invert a hollow box. It
+  verifies dimension isolation and a complete saved-world restart, places a
+  linked filler, quick-moves 27 stone, supplies MJ, checks all 27 placed blocks
+  and exact material payment, rejects editing while locked and reopens the plan
+  after machine removal. Eight screenshots in
+  `verification/planner-client-run/screenshots` were visually reviewed.
+- This fixture supplies MJ directly to isolate planner adoption; engine/pipe energy
+  supply was exercised by the existing filler client milestone. Large multi-user
+  collections and worst-case million-cell preview performance are not claimed
+  validated here. Riding groups, robotics, broader modded-schematic compatibility
+  and remaining resource/integration work still prevent declaring the entire port
+  complete. Existing guide-recipe and texture-animation/mipmap warnings remain.

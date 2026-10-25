@@ -70,15 +70,12 @@ public class BCCoreInitializer implements ModInitializer {
     }
 
     private static void registerLifecycleEvents() {
+        BCCoreEventDist.register();
         // Forge: FMLServerStartingEvent
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             // STUB(R.Chen): no core-specific server-start hook yet.
         });
 
-        // Forge: MinecraftForge.EVENT_BUS.register(BCCoreEventDist.INSTANCE)
-        // STUB(R.Chen): BCCoreEventDist subscribes to volume-box world load/save and
-        //               player events — port each to its Fabric Event once
-        //               core.marker.volume is migrated.
 
         // Forge: WorldEvent.Unload (server side)
         ServerWorldEvents.UNLOAD.register((server, world) -> {

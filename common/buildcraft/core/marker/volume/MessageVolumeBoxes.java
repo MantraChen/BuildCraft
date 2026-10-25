@@ -1,146 +1,57 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Remake by FelixMantra */
 package buildcraft.core.marker.volume;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import io.netty.buffer.Unpooled;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.client.network.ClientPlayerEntity;
+import java.util.*;
+import net.fabricmc.api.*;
+import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import buildcraft.lib.net.*;
 
-import buildcraft.lib.BCLibProxy;
-import buildcraft.lib.net.BCNetworkManager;
-import buildcraft.lib.net.PacketBufferBC;
-
-/**
- * Fabric 1.20.1 port of the original Forge {@code IMessage} MessageVolumeBoxes.
- *
- * Wire format is identical to the original (int count + [varInt len + bytes] per VolumeBox buffer).
- * The Forge IMessageHandler is replaced by a static {@link #handle} method registered via
- * {@link BCNetworkManager#registerClientReceiver} from the core module's client initializer.
- */
+/** Dimension-scoped, immutable batches; native packet limits do not depend on the number of boxes. */
 public final class MessageVolumeBoxes implements FabricPacket {
-
-    public static final PacketType<MessageVolumeBoxes> TYPE = PacketType.create(
-        new Identifier("buildcraft", "volume_boxes"),
-        MessageVolumeBoxes::read
-    );
-
-    private final List<PacketBufferBC> buffers;
-
-    // Single private canonical constructor; use static factories to construct instances.
-    private MessageVolumeBoxes(List<PacketBufferBC> buffers) {
-        this.buffers = buffers;
+    public static final int MAX_BOX_BYTES=65536,MAX_PACKET_BYTES=256*1024,MAX_BOXES=4096;
+    public static final PacketType<MessageVolumeBoxes> TYPE=PacketType.create(new Identifier("buildcraft","volume_boxes"),MessageVolumeBoxes::read);
+    final Identifier dimension;final UUID generation;final int index;final boolean last;final List<byte[]> boxes;
+    private MessageVolumeBoxes(Identifier dimension,UUID generation,int index,boolean last,List<byte[]> boxes){
+        this.dimension=dimension;this.generation=generation;this.index=index;this.last=last;this.boxes=List.copyOf(boxes);
     }
-
-    /** Server-side factory: serialises each VolumeBox into its own PacketBufferBC. */
-    public static MessageVolumeBoxes of(List<VolumeBox> volumeBoxes) {
-        List<PacketBufferBC> bufs = volumeBoxes.stream()
-            .map(vb -> {
-                PacketBufferBC buf = new PacketBufferBC(Unpooled.buffer());
-                vb.toBytes(buf);
-                return buf;
-            })
-            .collect(Collectors.toList());
-        return new MessageVolumeBoxes(bufs);
-    }
-
-    public static MessageVolumeBoxes read(PacketByteBuf buf) {
-        PacketBufferBC bc = PacketBufferBC.asPacketBufferBc(buf);
-        List<PacketBufferBC> bufs = new ArrayList<>();
-        int count = bc.readInt();
-        for (int i = 0; i < count; i++) {
-            int bytes = bc.readVarInt();
-            bufs.add(new PacketBufferBC(bc.readBytes(bytes)));
+    public static List<MessageVolumeBoxes> batches(ServerWorld world,List<VolumeBox> volumes){
+        if(volumes.size()>MAX_BOXES)throw new IllegalArgumentException("Too many volume boxes");
+        List<List<byte[]>> groups=new ArrayList<>();List<byte[]> current=new ArrayList<>();int size=0;
+        for(var volume:volumes){
+            var buffer=PacketBufferBC.write(volume::toBytes);byte[] bytes;
+            try{bytes=new byte[buffer.readableBytes()];buffer.getBytes(buffer.readerIndex(),bytes);}finally{buffer.release();}
+            if(bytes.length>MAX_BOX_BYTES)throw new IllegalArgumentException("Volume data too large");
+            if(!current.isEmpty()&&size+bytes.length+5>MAX_PACKET_BYTES){groups.add(current);current=new ArrayList<>();size=0;}
+            current.add(bytes);size+=bytes.length+5;
         }
-        return new MessageVolumeBoxes(bufs);
+        groups.add(current);var generation=UUID.randomUUID();List<MessageVolumeBoxes> result=new ArrayList<>();
+        for(int i=0;i<groups.size();i++)result.add(new MessageVolumeBoxes(world.getRegistryKey().getValue(),generation,i,i==groups.size()-1,groups.get(i)));
+        return List.copyOf(result);
     }
-
-    @Override
-    public void write(PacketByteBuf buf) {
-        PacketBufferBC bc = PacketBufferBC.asPacketBufferBc(buf);
-        bc.writeInt(buffers.size());
-        for (PacketBufferBC local : buffers) {
-            bc.writeVarInt(local.readableBytes());
-            bc.writeBytes(local, 0, local.readableBytes());
-        }
+    public static void send(ServerWorld world,Collection<ServerPlayerEntity> players){
+        if(players.isEmpty())return;
+        for(var packet:batches(world,WorldSavedDataVolumeBoxes.get(world).volumeBoxes))
+            for(var player:players)if(player.getWorld()==world)BCNetworkManager.sendTo(packet,player);
     }
-
-    @Override
-    public PacketType<?> getType() {
-        return TYPE;
+    public static MessageVolumeBoxes read(PacketByteBuf buffer){
+        Identifier dimension=buffer.readIdentifier();UUID generation=buffer.readUuid();int index=buffer.readVarInt();boolean last=buffer.readBoolean();int count=buffer.readVarInt();
+        if(index<0||index>MAX_BOXES||count<0||count>MAX_BOXES)throw new IllegalArgumentException("Invalid volume batch");
+        List<byte[]> boxes=new ArrayList<>();int size=0;
+        for(int i=0;i<count;i++){byte[] bytes=buffer.readByteArray(MAX_BOX_BYTES);size+=bytes.length+5;if(size>MAX_PACKET_BYTES)throw new IllegalArgumentException("Volume batch too large");boxes.add(bytes);}
+        if(buffer.isReadable())throw new IllegalArgumentException("Trailing volume batch data");
+        return new MessageVolumeBoxes(dimension,generation,index,last,boxes);
     }
-
-    // -----------------------------------------------------------------------
-    // Client-side handler — registered via BCNetworkManager.registerClientReceiver from core's
-    // ClientModInitializer. Ported from the original IMessageHandler.HANDLER static field.
-    // -----------------------------------------------------------------------
-
-    @Environment(EnvType.CLIENT)
-    public static void registerClientHandler() {
-        BCNetworkManager.registerClientReceiver(TYPE, MessageVolumeBoxes::handle);
+    @Override public void write(PacketByteBuf buffer){
+        buffer.writeIdentifier(dimension);buffer.writeUuid(generation);buffer.writeVarInt(index);buffer.writeBoolean(last);buffer.writeVarInt(boxes.size());
+        for(var box:boxes)buffer.writeByteArray(box);
     }
-
-    @Environment(EnvType.CLIENT)
-    private static void handle(MessageVolumeBoxes packet,
-                                ClientPlayerEntity player,
-                                PacketSender responseSender) {
-        Map<PacketBufferBC, VolumeBox> incoming = packet.buffers.stream()
-            .map(buf -> {
-                VolumeBox vb;
-                try {
-                    vb = new VolumeBox(BCLibProxy.getProxy().getClientWorld(), buf);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                PacketBufferBC out = new PacketBufferBC(Unpooled.buffer());
-                vb.toBytes(out);
-                return Pair.of(out, vb);
-            })
-            .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
-
-        ClientVolumeBoxes.INSTANCE.volumeBoxes.removeIf(vb -> !incoming.values().contains(vb));
-        for (Map.Entry<PacketBufferBC, VolumeBox> entry : incoming.entrySet()) {
-            boolean wasContained = false;
-            for (VolumeBox existing : ClientVolumeBoxes.INSTANCE.volumeBoxes) {
-                if (existing.equals(entry.getValue())) {
-                    try {
-                        existing.fromBytes(entry.getKey());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    wasContained = true;
-                    break;
-                }
-            }
-            if (!wasContained) {
-                ClientVolumeBoxes.INSTANCE.volumeBoxes.add(entry.getValue());
-                for (Addon addon : entry.getValue().addons.values()) {
-                    if (addon != null) {
-                        addon.onAdded();
-                    }
-                }
-            }
-        }
+    @Override public PacketType<?> getType(){return TYPE;}
+    @Environment(EnvType.CLIENT) public static void registerClientHandler(){
+        BCNetworkManager.registerClientReceiver(TYPE,(packet,player,sender)->ClientVolumeBoxes.INSTANCE.accept(player.getWorld(),packet));
     }
 }

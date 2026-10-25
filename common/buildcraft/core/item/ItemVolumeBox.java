@@ -27,7 +27,7 @@ public class ItemVolumeBox extends ItemBC_Neptune {
     public ActionResult useOnBlock(ItemUsageContext ctx) {
         World world = ctx.getWorld();
         if (world.isClient) {
-            return ActionResult.PASS;
+            return ActionResult.SUCCESS;
         }
 
         BlockPos pos = ctx.getBlockPos();
@@ -35,6 +35,11 @@ public class ItemVolumeBox extends ItemBC_Neptune {
         BlockPos offset = pos.offset(facing);
 
         WorldSavedDataVolumeBoxes volumeBoxes = WorldSavedDataVolumeBoxes.get(world);
+        if(ctx.getPlayer()==null||ctx.getPlayer().isSpectator()||!world.isInBuildLimit(offset)
+            ||!world.getWorldBorder().contains(offset)||!world.isChunkLoaded(offset)||!world.canPlayerModifyAt(ctx.getPlayer(),offset)
+            ||ctx.getPlayer().squaredDistanceTo(offset.getX()+.5,offset.getY()+.5,offset.getZ()+.5)>64
+            ||volumeBoxes.volumeBoxes.size()>=buildcraft.core.marker.volume.MessageVolumeBoxes.MAX_BOXES
+            ||net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.getCurrentUnsafe()!=null)return ActionResult.FAIL;
         VolumeBox current = volumeBoxes.getVolumeBoxAt(offset);
 
         if (current == null) {

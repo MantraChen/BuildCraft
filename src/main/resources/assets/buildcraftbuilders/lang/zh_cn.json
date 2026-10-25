@@ -59,5 +59,8 @@
   "gui.buildcraftbuilders.library.status.7": "保存失败，已保留输入物品",
   "gui.buildcraftbuilders.library.status.8": "其他玩家正在使用蓝图库",
   "gui.buildcraftbuilders.library.status.9": "传输超时，已保留输入物品",
-  "gui.buildcraftbuilders.library.status.10": "无法删除本地文件"
+  "gui.buildcraftbuilders.library.status.10": "无法删除本地文件",
+  "gui.buildcraftbuilders.filler_planner": "填充规划器",
+  "gui.buildcraftbuilders.planner.blocks": "预览：%s 个方块",
+  "gui.buildcraftbuilders.planner.locked": "已被机器锁定"
 }

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:glass"
+    },
+    {
+      "item": "minecraft:lapis_lazuli"
+    },
+    {
+      "item": "buildcraftcore:marker_volume"
+    }
+  ],
+  "result": {
+    "item": "buildcraftcore:volume_box"
+  }
+}

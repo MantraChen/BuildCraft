@@ -146,7 +146,7 @@ public class Lock {
 
             @Override
             public boolean stillWorks(World world) {
-                return world.getBlockState(pos).getBlock() == block;
+                return !world.isChunkLoaded(pos) || world.getBlockState(pos).getBlock() == block;
             }
         }
 

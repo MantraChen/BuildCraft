@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities, [switch]$Replacer, [switch]$Library)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities, [switch]$Replacer, [switch]$Library, [switch]$Planner)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -357,5 +357,17 @@ if ($Library) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $libraryOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runLibraryClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Planner) {
+    $plannerRun = Join-Path $verification 'planner-client-run'
+    $plannerConfig = Join-Path $plannerRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $plannerConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $plannerConfig 'main.cfg') -Force
+    $plannerOptions = Join-Path $plannerRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $plannerOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $plannerOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runPlannerClientSmoke --console=plain
 }
 exit $LASTEXITCODE

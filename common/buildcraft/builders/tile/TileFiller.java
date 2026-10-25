@@ -98,6 +98,7 @@ public class TileFiller extends TileBC_Neptune
         var boxes = WorldSavedDataVolumeBoxes.get(world);
         var volume = boxes.getVolumeBoxAt(target);
         if (volume != null) {
+            if(volume.isEditing())return;
             if (volume.box.contains(pos)) return;
             addon = volume.addons.values().stream().filter(AddonFillerPlanner.class::isInstance)
                 .map(AddonFillerPlanner.class::cast).findFirst().orElse(null);
