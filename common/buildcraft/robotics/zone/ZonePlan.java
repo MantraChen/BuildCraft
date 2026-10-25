@@ -27,6 +27,7 @@ import buildcraft.api.core.IZone;
 import buildcraft.lib.misc.NBTUtilBC;
 
 public class ZonePlan implements IZone {
+    public static final int MAX_CHUNKS = 4096;
     private final HashMap<ChunkPos, ZoneChunk> chunkMapping = new HashMap<>();
 
     public ZonePlan() {}
@@ -59,6 +60,7 @@ public class ZonePlan implements IZone {
 
         if (!chunkMapping.containsKey(chunkId)) {
             if (val) {
+                if (chunkMapping.size() >= MAX_CHUNKS) throw new IllegalArgumentException("Zone has too many chunks");
                 property = new ZoneChunk();
                 chunkMapping.put(chunkId, property);
             } else {
@@ -86,7 +88,7 @@ public class ZonePlan implements IZone {
 
     public ZonePlan getWithOffset(int offsetX, int offsetY) {
         ZonePlan zonePlan = new ZonePlan();
-        getAll().forEach(p -> zonePlan.set(p.x + offsetX, p.y + offsetY, true));
+        getAll().forEach(p -> zonePlan.set(Math.addExact(p.x, offsetX), Math.addExact(p.y, offsetY), true));
         return zonePlan;
     }
 
@@ -119,18 +121,21 @@ public class ZonePlan implements IZone {
     }
 
     public void readFromNBT(NbtCompound nbt) {
-        NBTUtilBC.readCompoundList(nbt.get("chunkMapping"))
+        var list = nbt.get("chunkMapping");
+        if (list != null && (!(list instanceof net.minecraft.nbt.NbtList entries)
+            || entries.size() > MAX_CHUNKS || !entries.isEmpty() && entries.getHeldType() != net.minecraft.nbt.NbtElement.COMPOUND_TYPE))
+            throw new IllegalArgumentException("Invalid zone chunk list");
+        var replacement = new HashMap<ChunkPos, ZoneChunk>();
+        NBTUtilBC.readCompoundList(list)
                 .forEach(zoneChunkTag -> {
                     ZoneChunk chunk = new ZoneChunk();
                     chunk.readFromNBT(zoneChunkTag);
-                    chunkMapping.put(
-                            new ChunkPos(
-                                    zoneChunkTag.getInt("chunkX"),
-                                    zoneChunkTag.getInt("chunkZ")
-                            ),
-                            chunk
-                    );
+                    var pos = checkedChunk(zoneChunkTag.getInt("chunkX"), zoneChunkTag.getInt("chunkZ"));
+                    if (replacement.put(pos, chunk) != null) throw new IllegalArgumentException("Duplicate zone chunk");
                 });
+        replacement.values().removeIf(ZoneChunk::isEmpty);
+        chunkMapping.clear();
+        chunkMapping.putAll(replacement);
     }
 
     @Override
@@ -143,13 +148,11 @@ public class ZonePlan implements IZone {
         double maxSqrDistance = Double.MAX_VALUE;
 
         for (Map.Entry<ChunkPos, ZoneChunk> e : chunkMapping.entrySet()) {
-            double dx = (e.getKey().x << 4 + 8) - index.getX();
-            double dz = (e.getKey().z << 4 + 8) - index.getZ();
-
-            double sqrDistance = dx * dx + dz * dz;
-
-            if (sqrDistance < maxSqrDistance) {
-                maxSqrDistance = sqrDistance;
+            for (var cell : e.getValue().getAll()) {
+                double dx = (double) e.getKey().getStartX() + cell.x - index.getX();
+                double dz = (double) e.getKey().getStartZ() + cell.y - index.getZ();
+                maxSqrDistance = Math.min(maxSqrDistance, dx * dx + dz * dz);
+                if (maxSqrDistance == 0) return 0;
             }
         }
 
@@ -188,15 +191,26 @@ public class ZonePlan implements IZone {
     }
 
     public ZonePlan readFromByteBuf(PacketByteBuf buf) {
-        chunkMapping.clear();
         int size = buf.readInt();
+        if (size < 0 || size > MAX_CHUNKS) throw new IllegalArgumentException("Invalid zone chunk count");
+        var replacement = new HashMap<ChunkPos, ZoneChunk>();
         for (int i = 0; i < size; i++) {
-            ChunkPos key = new ChunkPos(buf.readInt(), buf.readInt());
+            ChunkPos key = checkedChunk(buf.readInt(), buf.readInt());
             ZoneChunk value = new ZoneChunk();
             value.readFromByteBuf(buf);
-            chunkMapping.put(key, value);
+            if (replacement.put(key, value) != null) throw new IllegalArgumentException("Duplicate zone chunk");
         }
+        replacement.values().removeIf(ZoneChunk::isEmpty);
+        chunkMapping.clear();
+        chunkMapping.putAll(replacement);
         return this;
+    }
+
+    private static ChunkPos checkedChunk(int x, int z) {
+        if (x < (Integer.MIN_VALUE >> 4) || x > (Integer.MAX_VALUE >> 4)
+            || z < (Integer.MIN_VALUE >> 4) || z > (Integer.MAX_VALUE >> 4))
+            throw new IllegalArgumentException("Zone chunk coordinate overflow");
+        return new ChunkPos(x, z);
     }
 
     public void writeToByteBuf(PacketByteBuf buf) {

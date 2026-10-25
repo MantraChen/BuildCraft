@@ -74,7 +74,7 @@ separately there.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **513 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **523 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1766,3 +1766,55 @@ Remake by FelixMantra.
   vanilla missing-sound and shader warnings are still present. Robotics, riding
   groups, broader modded-schematic compatibility and the remaining migration work
   are not covered by this milestone; the port remains experimental.
+
+### Native location maps and reliable zone data
+
+- Location maps now use native item interactions, running after Fabric protection
+  callbacks and before a chest or marker's own interaction. A blank records the
+  clicked point/face, connected area bounds, or the complete ordered marker path,
+  including its repeated endpoint for a loop. Capturing never removes markers or
+  changes their connection order. Spectators, denied interactions, unavailable
+  chunks and active foreign transactions cannot record a map.
+- Exactly one blank becomes a record, including when a stack is held in creative.
+  Remaining blanks stay in hand; the record enters the inventory or is dropped
+  when full. Native stack limits are sixteen blanks and one record. Sneak-use in
+  air or on a block clears location data without removing custom display names or
+  unrelated addon NBT. Normal use cannot overwrite an existing record.
+- The public map API retains the original metadata and position/zone NBT formats.
+  New captures also store the dimension. Invalid or missing point, side, area,
+  path and zone values return no result instead of crashing or inventing a point.
+  Read-only queries leave blank item tags untouched. Native tooltips show the
+  record type, coordinates/path length, dimension, label and clearing instruction,
+  with English/Chinese text and `Remake by FelixMantra`.
+- A newly supplied native survival recipe crafts four blank location maps from
+  one paper and one redstone, with a recipe-book unlock. This is an added recipe;
+  it is not presented as an unchanged historical BuildCraft recipe.
+- Zone chunks now preserve the full-chunk flag when copied, retain the last cell
+  when another cell is erased, and handle empty random sampling safely. Reading
+  NBT/packets replaces old bits and regions. Bounded decoding rejects oversized
+  bit arrays, invalid packet flags/counts, duplicate chunks and coordinate overflow
+  before replacing the existing region. Plans support up to 4,096 chunks. Offset
+  arithmetic detects overflow, and distance uses selected columns rather than an
+  incorrectly shifted chunk center. Saved zones retain negative coordinates.
+- Ten additional packaged-mod tests cover native chest interception, exact split
+  counts, full-inventory drops, limits, native save/load, clearing, read-only API
+  behavior, protection, transactions, spectators, area and loop capture, malformed
+  records, zone copy/erase/offset/distance, atomic malformed decode, empty/reused
+  chunks and the actual two-item survival recipe.
+- Scope clarification: the imported robotics module contains the zone planner,
+  not a functioning robot entity implementation. The bundled original English
+  tooltip explicitly says robots are not coming to 1.12.2
+  (`buildcraft_resources/assets/buildcraft/lang/en_US.lang`). Restoring the
+  existing zone planner and paintbrush remains migration work; inventing a new
+  robot system is not a prerequisite for preserving this PR's behavior. This
+  milestone restores its map/zone prerequisites, not its missing editor or
+  map import/export screen. Riding groups and broader compatibility remain open.
+- The final packaged artifact passes **523 required GameTests**, plus the complete
+  model client (**928 block states, 139 items, 232 item variants; failures=0**) in
+  `verification/map-full-client-3.log`. The native map client uses actual survival
+  interaction packets to capture a chest point, area markers and a looping path,
+  verifies exact blank counts and untouched chest contents, shows native inventory
+  tooltips, saves and reopens the world, and clears a record through native sneak
+  input. It reports `failures=0` and exits cleanly in a 44-second Gradle invocation.
+  All four final screenshots in `verification/map-location-client-run/screenshots`
+  were reviewed, including the translated item name and restored named record.

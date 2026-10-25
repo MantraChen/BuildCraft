@@ -12,7 +12,7 @@ authors and dates. `archive/pr-4754` preserves the exact imported revision
 **Status: incomplete experimental port.** The complete production source compiles and
 the packaged mod starts native Fabric test servers and real Minecraft clients.
 Transport, machines, construction and their screens have verified workflows;
-robotics, riding groups and broader mod compatibility remain unfinished.
+zone planning, paintbrushes, riding groups and broader mod compatibility remain unfinished.
 See [the migration assessment](docs/MIGRATION_STATUS.md)
 and [the history/contributions record](docs/HISTORY.md).
 
@@ -23,6 +23,13 @@ Resource-pack changes preserve guide recipes. Legacy atlas sprites retain their
 original pixels and animation timing while supporting four mipmap levels.
 Run `./scripts/full-smoke.ps1 -Client -GuideResources` for the complete packaged-mod
 tests, model checks and connected guide/resource-reload workflow.
+
+Location maps now record a block and face, a connected area, or an ordered path
+including loops. Use a blank map on the block or marker; only one blank becomes a
+record, and a full inventory drops that record safely. Sneak-use clears it.
+Paper and redstone craft four blanks. Records preserve their dimension and label
+across world restarts. Use `./scripts/full-smoke.ps1 -Client -MapLocations` for the
+native capture, tooltip, save/reload and clearing checks.
 
 ## Development
 

@@ -25,6 +25,7 @@ public class ZoneChunk {
     public ZoneChunk() {}
 
     public ZoneChunk(ZoneChunk old) {
+        fullSet = old.fullSet;
         if (old.property != null) {
             property = BitSet.valueOf(old.property.toLongArray());
         }
@@ -53,7 +54,7 @@ public class ZoneChunk {
         } else {
             if (fullSet) {
                 property = new BitSet(16 * 16);
-                property.flip(0, 16 * 16 - 1);
+                property.set(0, 16 * 16);
                 fullSet = false;
             } else if (property == null) {
                 // Note - ZonePlan should usually destroy such chunks
@@ -81,15 +82,15 @@ public class ZoneChunk {
 
         if (property != null) {
             nbt.putByteArray("bits", property.toByteArray());
-        }
+        } else nbt.remove("bits");
     }
 
     public void readFromNBT(NbtCompound nbt) {
-        fullSet = nbt.getBoolean("fullSet");
-
-        if (nbt.contains("bits")) {
-            property = BitSet.valueOf(nbt.getByteArray("bits"));
-        }
+        byte[] bits = nbt.getByteArray("bits");
+        if (bits.length > 32) throw new IllegalArgumentException("Zone chunk exceeds 256 columns");
+        boolean full = nbt.getBoolean("fullSet");
+        property = full ? null : BitSet.valueOf(bits);
+        fullSet = full;
     }
 
     public BlockPos getRandomBlockPos(Random rand) {
@@ -99,6 +100,7 @@ public class ZoneChunk {
             x = rand.nextInt(16);
             z = rand.nextInt(16);
         } else {
+            if (isEmpty()) return null;
             int bitId = rand.nextInt(property.cardinality());
             int bitPosition = property.nextSetBit(0);
 
@@ -117,14 +119,14 @@ public class ZoneChunk {
     }
 
     public boolean isEmpty() {
-        return !fullSet && property.isEmpty();
+        return !fullSet && (property == null || property.isEmpty());
     }
 
     public ZoneChunk readFromByteBuf(PacketByteBuf buf) {
         int flags = buf.readUnsignedByte();
-        if ((flags & 1) != 0) {
-            property = BitSet.valueOf(buf.readByteArray());
-        }
+        if ((flags & ~3) != 0) throw new IllegalArgumentException("Invalid zone chunk flags");
+        BitSet bits = (flags & 1) != 0 ? BitSet.valueOf(buf.readByteArray(32)) : null;
+        property = (flags & 2) != 0 ? null : bits;
         fullSet = (flags & 2) != 0;
 
         return this;

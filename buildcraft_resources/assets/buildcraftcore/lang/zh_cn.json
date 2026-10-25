@@ -10,5 +10,15 @@
   "advancements.buildcraftcore.markers.title": "标记区域",
   "advancements.buildcraftcore.markers.description": "用标记连接器连接区域标记。",
   "advancements.buildcraftcore.path_markers.title": "沿着路径",
-  "advancements.buildcraftcore.path_markers.description": "用标记连接器连接路径标记。"
+  "advancements.buildcraftcore.path_markers.description": "用标记连接器连接路径标记。",
+  "item.buildcraftcore.map_location.type.clean": "空白位置地图",
+  "item.buildcraftcore.map_location.type.spot": "已记录坐标",
+  "item.buildcraftcore.map_location.type.area": "已记录区域",
+  "item.buildcraftcore.map_location.type.path": "已记录路径",
+  "item.buildcraftcore.map_location.type.zone": "已记录选区",
+  "item.buildcraftcore.map_location.type.path_repeating": "循环路径",
+  "item.buildcraftcore.map_location.points": "%s 个路径点",
+  "item.buildcraftcore.map_location.capture": "对方块或已连接的标记使用，记录一张地图。",
+  "item.buildcraftcore.map_location.clear": "潜行使用可清除记录。",
+  "item.buildcraftcore.map_location": "位置地图"
 }

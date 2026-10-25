@@ -13,5 +13,6 @@ public abstract class SchematicItemStackMixin {
     @Inject(method="getMaxCount",at=@At("HEAD"),cancellable=true)
     private void buildcraft_recordedSchematicLimit(CallbackInfoReturnable<Integer> result){
         if(ItemSchematicSingle.isUsed((ItemStack)(Object)this))result.setReturnValue(1);
+        if(buildcraft.core.item.ItemMapLocation.isRecorded((ItemStack)(Object)this))result.setReturnValue(1);
     }
 }
