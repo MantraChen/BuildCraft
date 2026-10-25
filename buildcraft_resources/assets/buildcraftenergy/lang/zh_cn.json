@@ -1,4 +1,6 @@
 {
+  "biome.buildcraftenergy.oil_desert": "沙漠油田",
+  "biome.buildcraftenergy.oil_ocean": "海洋油田",
   "tile.engine.rf.name": "RF 引擎",
   "fluid.buildcraftenergy.oil": "原油",
   "fluid.buildcraftenergy.oil_residue": "残渣",

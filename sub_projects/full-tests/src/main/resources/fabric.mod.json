@@ -6,6 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "buildcraft.test.full.OilGenerationGameTests",
       "buildcraft.test.full.HeatExchangeGameTests",
       "buildcraft.test.full.DistillerGameTests",
       "buildcraft.test.full.FullModGameTests",
@@ -30,6 +31,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.OilGenerationClientSmoke",
       "buildcraft.test.full.HeatExchangeClientSmoke",
       "buildcraft.test.full.DistillerClientSmoke",
       "buildcraft.test.full.AutoCraftClientSmoke",

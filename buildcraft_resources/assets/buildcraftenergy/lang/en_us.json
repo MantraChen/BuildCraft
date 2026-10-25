@@ -1,4 +1,6 @@
 {
+  "biome.buildcraftenergy.oil_desert": "Desert Oil Field",
+  "biome.buildcraftenergy.oil_ocean": "Ocean Oil Field",
   "tile.engine.rf.name": "RF Engine",
   "fluid.buildcraftenergy.oil": "Oil",
   "fluid.buildcraftenergy.oil_residue": "Residue",

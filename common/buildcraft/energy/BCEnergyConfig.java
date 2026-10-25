@@ -51,6 +51,7 @@ public class BCEnergyConfig {
     public static double largeOilGenProb;
 
     public static final Set<Integer> excludedDimensions = new HashSet<Integer>();
+    public static final Set<Identifier> excludedDimensionNames = new HashSet<>();
     /** If false then {@link #excludedDimensions} should be treated as a whitelist rather than a blacklist. */
     public static boolean excludedDimensionsIsBlackList;
     public static final Set<Identifier> excessiveBiomes = new HashSet<>();
@@ -85,6 +86,7 @@ public class BCEnergyConfig {
     private static Property propExcludedBiomes;
     private static Property propExcludedBiomesIsBlacklist;
     private static Property propExcludedDimensions;
+    private static Property propExcludedDimensionNames;
     private static Property propExcludedDimensionsIsBlacklist;
     private static Property propChristmasEventType;
 
@@ -169,12 +171,15 @@ public class BCEnergyConfig {
 
         propExcludedDimensionsIsBlacklist = BCCoreConfig.config.get("worldgen.oil", "excludedDimensionsIsBlacklist", true,
             "If true then the excluded dimenstions list will be treated as a blacklist, otherwise it will be treated as a whitelist.");
+        propExcludedDimensionNames = BCCoreConfig.config.get("worldgen.oil", "excludedDimensionNames", new String[0],
+            "Native dimension identifiers, including modded dimensions. Combined with legacy IDs using excludedDimensionsIsBlacklist.");
 
         world.setTo(propExcessiveBiomes);
         world.setTo(propSurfaceDepositBiomes);
         world.setTo(propExcludedBiomes);
         world.setTo(propExcludedBiomesIsBlacklist);
         world.setTo(propExcludedDimensions);
+        world.setTo(propExcludedDimensionNames);
         world.setTo(propExcludedDimensionsIsBlacklist);
 
         propChristmasEventType =
@@ -224,6 +229,7 @@ public class BCEnergyConfig {
             addBiomeNames(propExcludedBiomes, excludedBiomes);
             addBiomeNames(propExcessiveBiomes, excessiveBiomes);
             addBiomeNames(propSurfaceDepositBiomes, surfaceDepositBiomes);
+            addBiomeNames(propExcludedDimensionNames, excludedDimensionNames);
             excludedDimensions.clear();
             for (int dimension : propExcludedDimensions.getIntList()) excludedDimensions.add(dimension);
             excludedBiomesIsBlackList = propExcludedBiomesIsBlacklist.getBoolean();

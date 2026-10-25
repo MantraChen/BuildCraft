@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **200 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **218 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -481,8 +481,9 @@ features explicitly as work proceeds.
   render handlers, bucket models and English/Chinese names are supplied. Gas geometry
   fills from the ceiling rather than the floor. Atlas-source registration uses a client
   Mixin invoker; its application and visual output still require the full client launch.
-  Engine fuel/coolant use, refinery recipes, swimming/breathing in custom fluids,
-  world generation and multiplayer behavior remain outstanding integration work.
+  Later packaged-mod milestones below cover engine fluid handling, refinery recipes
+  and native oil generation. Swimming/breathing and broader multiplayer behavior still
+  need their own gameplay validation.
 - Restored the original variable-model parser, expression-driven cuboids, nested models,
   texture aliases and transformation rules against native Minecraft/JOML APIs. Parent
   resources close reliably and recursive references fail with a useful error. Model
@@ -796,6 +797,44 @@ features explicitly as work proceeds.
   The client exits cleanly with zero fixture failures. Running, refinery and reversed
   screenshots were visually inspected in
   `verification/heat-exchange-client-run/screenshots/`.
+
+### Native oil fields and world generation
+
+- Replaced the deferred generator with a registered native feature, configured/placed
+  feature resources and Fabric biome decoration. Seed-derived deposits retain the
+  three original sizes, underground spherical reservoirs, terrain-following tendrils,
+  optional tapered spouts and large-well oil springs. Reservoir depth and springs
+  follow the actual world bottom, including negative Y in 1.20.1.
+- Each pass writes only its decorating chunk. Neighboring candidates are planned from
+  the seed and native noise/height generator without loading their chunks. Tests guard
+  every block access and compare opposite chunk-generation orders. Replacement keeps
+  block entities, constructed blocks, waterlogged hosts and bedrock outside the large
+  well's connecting bore. Native fluid ticks make the generated oil usable normally.
+- Generation honors the global/oil switches, probability/rate settings, spout ranges,
+  biome bonuses and both blacklist/whitelist modes. Native `excludedDimensionNames`
+  combines with legacy IDs (`0`, `-1`, `1`) without assigning a vanilla ID to custom
+  dimensions. Flat worlds are skipped; the central End island retains its exclusion
+  even if the End is explicitly enabled. There is no retroactive world modification.
+- Registered desert/ocean oil biomes as native data-pack resources and removed the
+  obsolete Forge GenLayer classes. Small humidity/erosion partitions in the native
+  Overworld climate provide seed-dependent oil fields while retaining the remaining
+  climate parameters. All vanilla ocean variants are eligible; the Nether preset is
+  unchanged. Config toggles control selection, while biome definitions remain present
+  so existing saves can load. Native desert surface predicates include oil deserts.
+- Eighteen new world tests bring the packaged suite to **218 tests**. Coverage includes
+  actual feature/biome registration, reachable climate entries, biome toggles/surface
+  predicates, deterministic seeds/negative coordinates, all deposit sizes, native and
+  legacy dimension lists, finite/invalid rates, terrain heights, protected blocks,
+  saved spring metadata and bounded spouts. Default unknown-oil-biome warnings are gone.
+- A real normal-terrain client with seed 4754 and unchanged generation probabilities
+  finds a naturally decorated large well at `(33, -43, -181)`, with a spout reaching
+  Y=107 and a saved spring estimate of 5,133 sources. A live engine/pump/pipe network
+  collects the generated oil, and a real survival interaction withdraws an oil bucket.
+  Native biome search locates the desert field near `(1088, 64, 960)` and ocean field
+  near `(-896, 64, -1472)`; the desert has actual sand. A complete world restart retains
+  the deep reservoir, spring metadata and collected oil. The client exits with zero
+  fixture failures. All four screenshots were visually inspected in
+  `verification/oil-generation-client-run/screenshots/`.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

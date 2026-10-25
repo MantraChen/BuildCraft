@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -136,5 +136,17 @@ if ($HeatExchange) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $heatOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runHeatExchangeClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($OilGeneration) {
+    $oilRun = Join-Path $verification 'oil-generation-client-run'
+    $oilConfig = Join-Path $oilRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $oilConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $oilConfig 'main.cfg') -Force
+    $oilOptions = Join-Path $oilRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $oilOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $oilOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runOilGenerationClientSmoke --console=plain
 }
 exit $LASTEXITCODE

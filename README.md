@@ -120,6 +120,17 @@ heat one oil bucket with lava, feed the warm oil into a powered distiller, and v
 the exact products, wrench reversal and fluid recovery. Exchangers support three to
 five blocks, all 42 original heating/cooling recipes, four transactional tanks and
 automatic output. Their tooltip and advancement include **Remake by FelixMantra**.
+Add `-OilGeneration` to create a normal seeded world, find a naturally generated oil
+well, collect oil through an engine/pump/pipe network and a survival bucket, locate
+both oil-field biomes and reopen the save. Underground reservoirs, terrain-following
+oil deposits, spouts and world-bottom oil springs now generate in new chunks.
+Desert/ocean oil fields use native climate selection; desert fields retain sand and
+sandstone. Flat worlds and the Nether/End are excluded by default. The existing
+`worldgen.oil` configuration controls rates, spouts and biome/dimension blacklists;
+`excludedDimensionNames` accepts identifiers for custom dimensions alongside legacy
+dimension IDs. Restart Minecraft after changing generation settings. Already generated
+chunks are preserved. With commands enabled, use
+`/locate biome buildcraftenergy:oil_desert` or `/locate biome buildcraftenergy:oil_ocean`.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

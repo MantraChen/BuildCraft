@@ -3,6 +3,6 @@
   "package": "buildcraft.lib.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "buildcraft-refmap.json",
-  "mixins": ["ServerPlayerInteractionManagerMixin", "WorldMachineUpdateMixin", "QuarryCollisionMixin"],
+  "mixins": ["ServerPlayerInteractionManagerMixin", "WorldMachineUpdateMixin", "QuarryCollisionMixin", "OilBiomeParametersMixin", "OilBiomeSurfaceMixin"],
   "injectors": { "defaultRequire": 1 }
 }

@@ -25,6 +25,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Distiller
 # Also verify multiblock heat exchange, saved warmup, warm-oil refining and reversal:
 ./scripts/full-smoke.ps1 -HeatExchange
+# Also verify natural oil in a normal world, both biomes, pumping and save/reload:
+./scripts/full-smoke.ps1 -OilGeneration
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -100,7 +102,23 @@ stale-port rejection, middle-block removal and exact product recovery must pass.
 Screenshots are `heat-warming.png`, `heat-running.png`, `heat-refinery.png` and
 `heat-reversed.png` under that run's `screenshots/` directory.
 
-The 200 server tests currently verify:
+The oil-generation client uses `verification/oil-generation-client-run/`. It creates
+normal terrain with seed 4754 and unchanged generation probabilities. It locates a
+planned large deposit, requires the actual chunk decorator to have created its oil
+reservoir/spout/spring, and collects oil through a native engine, pump and pipes.
+The survival player withdraws an oil bucket, locates both oil biomes through the
+native biome search, checks desert sand, and reopens the entire save. Screenshots
+are `natural-oil-field.png`, `natural-oil-pumping.png`, `oil-desert-biome.png` and
+`oil-ocean-biome.png` under that run's `screenshots/` directory.
+
+The 218 server tests currently verify:
+
+- Eighteen oil-generation tests cover native feature/data-pack/biome registration,
+  climate reachability and toggles, actual surface predicates, deterministic seeds
+  and negative coordinates, original deposit types, invalid/high finite rates, biome
+  bonuses/blacklists, native and legacy dimensions, flat-world exclusion, deep oil
+  and saved springs, guarded cross-chunk accesses/order, terrain-following lakes,
+  protected containers/blocks, spout disabling and world-height bounds.
 
 - Twenty-one heat-exchanger tests cover all 42 heating/cooling recipes, three-to-five
   block rates/warmup, temperature rejection, atomic blocked outputs, exact droplets,

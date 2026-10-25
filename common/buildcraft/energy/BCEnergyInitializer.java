@@ -23,7 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
- * Blocks, fluids, buckets, items and tile factories register here. World generation remains unfinished.
+ * Blocks, fluids, buckets, items, tile factories and native oil features register here.
  */
 public class BCEnergyInitializer implements ModInitializer {
 
@@ -57,10 +57,10 @@ public class BCEnergyInitializer implements ModInitializer {
 
         // --- Forge init (BCEnergy.init) ------------------------------------------
         BCEnergyRecipes.init();
-        // STUB(R.Chen): BCEnergyWorldGen.init() — oil biome/structure generation deferred.
+        BCEnergyWorldGen.init();
 
         // --- Forge postInit (BCEnergy.postInit) ----------------------------------
-        // STUB(R.Chen): BCEnergyConfig.validateBiomeNames() — deferred with world gen.
+        // Dynamic biome-name validation is registered by BCEnergyConfig.
         // STUB(R.Chen): MigrationManager block migrations — deferred until fluids land.
     }
 }
