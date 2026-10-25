@@ -13,6 +13,11 @@ commits; upstream contributions retain their original authors.
 with `main` as its default branch. The original fork and upstream draft PR remain intact.
 The import is also retained as `archive/pr-4754`.
 
+The active branch removes an accidentally imported `.claude/worktrees/` gitlink
+that had no `.gitmodules` entry and broke recursive submodule commands. The archived
+revision and its complete ancestry remain unchanged. The API submodule retains its
+pinned commit, with `remake/1.20.1` as the branch used for explicit remote updates.
+
 GitHub resolves all 60 migration commits to `MantraChen`. No author, email, timestamp
 or commit hash was rewritten. An authenticated GitHub GraphQL query confirmed the
 following commit contributions from this repository after import:

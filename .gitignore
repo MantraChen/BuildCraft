@@ -42,6 +42,7 @@ logs
 
 claude.md
 claude/
+.claude/worktrees/
 
 # Local development tools and verification logs
 .tools/

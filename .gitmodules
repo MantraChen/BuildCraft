@@ -1,7 +1,7 @@
 [submodule "BuildCraftAPI"]
 	path = BuildCraftAPI
 	url = https://github.com/MantraChen/BuildCraftAPI.git
-	branch = fabric/1.20.1-dev
+	branch = remake/1.20.1
 [submodule "BuildCraft-Localization"]
 	path = BuildCraft-Localization
 	url = https://github.com/BuildCraft/BuildCraft-Localization.git
