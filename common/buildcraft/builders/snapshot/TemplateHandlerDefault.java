@@ -8,6 +8,10 @@ package buildcraft.builders.snapshot;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -20,15 +24,7 @@ public enum TemplateHandlerDefault implements ITemplateHandler {
 
     @Override
     public boolean handle(World world, BlockPos pos, PlayerEntity player, ItemStack stack) {
-        return stack.onItemUse(
-            player,
-            world,
-            pos,
-            player.getActiveHand(),
-            Direction.UP,
-            0.5F,
-            0.0F,
-            0.5F
-        ) == ActionResult.SUCCESS;
+        BlockHitResult hit = new BlockHitResult(Vec3d.ofBottomCenter(pos), Direction.UP, pos, false);
+        return stack.useOnBlock(new ItemUsageContext(player, Hand.MAIN_HAND, hit)).isAccepted();
     }
 }

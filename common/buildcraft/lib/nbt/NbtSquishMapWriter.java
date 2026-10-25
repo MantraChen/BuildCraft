@@ -39,7 +39,7 @@ class NbtSquishMapWriter {
 
     private static void log(String string) {
         if (debug) {
-            Bootstrap.SYSOUT.print(string + "\n");
+            System.out.println(string);
         } else {
             throw new IllegalArgumentException("Don't allocate a string if we aren't debugging!");
         }
@@ -340,7 +340,7 @@ class NbtSquishMapWriter {
                 // profiler.pop();
             }
             profiler.pop();
-            sortedIndexes.remove(0, Math.min(sortedIndexes.size(), maxVal));
+            sortedIndexes.subList(0, Math.min(sortedIndexes.size(), maxVal)).clear();
             byte[] bitsetBytes = bitset.getBytes();
             if (debug) log("\n List bitset #" + (bitset.bits - 1));
             writeVarInt(to, bitsetBytes.length);

@@ -1,10 +1,8 @@
 package buildcraft.lib.script;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,18 +24,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-import org.apache.commons.io.IOUtils;
-
 import net.minecraft.util.Identifier;
-
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 
 import buildcraft.api.core.BCLog;
 import buildcraft.api.registry.IReloadableRegistryManager;
 import buildcraft.api.registry.IScriptableRegistry;
 
-import buildcraft.lib.BCLibProxy;
 import buildcraft.lib.misc.JsonUtil;
 import buildcraft.lib.misc.TimeUtil;
 import buildcraft.lib.script.SimpleScript.ScriptAction;
@@ -92,7 +84,7 @@ public class ScriptableRegistry<E> extends SimpleReloadableRegistry<E> implement
             long end = System.currentTimeMillis();
             SimpleScript.logForAll("Finished at: " + TimeUtil.formatNow() + ", took " + (end - start) + "ms");
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Failed to reload scripts for " + entryPath, e);
         }
     }
 
@@ -108,93 +100,21 @@ public class ScriptableRegistry<E> extends SimpleReloadableRegistry<E> implement
 
         List<ScriptAction> actions = new ArrayList<>();
 
-        List<FileSystem> openFileSystems = new ArrayList<>();
-        Map<File, Path> loadedFiles = new HashMap<>();
-        List<Path> jarRoots = new ArrayList<>();
-        for (ModContainer container : Loader.instance().getActiveModList()) {
-            File source = container.getSource();
-            if (!source.exists()) {
-                continue;
-            }
-            visitFile(openFileSystems, loadedFiles, jarRoots, source);
-        }
-
-        switch (manager.getType()) {
-            case RESOURCE_PACK: {
-                for (File rpFile : BCLibProxy.getProxy().getLoadedResourcePackFiles()) {
-                    visitFile(openFileSystems, loadedFiles, null, rpFile);
-                }
-                break;
-            }
-            case DATA_PACK: {
-                // TODO(1.13): Load from datapacks as well!
-                break;
-            }
-        }
-
-        File baseFile = new File(Loader.instance().getConfigDir(), "buildcraft/scripts");
-        if (!baseFile.isDirectory()) {
-            baseFile.mkdirs();
-        }
-        visitFile(openFileSystems, loadedFiles, null, baseFile);
-
-        for (Entry<File, Path> entry : loadedFiles.entrySet()) {
-            File file = entry.getKey();
-            loadScripts(openFileSystems, actions, file, entry.getValue(), jarRoots, file == baseFile);
-        }
-
-        SimpleScript.logForAll("#############");
-        SimpleScript.logForAll("#");
-        SimpleScript.logForAll("# Executing");
-        SimpleScript.logForAll("#");
-        SimpleScript.logForAll("#############");
-        SimpleScript.logForAll("");
-
-        executeScripts(gson, actions);
-
-        for (FileSystem system : openFileSystems) {
-            IOUtils.closeQuietly(system);
+        net.minecraft.resource.ResourceManager resources = manager instanceof ReloadableRegistryManager nativeManager
+            ? nativeManager.getResourceManager() : null;
+        try (ScriptResourceRoots sources = ScriptResourceRoots.open(manager.getType().prefix, resources)) {
+            List<Path> roots = new ArrayList<>(sources.roots());
+            Path configRoot = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir()
+                .resolve("buildcraft/scripts").resolve(manager.getType().prefix);
+            Files.createDirectories(configRoot);
+            roots.add(configRoot);
+            for (Path root : roots) loadScripts(actions, root, roots);
+            executeScripts(gson, actions);
+        } catch (IOException failure) {
+            throw new IllegalStateException("Unable to load BuildCraft scripts: " + entryPath, failure);
         }
     }
-
-    private void visitFile(List<FileSystem> openFileSystems, Map<File, Path> loadedFiles, List<Path> roots,
-        File source) {
-        if (loadedFiles.containsKey(source)) {
-            return;
-        }
-        Path root = getRoot(openFileSystems, source);
-        if (root != null) {
-            loadedFiles.put(source, root);
-            if (roots != null) {
-                roots.add(root);
-            }
-        }
-    }
-
-    @Nullable
-    private Path getRoot(List<FileSystem> openFileSystems, File file) {
-        final PackType sourceType = manager.getType();
-        Path scriptDirRoot = file.toPath();
-        if (file.isDirectory()) {
-            Path root = scriptDirRoot.resolve(sourceType.prefix);
-            return Files.exists(root) ? root : null;
-        }
-        try {
-            FileSystem fileSystem = FileSystems.newFileSystem(scriptDirRoot, /* since java 13 */ (ClassLoader) null);
-            Path root = fileSystem.getPath("/" + sourceType.prefix);
-            if (!Files.exists(root)) {
-                return null;
-            }
-            openFileSystems.add(fileSystem);
-            return root;
-        } catch (IOException e) {
-            BCLog.logger.error("Unable to load " + file + " as a separate file system!", e);
-            return null;
-        }
-    }
-
-    private void loadScripts(List<FileSystem> openFileSystems, List<ScriptAction> actions, File file, Path root,
-        List<Path> jarRoots, boolean genInfo) {
+    private void loadScripts(List<ScriptAction> actions, Path root, List<Path> jarRoots) {
         try {
             boolean loggedInsn = false;
             String postPath = "compat/" + this.entryPath;
@@ -213,7 +133,7 @@ public class ScriptableRegistry<E> extends SimpleReloadableRegistry<E> implement
                     if (!loggedInsn) {
                         loggedInsn = true;
                         SimpleScript.logForAll("");
-                        SimpleScript.logForAll("# Found pack: " + file);
+                        SimpleScript.logForAll("# Found pack: " + root);
                         SimpleScript.logForAll("");
                     }
                     List<String> contents = Files.readAllLines(scriptFile);
@@ -235,7 +155,7 @@ public class ScriptableRegistry<E> extends SimpleReloadableRegistry<E> implement
                 }
             }
         } catch (IOException io) {
-            BCLog.logger.warn("Unable to load from ...", io);
+            throw new IllegalStateException("Unable to load scripts from " + root, io);
         }
     }
 
@@ -352,6 +272,7 @@ public class ScriptableRegistry<E> extends SimpleReloadableRegistry<E> implement
         Class<? extends E> recipeClass = getScriptableTypes().get(type);
         if (recipeClass != null) {
             E recipe = gson.fromJson(json, recipeClass);
+            getReloadableEntryMap().put(name, recipe);
             SimpleScript.logForAll("Adding " + name + " as " + recipe);
             return;
         }

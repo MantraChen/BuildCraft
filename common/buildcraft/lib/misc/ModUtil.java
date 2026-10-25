@@ -2,17 +2,13 @@ package buildcraft.lib.misc;
 
 import javax.annotation.Nullable;
 
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class ModUtil {
 
     @Nullable
     public static String getNameOfMod(String domain) {
-        ModContainer mod = Loader.instance().getIndexedModList().get(domain);
-        if (mod != null) {
-            return mod.getName();
-        }
-        return null;
+        return FabricLoader.getInstance().getModContainer(domain)
+            .map(mod -> mod.getMetadata().getName()).orElse(null);
     }
 }

@@ -18,12 +18,11 @@ public class InvertedFluidFilter implements IFluidFilter {
         this.delegate = delegate;
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
     public boolean matches(FluidStackBC fluid) {
-        return !delegate.matches(fluid);
+        return matches(fluid.getFluidVariant(), fluid.getAmount());
     }
     @Override
     public boolean matches(net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant fluid, long amount) {
-        return matches(buildcraft.lib.compat.FluidStackBC.of(fluid, amount));
+        return !delegate.matches(fluid, amount);
     }
 }

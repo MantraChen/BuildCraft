@@ -34,6 +34,13 @@ public class BCLibInitializer implements ModInitializer {
     public void onInitialize() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib (Fabric 1.20.1)");
 
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerFallback(
+            (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
+                ? tile.getItemStorage(side) : null);
+        buildcraft.api.registry.BuildCraftRegistryManager.managerDataPacks = buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS;
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.SERVER_DATA)
+            .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS);
+
         // STUB(R.Chen): registry hookups — wire up once BCLibBlocks/BCLibItems are migrated.
         // Registry.register(Registries.BLOCK, ...);
         // Registry.register(Registries.ITEM, ...);

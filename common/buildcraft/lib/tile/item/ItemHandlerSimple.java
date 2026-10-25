@@ -10,6 +10,15 @@ package buildcraft.lib.tile.item;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.ArrayList;
+
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -34,6 +43,8 @@ public class ItemHandlerSimple implements IItemHandlerAdv {
     public final DefaultedList<ItemStack> stacks;
 
     private int firstUsed = Integer.MAX_VALUE;
+    private int slotLimit = 64;
+    private SlotState[] transferSlots;
 
     public ItemHandlerSimple(int size) {
         this(size, (slot, stack) -> true, StackInsertionFunction.getDefaultInserter(), null);
@@ -66,6 +77,7 @@ public class ItemHandlerSimple implements IItemHandlerAdv {
 
     public void setLimitedInsertor(int maxStackSize) {
         setInsertor(StackInsertionFunction.getInsertionFunction(maxStackSize));
+        slotLimit = Math.min(64, maxStackSize);
     }
 
     public void setCallback(StackChangeCallback callback) {
@@ -142,7 +154,7 @@ public class ItemHandlerSimple implements IItemHandlerAdv {
     @Override
     @Nonnull
     public ItemStack extractItem(int slot, int amount, boolean simulate) {
-        if (badSlotIndex(slot)) return ItemStack.EMPTY;
+        if (badSlotIndex(slot) || amount <= 0) return ItemStack.EMPTY;
         ItemStack current = stacks.get(slot);
         if (current.isEmpty()) return ItemStack.EMPTY;
         if (current.getCount() < amount) {
@@ -217,7 +229,95 @@ public class ItemHandlerSimple implements IItemHandlerAdv {
 
     @Override
     public int getSlotLimit(int slot) {
-        return 64;
+        return slotLimit;
+    }
+
+    /** All side views share the same snapshots, so nested transfers can roll back across faces. */
+    public Storage<ItemVariant> asStorage(boolean insert, boolean extract) {
+        if (transferSlots == null) {
+            transferSlots = new SlotState[getSlots()];
+            for (int slot = 0; slot < getSlots(); slot++) transferSlots[slot] = new SlotState(slot);
+        }
+        List<SingleSlotStorage<ItemVariant>> views = new ArrayList<>();
+        for (SlotState slot : transferSlots) views.add(new TransferSlot(slot, insert, extract));
+        return new CombinedStorage<>(views);
+    }
+
+    private final class SlotState extends SnapshotParticipant<ItemStack> {
+        final int slot;
+        TransactionContext pendingRoot;
+
+        SlotState(int slot) { this.slot = slot; }
+
+        @Override protected ItemStack createSnapshot() { return stacks.get(slot).copy(); }
+        @Override protected void readSnapshot(ItemStack snapshot) { setStackInternal(slot, snapshot); }
+
+        void change(ItemStack stack, TransactionContext transaction) {
+            updateSnapshots(transaction);
+            TransactionContext root = transaction.getOpenTransaction(0);
+            if (pendingRoot != root) {
+                pendingRoot = root;
+                ItemStack before = stacks.get(slot).copy();
+                transaction.addOuterCloseCallback(result -> {
+                    pendingRoot = null;
+                    ItemStack after = stacks.get(slot);
+                    if (result.wasCommitted() && callback != null && !ItemStack.areEqual(before, after)) {
+                        callback.onStackChange(ItemHandlerSimple.this, slot, before, after);
+                    }
+                });
+            }
+            setStackInternal(slot, stack);
+        }
+    }
+
+    private final class TransferSlot implements SingleSlotStorage<ItemVariant> {
+        final SlotState state;
+        final boolean insert, extract;
+
+        TransferSlot(SlotState state, boolean insert, boolean extract) {
+            this.state = state;
+            this.insert = insert;
+            this.extract = extract;
+        }
+
+        @Override public boolean supportsInsertion() { return insert; }
+        @Override public boolean supportsExtraction() { return extract; }
+
+        @Override
+        public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+            StoragePreconditions.notBlankNotNegative(resource, maxAmount);
+            if (!insert || maxAmount == 0) return 0;
+            ItemStack input = resource.toStack((int) Math.min(maxAmount, resource.getItem().getMaxCount()));
+            ItemStack current = stacks.get(state.slot);
+            if (!canSet(state.slot, input) || !canSet(state.slot, current)) return 0;
+            InsertionResult result = inserter.modifyForInsertion(state.slot, current.copy(), input.copy());
+            if (!canSet(state.slot, result.toSet)) throw new IllegalStateException("Conflicting insertion rules");
+            long accepted = input.getCount() - result.toReturn.getCount();
+            if (accepted > 0) state.change(result.toSet, transaction);
+            return accepted;
+        }
+
+        @Override
+        public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+            StoragePreconditions.notBlankNotNegative(resource, maxAmount);
+            if (!extract || maxAmount == 0 || !resource.equals(getResource())) return 0;
+            ItemStack current = stacks.get(state.slot);
+            int taken = (int) Math.min(maxAmount, current.getCount());
+            if (taken > 0) {
+                ItemStack remaining = current.copy();
+                remaining.decrement(taken);
+                state.change(remaining, transaction);
+            }
+            return taken;
+        }
+
+        @Override public boolean isResourceBlank() { return stacks.get(state.slot).isEmpty(); }
+        @Override public ItemVariant getResource() { return ItemVariant.of(stacks.get(state.slot)); }
+        @Override public long getAmount() { return stacks.get(state.slot).getCount(); }
+        @Override public long getCapacity() {
+            ItemStack stack = stacks.get(state.slot);
+            return Math.min(getSlotLimit(state.slot), stack.isEmpty() ? 64 : stack.getMaxCount());
+        }
     }
 
     @Override

@@ -80,7 +80,8 @@ public class BlockUtil {
     // STUB(R.Chen): missing getFluidWithoutFlowing / getFluid helpers.
     public static Fluid getFluidWithoutFlowing(BlockState state) {
         FluidState fs = state.getFluidState();
-        return fs.isEmpty() ? net.minecraft.fluid.Fluids.EMPTY : fs.getFluid().getStill();
+        if (fs.isEmpty()) return net.minecraft.fluid.Fluids.EMPTY;
+        return fs.getFluid() instanceof net.minecraft.fluid.FlowableFluid flowing ? flowing.getStill() : fs.getFluid();
     }
     public static Fluid getFluid(World world, BlockPos pos) {
         return getFluidWithFlowing(world, pos);

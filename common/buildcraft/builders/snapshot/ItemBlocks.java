@@ -12,9 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import net.minecraft.item.Items;
 import net.minecraft.item.Item;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.BlockItem;
 
 public class ItemBlocks {
@@ -22,20 +20,8 @@ public class ItemBlocks {
 
     static {
         StreamSupport.stream(net.minecraft.registry.Registries.ITEM.spliterator(), false)
-            .filter(item -> item instanceof BlockItem || item instanceof BlockItem)
+            .filter(item -> item instanceof BlockItem)
             .forEach(ItemBlocks::add);
-        add(
-            Items.BED,
-            Items.OAK_DOOR,
-            Items.SPRUCE_DOOR,
-            Items.BIRCH_DOOR,
-            Items.JUNGLE_DOOR,
-            Items.ACACIA_DOOR,
-            Items.DARK_OAK_DOOR,
-            Items.IRON_DOOR,
-            Items.SKULL,
-            Items.SIGN
-        );
     }
 
     public static void add(Item... items) {

@@ -14,6 +14,7 @@ import buildcraft.api.filler.IFillerPattern;
 
 import buildcraft.lib.gui.ContainerBC_Neptune;
 import buildcraft.lib.net.PacketBufferBC;
+import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 import buildcraft.lib.statement.FullStatement;
 
 import buildcraft.builders.addon.AddonFillerPlanner;

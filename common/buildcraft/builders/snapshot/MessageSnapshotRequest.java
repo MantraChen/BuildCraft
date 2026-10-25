@@ -36,7 +36,7 @@ public class MessageSnapshotRequest implements IMessage {
     }
 
     public static final IMessageHandler<MessageSnapshotRequest, MessageSnapshotResponse> HANDLER = (message, ctx) -> {
-        Snapshot snapshot = GlobalSavedDataSnapshots.get(EnvType.SERVER).getSnapshot(message.key);
+        Snapshot snapshot = GlobalSavedDataSnapshots.get(buildcraft.lib.tile.TileBC_Neptune.NetSide.SERVER).getSnapshot(message.key);
         return snapshot != null ? new MessageSnapshotResponse(snapshot) : null;
     };
 }

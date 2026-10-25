@@ -57,9 +57,36 @@ features explicitly as work proceeds.
   SHA-256, and launched successfully on Windows with JDK 17.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
-- Full `compileJava`: **fails with 357 errors** in the imported source. No client or
-  dedicated-server startup has been claimed.
+- Full `compileJava`: the imported source produced **357 errors**; after the current
+  fixes it still **fails with 252 errors**. No full BuildCraft client or dedicated-server
+  startup has been claimed.
+- Fabric regression fixture: **34 tests passed**, zero failures/ignored tests. This
+  loads selected production classes under the real Fabric class loader and runs after
+  Fabric's common initialization. It exits before starting a world and does not load
+  the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
+
+## Repair progress
+
+- Item insertion/extraction now uses Fabric transactions, including all-or-none
+  insertion, simulation, batch capacity accounting and minimum extraction across slots.
+- Machine inventory groups retain named NBT data, preserve phantom filters, exclude
+  phantom items from drops, and expose configured faces and input/output permissions.
+  Cancelled transfers restore inventory contents and do not emit change callbacks.
+- Exact-NBT ingredients use Fabric's serializable ingredient API, with tests for
+  strict matching, input mutation isolation and JSON round trips.
+- Registry reloads have Fabric resource listeners and lifecycle callbacks. Scripts can
+  read mod roots, native resource/data packs and config files. Temporary pack projections
+  are cleaned up without closing Loader-owned file systems. Pack projection tests pass;
+  full script execution and registry lifecycle still require integration validation.
+- Compact bit packing preserves historical bytes and supports signed 32-bit round trips.
+  Snapshot readers, resource metadata, item caches and several mapped game APIs were
+  corrected. Unused broken Forge shims were removed where native APIs replaced them.
+
+Remaining work includes full compilation, block/entity and screen registration, network
+payload routing, renderers, fluid/energy integration, lossless block harvesting, packaged
+dependencies, and actual client/server/world validation. The working fixture does not
+establish that any machine is ready for a survival world.
 
 Remake by FelixMantra.

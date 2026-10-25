@@ -18,7 +18,7 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
-// STUB: BlockEntitySkull renamed to SkullBlockEntity in 1.20
+import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.util.Identifier;
 
 import buildcraft.api.core.render.ISprite;
@@ -68,17 +68,20 @@ public class SpriteUtil {
 
         try {
             if (!CACHED.containsKey(profile)) {
-                CACHED.put(profile, TileEntitySkull.updateGameprofile(profile));
+                GameProfile requested = profile;
+                CACHED.put(requested, null);
+                SkullBlockEntity.loadProperties(requested,
+                    loaded -> mc.execute(() -> CACHED.put(requested, loaded)));
             }
             GameProfile p2 = CACHED.get(profile);
             if (p2 == null) {
                 return null;
             }
             profile = p2;
-            Map<Type, MinecraftProfileTexture> map = mc.getSkinManager().loadSkinFromCache(profile);
+            Map<Type, MinecraftProfileTexture> map = mc.getSkinProvider().getTextures(profile);
             MinecraftProfileTexture tex = map.get(Type.SKIN);
             if (tex != null) {
-                return mc.getSkinManager().loadSkin(tex, Type.SKIN);
+                return mc.getSkinProvider().loadSkin(tex, Type.SKIN);
             }
             return LOCATION_SKIN_LOADING;
         } catch (NullPointerException | ClassCastException e) {
@@ -96,7 +99,7 @@ public class SpriteUtil {
             return BCLibSprites.HELP;
         }
         Identifier loc = getSkinSpriteLocation0(profile);
-        if (loc == null) {
+        if (loc == null || loc == LOCATION_SKIN_LOADING) {
             return BCLibSprites.LOCK;
         }
         return new SpriteRaw(loc, 8, 8, 8, 8, 64);
@@ -108,7 +111,7 @@ public class SpriteUtil {
             return null;
         }
         Identifier loc = getSkinSpriteLocation0(profile);
-        if (loc == null) {
+        if (loc == null || loc == LOCATION_SKIN_LOADING) {
             return null;
         }
         return new SpriteRaw(loc, 40, 8, 8, 8, 64);

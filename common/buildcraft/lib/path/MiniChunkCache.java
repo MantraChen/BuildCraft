@@ -67,7 +67,7 @@ public class MiniChunkCache {
         pos = minPos;
         MiniChunkGraph existing = cache.get(pos);
         if (existing != null) {
-            return Futures.immediateCheckedFuture(existing);
+            return Futures.immediateFuture(existing);
         }
         if (!world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) return Futures.immediateFailedFuture(new Throwable("The block " + pos + " is not loaded!"));
         synchronized (this) {
@@ -89,9 +89,9 @@ public class MiniChunkCache {
 
     private static BlockPos convertToMin(BlockPos pos) {
         // Get the minimum blockpos of the minichunk
-        int x = (pos.getX() / 16) * 16;
-        int y = (pos.getY() / 16) * 16;
-        int z = (pos.getZ() / 16) * 16;
+        int x = Math.floorDiv(pos.getX(), 16) * 16;
+        int y = Math.floorDiv(pos.getY(), 16) * 16;
+        int z = Math.floorDiv(pos.getZ(), 16) * 16;
         return new BlockPos(x, y, z);
     }
 }

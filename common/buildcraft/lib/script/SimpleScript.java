@@ -26,12 +26,11 @@ import com.google.gson.JsonSyntaxException;
 
 import net.minecraft.util.Identifier;
 
-import net.minecraftforge.fml.common.Loader;
+import net.fabricmc.loader.api.FabricLoader;
 
 import buildcraft.api.core.BCDebugging;
 import buildcraft.api.core.BCLog;
 
-import buildcraft.lib.BCLibProxy;
 import buildcraft.lib.expression.DefaultContexts;
 import buildcraft.lib.expression.FunctionContext;
 import buildcraft.lib.expression.GenericExpressionCompiler;
@@ -48,7 +47,7 @@ public class SimpleScript {
     static BufferedWriter logWriter;
 
     static {
-        CONTEXT.put_s_b("is_mod_loaded", Loader::isModLoaded);
+        CONTEXT.put_s_b("is_mod_loaded", FabricLoader.getInstance()::isModLoaded);
         // Functions:
 
         // Debug: turns on script debugging
@@ -536,7 +535,7 @@ public class SimpleScript {
     }
 
     public static AutoCloseable createLogFile(String path) {
-        logDir = new File(BCLibProxy.getProxy().getGameDirectory(), "logs/buildcraft/scripts");
+        logDir = FabricLoader.getInstance().getGameDir().resolve("logs/buildcraft/scripts").toFile();
         try {
             logDir.mkdirs();
             File logFile = new File(logDir, path + ".log");

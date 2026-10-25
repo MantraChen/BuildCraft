@@ -6,22 +6,19 @@
 
 package buildcraft.lib.misc.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DecompactingBitSet {
     public final int bits;
-    private final ArrayList<Byte> bytes = new ArrayList<Byte>();
+    private final byte[] bytes;
     private int byteIndex = 0, bitIndex = 0;
 
     public DecompactingBitSet(int bits, byte[] data) {
         this.bits = bits;
-        bytes.addAll(data);
+        bytes = data.clone();
     }
 
     private int nextBit() {
         int offset = byteIndex;
-        byte current = bytes.get(offset);
+        byte current = bytes[offset];
 
         int bit = (current >> bitIndex) & 1;
 

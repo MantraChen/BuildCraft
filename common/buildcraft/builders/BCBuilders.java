@@ -73,7 +73,7 @@ public class BCBuilders {
 
     @Mod.EventHandler
     public static void onServerStarting(FMLServerStartingEvent event) {
-        GlobalSavedDataSnapshots.reInit(EnvType.SERVER);
+        GlobalSavedDataSnapshots.reInit(buildcraft.lib.tile.TileBC_Neptune.NetSide.SERVER);
     }
 
     static {

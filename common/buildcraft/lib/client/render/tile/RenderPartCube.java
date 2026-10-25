@@ -6,7 +6,7 @@
 
 package buildcraft.lib.client.render.tile;
 
-import javax.vecmath.Point3f;
+import org.joml.Vector3f;
 
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.texture.Sprite;
@@ -44,7 +44,7 @@ public class RenderPartCube {
     /** Renders an element, without changing the vertex. However this does ignore the "normal" and "texture" components
      * of the vertex. */
     public void render(BufferBuilder bb) {
-        Point3f pos = center.positionvf();
+        Vector3f pos = center.positionvf();
         double x = pos.x;
         double y = pos.y;
         double z = pos.z;

@@ -6,7 +6,7 @@
 
 package buildcraft.lib.path.task;
 
-import net.minecraft.block.Block;
+import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -35,8 +35,7 @@ public enum EnumTraversalExpense {
         if (!state.getFluidState().isEmpty()) {
             return FLUID;
         }
-        Block block = state.getBlock();
-        if (block.isPassable(world, pos)) {
+        if (state.canPathfindThrough(world, pos, NavigationType.LAND)) {
             return AIR;
         }
         return SOLID;

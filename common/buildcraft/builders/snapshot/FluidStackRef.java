@@ -38,8 +38,8 @@ public class FluidStackRef {
             ),
             Optional.ofNullable(amount)
                 .flatMap(ref -> ref.get(nbt))
-                .map(NbtInt::getInt)
-                .orElse(Fluid.BUCKET_VOLUME)
+                .map(NbtInt::intValue)
+                .orElse(1000) // Legacy snapshot amounts are millibuckets; the constructor converts to droplets.
         );
     }
 }

@@ -29,7 +29,7 @@ public final class VanillaSuffixArray<T> implements ISuffixArray<T> {
 
     @Override
     public SearchResult<T> search(String substring, int maxResults) {
-        List<T> list = vanillaSuffixArray.search(substring);
+        List<T> list = vanillaSuffixArray.findAll(substring);
         if (list.size() > maxResults) {
             int count = list.size();
             list.subList(maxResults, list.size()).clear();

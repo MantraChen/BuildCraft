@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.settings.GameSettings;
 
 public enum ParticleCountMultiplier implements IParticlePositionPipe {
     MINIMAL(2),
@@ -18,14 +17,11 @@ public enum ParticleCountMultiplier implements IParticlePositionPipe {
     ALL(13);
 
     public static ParticleCountMultiplier getForOption() {
-        GameSettings gs = MinecraftClient.getInstance().options;
-        int count = gs.particleSetting % 3;
-        if (count == 0) {
-            return ALL;
-        } else if (count == 1) {
-            return DECREASED;
-        }
-        return MINIMAL;
+        return switch (MinecraftClient.getInstance().options.getParticles().getValue()) {
+            case ALL -> ALL;
+            case DECREASED -> DECREASED;
+            case MINIMAL -> MINIMAL;
+        };
     }
 
     public static IParticlePositionPipe getOptionProvider() {

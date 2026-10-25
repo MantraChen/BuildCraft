@@ -548,7 +548,7 @@ public class JsonUtil {
                     ArrayUtils.toPrimitive(StreamSupport.stream(json.getAsJsonArray().spliterator(), false)
                         .map(JsonElement::getAsByte).toArray(Byte[]::new))))
             .registerTypeAdapter(NbtString.class,
-                (JsonSerializer<NbtString>) (src, typeOfSrc, context) -> new JsonPrimitive(src.getString()))
+                (JsonSerializer<NbtString>) (src, typeOfSrc, context) -> new JsonPrimitive(src.asString()))
             .registerTypeAdapter(NbtString.class,
                 (JsonDeserializer<NbtString>) (json, typeOfT,
                     context) -> NbtString.of(json.getAsJsonPrimitive().getAsString()))
@@ -563,7 +563,7 @@ public class JsonUtil {
                 NbtList nbtTagList = new NbtList();
                 StreamSupport.stream(json.getAsJsonArray().spliterator(), false)
                     .map(element -> context.<NbtElement> deserialize(element, NbtElement.class))
-                    .forEach(nbtTagList::appendTag);
+                        .forEach(nbtTagList::add);
                 return nbtTagList;
             }).registerTypeAdapter(NbtCompound.class, (JsonSerializer<NbtCompound>) (src, typeOfSrc, context) -> {
                 JsonObject jsonObject = new JsonObject();

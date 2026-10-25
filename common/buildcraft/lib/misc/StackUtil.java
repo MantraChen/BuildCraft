@@ -59,6 +59,10 @@ public class StackUtil {
         return false;
     }
 
+    public static boolean contains(buildcraft.api.recipes.IngredientStack required, ItemStack container) {
+        return required.count >= 0 && container.getCount() >= required.count && required.ingredient.test(container);
+    }
+
     /** Checks to see if the given required stack is contained fully in a single stack in a list. */
     public static boolean contains(@Nonnull ItemStack required, Collection<ItemStack> containers) {
         for (ItemStack possible : containers) {

@@ -17,7 +17,7 @@ import java.util.HashMap;
 // This *might* be useful in the future - although I don't really know.
 @Deprecated
 public class ParticlePipeManager {
-    private static final HashMap<Integer, Supplier<IParticlePositionPipe>> PIPE_TYPES = new TIntObjectHashMap<>();
+    private static final HashMap<Integer, Supplier<IParticlePositionPipe>> PIPE_TYPES = new HashMap<>();
 
     static {
         // Just use ints rather than a full registry - its simpler

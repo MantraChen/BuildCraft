@@ -7,7 +7,6 @@
 package buildcraft.lib.misc.data;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class CompactingBitSet {
     public final int bits;
@@ -50,6 +49,10 @@ public class CompactingBitSet {
     }
 
     public byte[] getBytes() {
-        return bytes.toArray();
+        byte[] result = new byte[bytes.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = bytes.get(i);
+        }
+        return result;
     }
 }

@@ -42,11 +42,11 @@ public class ItemStackRef {
                 )
             ), Optional.ofNullable(amount)
                 .flatMap(ref -> ref.get(nbt))
-                .map(NbtInt::getInt)
+                .map(NbtInt::intValue)
                 .orElse(1));
         Optional.ofNullable(tagCompound)
             .flatMap(ref -> ref.get(nbt))
-            .ifPresent(itemStack::setTagCompound);
+            .ifPresent(tag -> itemStack.setNbt(tag.copy()));
         return itemStack;
     }
 }

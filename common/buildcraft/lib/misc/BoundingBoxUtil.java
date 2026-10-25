@@ -3,7 +3,6 @@
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
  * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
  */
-// STUB(R.Chen): IBox / Box utility methods deferred
 package buildcraft.lib.misc;
 
 import java.util.Collection;
@@ -22,7 +21,8 @@ public class BoundingBoxUtil {
         if (box == null) {
             return new Box(additional);
         }
-        Box b = new Box(box);
+        Box b = new Box();
+        b.initialize(box);
         b.extendToEncompass(additional);
         return b;
     }

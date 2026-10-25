@@ -19,37 +19,22 @@ public interface StackInsertionFunction {
     InsertionResult modifyForInsertion(int slot, @Nonnull ItemStack addingTo, @Nonnull ItemStack toInsert);
 
     static StackInsertionFunction getInsertionFunction(int maxStackSize) {
+        if (maxStackSize < 0) throw new IllegalArgumentException("Negative slot capacity");
         return (slot, addingTo, toInsert) -> {
             if (toInsert.isEmpty()) {
                 return new InsertionResult(addingTo, ItemStack.EMPTY);
             }
-            if (addingTo.isEmpty()) {
-                int maxSize = Math.min(maxStackSize, toInsert.getMaxCount());
-                if (toInsert.getCount() <= maxSize) {
-                    return new InsertionResult(toInsert, ItemStack.EMPTY);
-                } else {
-                    // toInsert.copy().split(maxSize) removes maxSize from the copy and returns it
-                    ItemStack mutable = toInsert.copy();
-                    ItemStack inserted = mutable.split(maxSize);
-                    return new InsertionResult(inserted, mutable);
-                }
-            } else if (addingTo.getCount() == maxStackSize) {
+            if (!addingTo.isEmpty() && !ItemStack.canCombine(addingTo, toInsert)) {
                 return new InsertionResult(addingTo, toInsert);
-            } else if (ItemStack.canCombine(addingTo, toInsert)) {
-                ItemStack complete = addingTo.copy();
-                int count = addingTo.getCount() + toInsert.getCount();
-                int maxSize = Math.min(maxStackSize, complete.getMaxCount());
-                if (count <= maxSize) {
-                    complete.setCount(count);
-                    return new InsertionResult(complete, ItemStack.EMPTY);
-                } else {
-                    complete.setCount(maxSize);
-                    ItemStack leftOver = toInsert.copy();
-                    leftOver.setCount(count - maxSize);
-                    return new InsertionResult(complete, leftOver);
-                }
             }
-            return new InsertionResult(addingTo, toInsert);
+            int capacity = Math.min(maxStackSize, toInsert.getMaxCount());
+            int accepted = Math.min(toInsert.getCount(), Math.max(0, capacity - addingTo.getCount()));
+            if (accepted == 0) return new InsertionResult(addingTo, toInsert);
+            ItemStack complete = toInsert.copy();
+            complete.setCount(addingTo.getCount() + accepted);
+            ItemStack leftOver = toInsert.copy();
+            leftOver.decrement(accepted);
+            return new InsertionResult(complete, leftOver);
         };
     }
 

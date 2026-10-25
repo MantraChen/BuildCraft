@@ -6,7 +6,6 @@ package buildcraft.lib;
 
 import java.util.function.Consumer;
 
-import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;

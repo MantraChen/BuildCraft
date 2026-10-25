@@ -37,6 +37,10 @@ public class BCLibClientInitializer implements ClientModInitializer {
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
 
+        buildcraft.api.registry.BuildCraftRegistryManager.managerResourcePacks = buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS;
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
+            .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS);
+
         // Forge: ClientConnectedToServerEvent
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             // STUB(R.Chen): BuildCraftObjectCaches.onClientJoinServer();

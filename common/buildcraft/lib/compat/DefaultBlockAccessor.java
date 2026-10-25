@@ -7,8 +7,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.Chunk.EnumCreateEntityType;
+import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.chunk.WorldChunk.CreationType;
 
 import buildcraft.lib.misc.ChunkUtil;
 
@@ -31,11 +31,11 @@ public enum DefaultBlockAccessor implements ISoftBlockAccessor {
             }
             return null;
         } else {
-            Chunk chunk = ChunkUtil.getChunk(world, pos, force);
+            WorldChunk chunk = ChunkUtil.getChunk(world, pos, force);
             if (chunk == null) {
                 return null;
             }
-            return chunk.getBlockEntity(pos, force ? EnumCreateEntityType.IMMEDIATE : EnumCreateEntityType.CHECK);
+            return chunk.getBlockEntity(pos, force ? CreationType.IMMEDIATE : CreationType.CHECK);
         }
     }
 
@@ -47,7 +47,7 @@ public enum DefaultBlockAccessor implements ISoftBlockAccessor {
             }
             return Blocks.AIR.getDefaultState();
         } else {
-            Chunk chunk = ChunkUtil.getChunk(world, pos, force);
+            WorldChunk chunk = ChunkUtil.getChunk(world, pos, force);
             if (chunk == null) {
                 return Blocks.AIR.getDefaultState();
             }

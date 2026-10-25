@@ -9,14 +9,14 @@ package buildcraft.lib.misc;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraft.registry.Registries;
 
 public class RegistryUtil {
     public static boolean isRegistered(Block block) {
-        return ForgeRegistries.BLOCKS.containsValue(block);
+        return block != null && Registries.BLOCK.getKey(block).isPresent();
     }
 
     public static boolean isRegistered(Item item) {
-        return ForgeRegistries.ITEMS.containsValue(item);
+        return item != null && Registries.ITEM.getKey(item).isPresent();
     }
 }

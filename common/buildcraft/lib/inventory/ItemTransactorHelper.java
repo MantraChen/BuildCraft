@@ -14,27 +14,30 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.collection.DefaultedList;
+
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 
 import buildcraft.api.inventory.IItemTransactor;
 import buildcraft.api.transport.IInjectable;
+import buildcraft.lib.compat.BCItemStorage;
 
-// STUB(R.Chen): full implementation in Phase 4E.
-// The Forge ICapabilityProvider / IItemHandler / IInventory / ISidedInventory wrappers and the
-// entity transactors (ItemEntity / EntityArrow) all depend on the Transfer-API item layer and the
-// inventory wrapper classes which are not yet migrated. Only the three entry points referenced by
-// PipeFlowItems are exposed here, returning the no-space fallbacks so callers behave as "nothing
-// connected" until the real routing is wired up.
+/** Resolves sided Fabric storage for pipes and machines. */
 public class ItemTransactorHelper {
 
-    /** STUB(R.Chen): always returns the no-space transactor until BlockApiLookup wiring lands. */
     @Nonnull
     public static IItemTransactor getTransactor(BlockEntity provider, Direction face) {
+        if (provider != null && !provider.isRemoved() && provider.getWorld() != null) {
+            Storage<ItemVariant> storage = BCItemStorage.fromBlockEntity(provider.getWorld(), provider, face);
+            if (storage != null) return new StorageItemTransactor(storage);
+        }
         return NoSpaceTransactor.INSTANCE;
     }
 
-    /** STUB(R.Chen): always returns the no-space injectable until BlockApiLookup wiring lands. */
     @Nonnull
     public static IInjectable getInjectable(BlockEntity provider, Direction face) {
+        if (provider instanceof IInjectable injectable && !provider.isRemoved()) return injectable;
         return NoSpaceInjectable.INSTANCE;
     }
 
@@ -42,7 +45,17 @@ public class ItemTransactorHelper {
         return new InjectableWrapper(injectable, facing);
     }
 
-    /** STUB(R.Chen): an {@link IInjectable} that never accepts anything. */
+    public static DefaultedList<ItemStack> insertAllBypass(IItemTransactor transactor,
+        DefaultedList<ItemStack> stacks, boolean simulate) {
+        DefaultedList<ItemStack> remaining = DefaultedList.of();
+        for (ItemStack stack : stacks) {
+            ItemStack remainder = transactor.insert(stack, false, simulate);
+            if (!remainder.isEmpty()) remaining.add(remainder);
+        }
+        return remaining;
+    }
+
+    /** Fallback when the block has no native pipe injection endpoint. */
     private enum NoSpaceInjectable implements IInjectable {
         INSTANCE;
 
@@ -59,20 +72,4 @@ public class ItemTransactorHelper {
         }
     }
 
-    /** STUB(R.Chen): wraps an {@link IInjectable} as an insert-only {@link IItemTransactor}. */
-    private static class InjectableWrapper implements IItemTransactor.IItemInsertable {
-        private final IInjectable injectable;
-        private final Direction facing;
-
-        InjectableWrapper(IInjectable injectable, Direction facing) {
-            this.injectable = injectable;
-            this.facing = facing;
-        }
-
-        @Nonnull
-        @Override
-        public ItemStack insert(@Nonnull ItemStack stack, boolean allOrNone, boolean simulate) {
-            return injectable.injectItem(stack, !simulate, facing, null, 0);
-        }
-    }
 }

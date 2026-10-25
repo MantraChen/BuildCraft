@@ -18,7 +18,6 @@ import net.fabricmc.api.Environment;
 import buildcraft.api.BCModules;
 
 import buildcraft.lib.client.render.DetachedRenderer;
-import buildcraft.lib.client.render.DetachedRenderer.RenderMatrixType;
 import buildcraft.lib.net.MessageManager;
 
 import buildcraft.core.client.RenderTickListener;
@@ -84,9 +83,9 @@ public abstract class BCCoreProxy implements IGuiHandler {
             super.fmlPreInit();
             BCCoreSprites.fmlPreInit();
             BCCoreModels.fmlPreInit();
-            DetachedRenderer.INSTANCE.addRenderer(RenderMatrixType.FROM_WORLD_ORIGIN, RenderVolumeBoxes.INSTANCE);
+            DetachedRenderer.register(RenderVolumeBoxes.INSTANCE);
             // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(ListTooltipHandler.INSTANCE);
-            MessageManager.setHandler(MessageVolumeBoxes.class, MessageVolumeBoxes.HANDLER, EnvType.CLIENT);
+            MessageVolumeBoxes.registerClientHandler();
         }
 
         @Override

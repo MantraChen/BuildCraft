@@ -378,9 +378,14 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     // backing Storage instances.
 
     // Item caps
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant>
+        getItemStorage(@Nullable Direction side) {
+        return itemManager.getStorage(side);
+    }
+
     protected void onSlotChange(/* STUB(R.Chen): IItemHandlerModifiable */ Object handler, int slot,
         @Nonnull ItemStack before, @Nonnull ItemStack after) {
-        if (world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
+        if (world != null && world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
             if (getCurrentState().hasComparatorOutput()) {
                 markDirty();
             } else {

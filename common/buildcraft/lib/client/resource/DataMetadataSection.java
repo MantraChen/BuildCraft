@@ -1,16 +1,10 @@
 package buildcraft.lib.client.resource;
 
-import java.lang.reflect.Type;
-
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraft.client.resources.data.IMetadataSection;
-import net.minecraft.client.resources.data.IMetadataSectionSerializer;
+import net.minecraft.resource.metadata.ResourceMetadataReader;
 
 /** Generic metadata section, containing any types of data. */
-public class DataMetadataSection implements IMetadataSection {
+public class DataMetadataSection {
     public static final String SECTION_NAME = "buildcraft_data";
 
     public final JsonObject data;
@@ -19,15 +13,15 @@ public class DataMetadataSection implements IMetadataSection {
         this.data = data;
     }
 
-    public static final IMetadataSectionSerializer<DataMetadataSection> DESERIALISER =
-        new IMetadataSectionSerializer<DataMetadataSection>() {
-            // @Override -- removed: method does not exist in Fabric 1.20.1
-            public DataMetadataSection deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
-                return new DataMetadataSection(JsonUtils.getJsonObject(json, SECTION_NAME));
+    public static final ResourceMetadataReader<DataMetadataSection> DESERIALISER =
+        new ResourceMetadataReader<DataMetadataSection>() {
+            @Override
+            public DataMetadataSection fromJson(JsonObject json) {
+                return new DataMetadataSection(json);
             }
 
             @Override
-            public String getSectionName() {
+            public String getKey() {
                 return SECTION_NAME;
             }
         };

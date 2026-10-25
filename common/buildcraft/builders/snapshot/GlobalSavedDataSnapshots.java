@@ -29,8 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.world.World;
 
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
@@ -39,7 +38,7 @@ import buildcraft.lib.nbt.NbtSquisher;
 
 public class GlobalSavedDataSnapshots {
     private static final String SNAPSHOT_FILE_EXTENSION = ".bcnbt";
-    private static final Map<Side, GlobalSavedDataSnapshots> INSTANCES = new EnumMap<>(net.fabricmc.api.EnvType.class);
+    private static final Map<NetSide, GlobalSavedDataSnapshots> INSTANCES = new EnumMap<>(NetSide.class);
     private final LoadingCache<Snapshot.Key, Optional<Snapshot>> snapshotsCache = CacheBuilder.newBuilder()
         .expireAfterAccess(10, TimeUnit.MINUTES)
         .build(CacheLoader.from(key -> Optional.ofNullable(readSnapshot(key)).map(Pair::getLeft)));
@@ -52,7 +51,7 @@ public class GlobalSavedDataSnapshots {
 
     private GlobalSavedDataSnapshots(NetSide side) {
         snapshotsFile = new File(
-            FMLCommonHandler.instance().getSavesDirectory().getParentFile(),
+            FabricLoader.getInstance().getGameDir().toFile(),
             "snapshots-" + side.name().toLowerCase(Locale.ROOT)
         );
         if (!snapshotsFile.exists()) {
@@ -76,7 +75,7 @@ public class GlobalSavedDataSnapshots {
     }
 
     public static GlobalSavedDataSnapshots get(World world) {
-        return get(world.isClient ? EnvType.CLIENT : EnvType.SERVER);
+        return get(world.isClient ? NetSide.CLIENT : NetSide.SERVER);
     }
 
     private Pair<Snapshot, File> readSnapshot(Snapshot.Key key) {

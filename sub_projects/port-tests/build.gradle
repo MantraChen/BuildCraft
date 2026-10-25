@@ -1,0 +1,61 @@
+plugins {
+    id 'fabric-loom' version '1.10.5'
+}
+
+version = '1.0.0'
+group = 'buildcraft.tests'
+
+repositories { mavenCentral() }
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.20.1'
+    mappings 'net.fabricmc:yarn:1.20.1+build.10:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.15.11'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.2+1.20.1'
+    implementation 'junit:junit:4.13.2'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+
+// This is a test fixture, not the distributable BuildCraft mod. It loads the real
+// Minecraft/Fabric classes and access wideners while full-port compilation proceeds.
+// The root build still compiles all production sources without exclusions.
+sourceSets.main.java {
+    srcDir '../../common'
+    srcDir '../../BuildCraftAPI/api'
+    srcDir '../../src/test/java'
+    include 'buildcraft/test/PortTestRunner.java'
+    include 'buildcraft/api/core/IStackFilter.java'
+    include 'buildcraft/api/core/EnumPipePart.java'
+    include 'buildcraft/api/inventory/IItemTransactor.java'
+    include 'buildcraft/lib/inventory/StorageItemTransactor.java'
+    include 'buildcraft/lib/inventory/InventoryWrapper.java'
+    include 'buildcraft/lib/misc/data/CompactingBitSet.java'
+    include 'buildcraft/lib/misc/data/DecompactingBitSet.java'
+    include 'buildcraft/test/lib/inventory/StorageItemTransactorTest.java'
+    include 'buildcraft/test/lib/inventory/ItemHandlerManagerTest.java'
+    include 'buildcraft/test/lib/inventory/IngredientNBTBCTest.java'
+    include 'buildcraft/lib/recipe/IngredientNBTBC.java'
+    include 'buildcraft/lib/script/ScriptResourceRoots.java'
+    include 'buildcraft/test/lib/inventory/ScriptResourceRootsTest.java'
+    include 'buildcraft/lib/tile/item/ItemHandlerManager.java'
+    include 'buildcraft/lib/tile/item/ItemHandlerSimple.java'
+    include 'buildcraft/lib/tile/item/IItemHandlerAdv.java'
+    include 'buildcraft/lib/tile/item/StackChangeCallback.java'
+    include 'buildcraft/lib/tile/item/StackInsertionChecker.java'
+    include 'buildcraft/lib/tile/item/StackInsertionFunction.java'
+    include 'buildcraft/test/lib/misc/data/CompactingBitSetTest.java'
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+loom {
+    runs {
+        server {
+            server()
+            runDir '../../verification/port-tests-run'
+            programArgs 'nogui'
+        }
+    }
+}

@@ -17,8 +17,11 @@ public class ListMatchHandlerClass extends ListMatchHandler {
     @Override
     public boolean matches(Type type, @Nonnull ItemStack stack, @Nonnull ItemStack target, boolean precise) {
         if (type == Type.TYPE) {
+            if (stack.isFood()) {
+                return target.isFood();
+            }
             Class<?> kl = stack.getItem().getClass();
-            return ListRegistry.itemClassAsType.contains(kl) && kl.equals(target.getClass());
+            return ListRegistry.itemClassAsType.contains(kl) && kl.equals(target.getItem().getClass());
         }
         return false;
     }
@@ -26,6 +29,7 @@ public class ListMatchHandlerClass extends ListMatchHandler {
     @Override
     public boolean isValidSource(Type type, @Nonnull ItemStack stack) {
         if (type == Type.TYPE) {
+            if (stack.isFood()) return true;
             Class<?> kl = stack.getItem().getClass();
             return ListRegistry.itemClassAsType.contains(kl);
         }

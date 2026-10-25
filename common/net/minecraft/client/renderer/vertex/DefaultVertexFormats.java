@@ -11,6 +11,6 @@ public class DefaultVertexFormats {
     public static final VertexFormat POSITION_COLOR = VertexFormats.POSITION_COLOR;
     public static final VertexFormat POSITION_TEX = VertexFormats.POSITION_TEXTURE;
     public static final VertexFormat POSITION_TEX_COLOR = VertexFormats.POSITION_TEXTURE_COLOR;
-    public static final VertexFormat POSITION_TEX_NORMAL = VertexFormats.POSITION_TEXTURE_LIGHT_NORMAL;
+    public static final VertexFormat POSITION_TEX_NORMAL = VertexFormats.POSITION_TEXTURE_COLOR_NORMAL;
     public static final VertexFormat POSITION_COLOR_TEX = VertexFormats.POSITION_COLOR_TEXTURE;
 }

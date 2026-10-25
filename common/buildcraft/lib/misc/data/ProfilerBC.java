@@ -22,7 +22,7 @@ public class ProfilerBC {
 
     public IProfilerSection start(String name) {
         profiler.push(name);
-        return profiler::endSection;
+        return profiler::pop;
     }
 
     public IProfilerSection start(String... names) {

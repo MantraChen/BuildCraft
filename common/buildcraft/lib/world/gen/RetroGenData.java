@@ -47,7 +47,7 @@ public class RetroGenData extends WorldSavedData {
         NbtList registry = nbt.getList("registry", NbtElement.STRING_TYPE);
         String[] names = new String[registry.size()];
         for (int i = 0; i < registry.size(); i++) {
-            names[i] = registry.getStringTagAt(i);
+            names[i] = registry.getString(i);
         }
 
         if (DEBUG) {

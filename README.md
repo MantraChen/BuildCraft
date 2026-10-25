@@ -33,6 +33,11 @@ The target is Minecraft 1.20.1, Yarn mappings and Fabric Loader/API. Full build 
 gameplay validation are still being restored; these commands describe the development
 workflow, not a claim that the imported build passes.
 
+Focused regression tests run with
+`./scripts/gradle.ps1 -p sub_projects/port-tests runServer --console=plain` on Windows,
+or `./gradlew -p sub_projects/port-tests runServer --console=plain` elsewhere. This
+dedicated test fixture exits before world startup; it is not the full mod.
+
 Report issues with this remake in
 [MantraChen/BuildCraft-Fabric](https://github.com/MantraChen/BuildCraft-Fabric/issues).
 

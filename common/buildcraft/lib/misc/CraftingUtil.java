@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 
 import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.recipe.CraftingRecipe;
-import net.minecraft.recipe.RecipeManager;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.world.World;
 
@@ -20,11 +19,9 @@ public final class CraftingUtil {
 
     @Nullable
     public static CraftingRecipe findMatchingRecipe(RecipeInputInventory inv, World world) {
-        // TODO(R.Chen): verify recipe lookup via RecipeManager
         if (world == null || world.getRecipeManager() == null) return null;
         return world.getRecipeManager()
             .getFirstMatch(RecipeType.CRAFTING, inv, world)
-            .map(match -> match.value())
             .orElse(null);
     }
 }

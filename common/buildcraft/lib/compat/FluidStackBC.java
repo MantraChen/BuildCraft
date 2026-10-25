@@ -109,7 +109,7 @@ public final class FluidStackBC {
     // ── NBT ──────────────────────────────────────────────────────────────────
 
     public NbtCompound toNbt(NbtCompound tag) {
-        fluid.toNbt(tag);
+        tag.copyFrom(fluid.toNbt());
         tag.putLong("Amount", amount);
         return tag;
     }

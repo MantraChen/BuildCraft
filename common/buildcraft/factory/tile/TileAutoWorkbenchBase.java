@@ -68,7 +68,7 @@ public abstract class TileAutoWorkbenchBase extends TileBC_Neptune {
         invBlueprint = itemManager.addInvHandler("blueprint", slots, EnumAccess.PHANTOM);
         invMaterialFilter = itemManager.addInvHandler("material_filter", slots, EnumAccess.PHANTOM);
         invMaterials = new ItemHandlerFiltered(invMaterialFilter, true);
-        // STUB(R.Chen): invMaterials.setCallback(itemManager.callback) — callback API removed in migration.
+        invMaterials.setCallback(itemManager.callback);
         //               ItemHandlerFiltered checker is set up in its constructor instead.
         itemManager.addInvHandler("materials", invMaterials, EnumAccess.INSERT);
         invResult = itemManager.addInvHandler("result", 1, EnumAccess.EXTRACT);

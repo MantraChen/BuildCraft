@@ -2,7 +2,6 @@
 package net.minecraft.client.gui.recipebook;
 
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.inventory.RecipeBookInventory;
 
 public class GuiRecipeBook {
     public void initSearchBar(boolean flag) {}

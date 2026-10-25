@@ -6,16 +6,9 @@
 
 package buildcraft.lib.misc;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import javax.annotation.Nullable;
+
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
@@ -24,57 +17,24 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.client.renderer.color.IItemColor;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.item.Item;
 import net.minecraft.client.render.RenderLayer;
 
-import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.client.model.animation.FastTESR;
-
 public class RenderUtil {
 
-    private static final ThreadLocal<TessellatorQueue> threadLocalTessellators;
-    private static final MethodHandle HANDLE_FORGE_TESSELLATOR;
-    private static final MethodHandle HANDLE_IS_BUFFER_DRAWING;
-
-    static {
-        threadLocalTessellators = ThreadLocal.withInitial(TessellatorQueue::new);
-        HANDLE_FORGE_TESSELLATOR = createGetter(TileEntityRendererDispatcher.class, Tessellator.class, "batchBuffer");
-        HANDLE_IS_BUFFER_DRAWING = createGetter(BufferBuilder.class, boolean.class, "isDrawing", "field_179010_r");
-    }
-
-    private static MethodHandle createGetter(Class<?> owner, Class<?> type, String... names) {
-        try {
-            Set<String> nameSet = new HashSet<>();
-            Collections.addAll(nameSet, names);
-            List<Field> validFields = new ArrayList<>();
-            for (Field field : owner.getDeclaredFields()) {
-                if (field.getType() == type && nameSet.contains(field.getName())) {
-                    validFields.add(field);
-                }
-            }
-
-            if (validFields.size() != 1) {
-                throw new Error("Incorrect number of fields! (Expected 1, but got " + validFields + ")");
-            }
-            Field fld = validFields.get(0);
-            fld.setAccessible(true);
-            return MethodHandles.publicLookup().unreflectGetter(fld);
-        } catch (ReflectiveOperationException roe) {
-            throw new Error("Failed to obtain forge's batch buffer!", roe);
-        }
-    }
+    private static final ThreadLocal<TessellatorQueue> threadLocalTessellators =
+        ThreadLocal.withInitial(TessellatorQueue::new);
 
     public static void registerBlockColour(@Nullable Block block, IBlockColor colour) {
         if (block != null) {
-            MinecraftClient.getInstance().getBlockColors().register(colour, block);
+            ColorProviderRegistry.BLOCK.register(colour, block);
         }
     }
 
     public static void registerItemColour(@Nullable Item item, IItemColor colour) {
         if (item != null) {
-            MinecraftClient.getInstance().getItemColors().register(colour, item);
+            ColorProviderRegistry.ITEM.register(colour, item);
         }
     }
 
@@ -113,7 +73,7 @@ public class RenderUtil {
     /** @return true if this thread is the main minecraft thread, used for all client side game logic and (by default)
      *         tile entity rendering. */
     public static boolean isMainRenderThread() {
-        return MinecraftClient.getInstance().isCallingFromMinecraftThread();
+        return MinecraftClient.getInstance().isOnThread();
     }
 
     /** @return The first unused {@link Tessellator} for the current thread that uses the given vertex format. (Unused =
@@ -122,26 +82,18 @@ public class RenderUtil {
         return threadLocalTessellators.get().nextFreeTessellator();
     }
 
-    /** @return The forge {@link Tessellator} used for rendering {@link FastTESR}'s. */
+    /** @return Minecraft's main-thread tessellator. */
     public static Tessellator getMainTessellator() {
         if (!isMainRenderThread()) {
             throw new IllegalStateException("Not the main thread!");
         }
-        try {
-            return (Tessellator) HANDLE_FORGE_TESSELLATOR.invokeExact(TileEntityRendererDispatcher.instance);
-        } catch (Throwable t) {
-            throw new Error(t);
-        }
+        return Tessellator.getInstance();
     }
 
     /** @return True if the given {@link BufferBuilder} is currently in the middle of drawing. Essentially returns true
      *         if {@link BufferBuilder#begin(int,VertexFormat)} would throw an exception. */
     public static boolean isDrawing(BufferBuilder bb) {
-        try {
-            return (boolean) HANDLE_IS_BUFFER_DRAWING.invokeExact(bb);
-        } catch (Throwable t) {
-            throw new Error(t);
-        }
+        return bb.isBuilding();
     }
 
     private static Tessellator newTessellator() {

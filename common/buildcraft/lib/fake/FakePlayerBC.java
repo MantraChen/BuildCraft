@@ -8,7 +8,7 @@ package buildcraft.lib.fake;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.block.entity.BlockEntitySign;
+import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.server.world.ServerWorld;
 
 import net.minecraftforge.common.util.FakePlayer;
@@ -18,8 +18,8 @@ public class FakePlayerBC extends FakePlayer {
         super(world, name);
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void openEditSign(TileEntitySign signTile) {
-        // TODO: Put this in forge!
+    @Override
+    public void openEditSignScreen(SignBlockEntity signTile, boolean front) {
+        // Automated players have no client connection on which to open an editor.
     }
 }

@@ -64,7 +64,7 @@ public class NetworkedFluidStackCache extends NetworkedObjectCache<FluidStackBC>
             buffer.writeBoolean(false);
         } else {
             buffer.writeBoolean(true);
-            buffer.writeCompoundTag(nbt);
+            buffer.writeNbt(nbt);
         }
     }
 
@@ -74,7 +74,7 @@ public class NetworkedFluidStackCache extends NetworkedObjectCache<FluidStackBC>
         if (fluid == null) return FluidStackBC.EMPTY;
         FluidVariant fv;
         if (buffer.readBoolean()) {
-            NbtCompound nbt = buffer.readCompoundTag();
+            NbtCompound nbt = buffer.readNbt();
             fv = FluidVariant.of(fluid, nbt);
         } else {
             fv = FluidVariant.of(fluid);

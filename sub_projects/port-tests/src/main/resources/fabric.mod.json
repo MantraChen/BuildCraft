@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "buildcraft_port_tests",
+  "version": "1.0.0",
+  "name": "BuildCraft port regression tests",
+  "environment": "server",
+  "entrypoints": { "server": ["buildcraft.test.PortTestRunner"] },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": "1.20.1",
+    "java": ">=17"
+  }
+}

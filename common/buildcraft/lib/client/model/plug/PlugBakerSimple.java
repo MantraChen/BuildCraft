@@ -33,7 +33,7 @@ public class PlugBakerSimple<K extends PluggableModelKey> implements IPluggableS
     private MutableQuad[] lastSeen;
 
     public PlugBakerSimple(IQuadProvider provider) {
-        (this) = provider;
+        this.provider = provider;
     }
 
     @Override
