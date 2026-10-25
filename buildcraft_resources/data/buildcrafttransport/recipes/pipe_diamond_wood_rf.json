@@ -1,0 +1,15 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_diamond_wood_power"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_diamond_wood_rf"
+  }
+}

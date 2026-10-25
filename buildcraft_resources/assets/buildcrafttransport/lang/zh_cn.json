@@ -1,4 +1,6 @@
 {
+  "advancements.buildcrafttransport.conducting_rf.title": "传导 RF",
+  "advancements.buildcrafttransport.conducting_rf.description": "用红石将 MJ 管道转换为 RF 管道",
   "advancements.buildcrafttransport.conducting_mj.title": "传导能量",
   "advancements.buildcrafttransport.conducting_mj.description": "用荧石粉将物品管道升级为 MJ 能量管道",
   "item.pipeWaterproof.name": "管道密封剂",

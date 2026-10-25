@@ -1,0 +1,41 @@
+{
+  "display": {
+    "icon": {
+      "item": "buildcrafttransport:pipe_wood_rf"
+    },
+    "title": {
+      "translate": "advancements.buildcrafttransport.conducting_rf.title"
+    },
+    "description": {
+      "translate": "advancements.buildcrafttransport.conducting_rf.description"
+    }
+  },
+  "parent": "buildcrafttransport:conducting_mj",
+  "criteria": {
+    "has_redstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:redstone"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "buildcrafttransport:pipe_wood_rf",
+      "buildcrafttransport:pipe_cobblestone_rf",
+      "buildcrafttransport:pipe_stone_rf",
+      "buildcrafttransport:pipe_sandstone_rf",
+      "buildcrafttransport:pipe_quartz_rf",
+      "buildcrafttransport:pipe_iron_rf",
+      "buildcrafttransport:pipe_gold_rf",
+      "buildcrafttransport:pipe_diamond_rf",
+      "buildcrafttransport:pipe_diamond_wood_rf"
+    ]
+  }
+}

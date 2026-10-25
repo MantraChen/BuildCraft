@@ -1,4 +1,6 @@
 {
+  "advancements.buildcrafttransport.conducting_rf.title": "Conducting RF",
+  "advancements.buildcrafttransport.conducting_rf.description": "Use redstone to convert kinesis pipes to RF pipes",
   "advancements.buildcrafttransport.conducting_mj.title": "Conducting MJ",
   "advancements.buildcrafttransport.conducting_mj.description": "Use glowstone to turn transport pipes into kinesis pipes",
   "item.pipeWaterproof.name": "Pipe Sealant",

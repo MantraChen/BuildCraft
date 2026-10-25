@@ -15,7 +15,7 @@ public final class MessageUpdateTile implements FabricPacket {
     public static final int HEADER_SIZE = Long.BYTES + 3;
     public static final int MAX_PAYLOAD = 1_048_576 - HEADER_SIZE;
     public static final PacketType<MessageUpdateTile> TYPE = PacketType.create(
-        new Identifier("buildcraft", "update_tile_bc"), MessageUpdateTile::read);
+        new Identifier("buildcraft", "update_tile_bc_v2"), MessageUpdateTile::read);
 
     private final BlockPos pos;
     private final PacketPayload payload;

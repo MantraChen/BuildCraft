@@ -20,7 +20,8 @@
       "buildcraft.test.full.FluidPipeGameTests",
       "buildcraft.test.full.FluidRecoveryGameTests",
       "buildcraft.test.full.MachineRecoveryGameTests",
-      "buildcraft.test.full.PowerPipeGameTests"
+      "buildcraft.test.full.PowerPipeGameTests",
+      "buildcraft.test.full.RfPipeGameTests"
     ],
     "client": [
       "buildcraft.test.full.FullClientSmoke",

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **97 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **111 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -135,6 +135,21 @@ features explicitly as work proceeds.
   actual gate stop/rate/resume, passive extraction, malformed snapshots and loss modes.
   A real creative engine powers a chute through wooden/stone pipes. All 306 native
   upgrade/undo/dye combinations preserve colours and consume exactly one ingredient.
+  Fourteen RF/network tests cover all nine materials, native nested/cross-face rollback,
+  per-tick input/output budgets, no-block-entity providers, reload, backpressure,
+  replacement sinks, weighted demand, gate stop/resume and sided passive extraction.
+  RF engine simulation is transactional; configured conversion, exact-fit MJ capacity,
+  bounded NBT and stale engine/Dynamo handles are verified. The native RF/Dynamo
+  upgrade screens enforce one gear per slot and reject distant access. A native
+  Dynamo-to-pipes-to-RF-engine round trip preserves fractional MJ, and the same chain
+  powers real chute collection. Nine RF upgrade/undo pairs cover 306 dye combinations.
+  Tile messages carry their native block-entity type on a versioned channel. A machine
+  replacement ignores a mismatched packet instead of parsing the previous machine's
+  payload and disconnecting; a regression reproduces the RF-engine/chute replacement.
+  A connected GPU client completes Dynamo/RF pipes/RF engine/chute work, receives
+  native flow animations and recipes, and clears both pipe animations after stopping.
+  Its native RF screen synchronizes the energy balance and two shift-clicked gears;
+  screenshots verify the original textures and visible remake attribution.
   This does not establish complete machine
   behavior. See [the full-mod fixture](../sub_projects/full-tests/README.md).
   Root `build` still includes historical Forge tests that need migration.
@@ -280,7 +295,11 @@ features explicitly as work proceeds.
   UVs at atlas boundaries; 768 GPU cases cover load, connection masks and scroll phases.
   A connected client observes a real engine powering a chute, receives both pipe
   animations and recipes, then verifies zero animation after the engine is switched off.
-  RF transport, obsidian/stripes behavior, gate/wire crafting
+  RF pipes now use native Team Reborn transactions for input, passive extraction,
+  demand probes and actual delivery. Rollback restores buffers and tick quotas together.
+  Native RF animation shares the matrix/atlas-safe geometry path, with 768 additional
+  GPU cases. Redstone converts all nine MJ pipe materials to RF and undo preserves dye.
+  Obsidian/stripes behavior, gate/wire crafting
   and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
@@ -290,7 +309,12 @@ features explicitly as work proceeds.
 - Added the native MJ Dynamo energy bridge with exact MJ conversion, per-tick output
   allowance, nested transaction rollback, directional output, upgrade inventory,
   persistence, native screen and animated model. It remains optional and disabled by
-  default. The separate RF engine is still incomplete.
+  default. The RF engine now has native transactional energy input, configurable
+  RF-to-MJ conversion and original iron/gold gear upgrades. Exact-fit conversion does
+  not stall; full engines retain RF. Both converter screens enforce one gear per slot,
+  and retained native energy handles stop working after removal. RF engine activation
+  opens its native screen with synchronized RF balance and remake attribution.
+  Survival recipes for the optional converters still need restoration.
 - Restored native snapshot request/response packets with ownership checks, bounded
   payloads, content-hash verification and bounded client caches. Zone-map packets now
   carry dimension identifiers, preserve negative/zero heights, reject unloaded or

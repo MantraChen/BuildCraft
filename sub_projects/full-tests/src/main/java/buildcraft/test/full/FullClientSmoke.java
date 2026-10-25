@@ -287,7 +287,12 @@ public final class FullClientSmoke implements ClientModInitializer {
 
 
     private static void checkPowerPipeGeometry(ArrayList<String> failures) {
-        int cases=0; var sprite=buildcraft.transport.BCTransportSprites.POWER_FLOW.getSprite();
+        checkEnergyPipeGeometry(failures,buildcraft.transport.BCTransportSprites.POWER_FLOW.getSprite(),"MJ");
+        checkEnergyPipeGeometry(failures,buildcraft.transport.BCTransportSprites.POWER_FLOW_RF.getSprite(),"RF");
+    }
+
+    private static void checkEnergyPipeGeometry(ArrayList<String> failures, net.minecraft.client.texture.Sprite sprite, String family) {
+        int cases=0;
         var matrices=new net.minecraft.client.util.math.MatrixStack(); matrices.translate(2,3,4);
         for (int mask=0;mask<64;mask++) for(double amount:new double[]{0,.1,.5,1}) for(double offset:new double[]{0,7.9,15.9}) {
             double[] power=new double[6],offsets=new double[6]; boolean[] connected=new boolean[6];
@@ -295,13 +300,13 @@ public final class FullClientSmoke implements ClientModInitializer {
             for(var side:Direction.values()) connected[side.ordinal()]=(mask & 1<<side.ordinal())!=0;
             var probe=new FluidVertices(sprite,240,240);
             buildcraft.transport.client.render.PipeFlowRendererPower.renderSections(power,connected,offsets,
-                new net.minecraft.util.math.Vec3d(offset,offset,offset),matrices,probe,0);
+                new net.minecraft.util.math.Vec3d(offset,offset,offset),matrices,probe,0,sprite);
             int minimum=amount==0?0:(6+5*Integer.bitCount(mask))*4;
             if (!probe.valid || probe.vertices<minimum || probe.vertices%4!=0 || amount==0 && probe.vertices!=0)
-                failures.add("MJ power geometry/UV/light failure: mask="+mask+" amount="+amount+" offset="+offset+" vertices="+probe.vertices);
+                failures.add(family+" power geometry/UV/light failure: mask="+mask+" amount="+amount+" offset="+offset+" vertices="+probe.vertices);
             cases++;
         }
-        System.out.println("BUILDCRAFT MJ PIPE RENDER: "+cases+" load/connection/scroll combinations");
+        System.out.println("BUILDCRAFT "+family+" PIPE RENDER: "+cases+" load/connection/scroll combinations");
     }
 
     private static final class FluidVertices implements net.minecraft.client.render.VertexConsumer {

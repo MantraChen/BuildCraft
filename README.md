@@ -68,6 +68,14 @@ accept engines/passive providers; iron/diamond gate limits stop and resume deliv
 MJ throughput and optional loss settings use the native configuration. Glowstone
 upgrades/undo preserve dye. The connected-client fixture powers a chute through two
 pipes and verifies animated energy, recipe sync and stopped-flow clearing.
+All nine RF pipe materials expose Team Reborn energy with nested transaction rollback,
+sided input, per-tick budgets, persistent buffers and gate-controlled limits. Redstone
+upgrades MJ pipes to RF; undo and dye preservation work through native crafting.
+The optional RF engine converts using the configured ratio, accepts iron/gold gear
+upgrades, and has a native screen marked **Remake by FelixMantra**. Enable
+`enableMjDynamo` and `enableRfEngine` in the generated BuildCraft config to use both
+converters; they remain disabled by default. The fixture enables them and verifies
+exact MJ/RF conservation, real chute work and removal of stale energy interfaces.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.

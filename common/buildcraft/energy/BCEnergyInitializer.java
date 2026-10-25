@@ -44,15 +44,16 @@ public class BCEnergyInitializer implements ModInitializer {
         BCEnergyBlocks.preInit();
         BCEnergyItems.preInit();
         BCEnergyScreens.register();
+        buildcraft.energy.tile.TileEngineRF.RF_UPGRADE.put(buildcraft.core.BCCoreItems.gearIron, 2 * buildcraft.api.mj.MjAPI.MJ);
+        buildcraft.energy.tile.TileEngineRF.RF_UPGRADE.put(buildcraft.core.BCCoreItems.gearGold, 3 * buildcraft.api.mj.MjAPI.MJ);
+        if (BCEnergyConfig.enableRfEngine) team.reborn.energy.api.EnergyStorage.SIDED.registerForBlockEntity(
+            (tile, side) -> tile.rfEnergyStorage,
+            buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.energy.tile.TileEngineRF.class));
         if (BCEnergyBlocks.mjDynamo != null) team.reborn.energy.api.EnergyStorage.SIDED.registerForBlockEntity(
             (tile, side) -> side == tile.facing() ? tile.energyStorage : null,
             buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.energy.tile.TileDynamoMJ.class));
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
-        // Remaining native screen: ENGINE_RF.
         // Client model/sprite/render registration is owned by BCLibClientInitializer.
-        // STUB(R.Chen): EnergyStorage.SIDED.registerForBlockEntityType(
-        //               (be, side) -> be.rfEnergyStorage, ENGINE_RF_TYPE, null)
-        //               — Team Reborn registration deferred until ENGINE_RF_TYPE is registered.
 
         // --- Forge init (BCEnergy.init) ------------------------------------------
         BCEnergyRecipes.init();

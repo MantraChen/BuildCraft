@@ -34,9 +34,14 @@ checks receipt of the custom upgrade recipe and captures `screenshots/fluid-shar
 inside the isolated interaction run directory. It then runs a creative engine through
 wooden/stone MJ pipes into a chute, checks real machine work, native client animation
 and MJ recipe sync, and captures `screenshots/mj-pipes-smoke.png`. After switching the
-engine off, it verifies both pipe animations clear before saving and exiting.
+engine off, it verifies both pipe animations clear. It then runs a native MJ Dynamo
+through two RF pipes and an RF engine into a chute, checks real item collection,
+RF animation/recipe synchronization, and verifies stopped flow clears. It opens the
+RF engine through a real client interaction, checks synchronized RF balance and
+shift-click gear limits, and captures `rf-pipes-smoke.png` and
+`rf-engine-screen-smoke.png` before saving and exiting.
 
-The 97 server tests currently verify:
+The 111 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -177,8 +182,25 @@ The 97 server tests currently verify:
   loss modes charge once per world tick. A native engine powers actual chute pickup.
   Nine glowstone upgrade/undo pairs cover 306 dye/type combinations in native crafting.
 
+- Native RF material rates, family separation, transactional demand probes and nested
+  cross-face rollback conserve energy and tick quotas. No-block-entity providers,
+  reload, partial/full/replaced sinks, weighted branches, iron gate stop/resume and
+  explicit sided passive extraction run in a real world. Malformed NBT and client
+  snapshots are bounded and atomic. Nine redstone upgrade/undo pairs preserve all
+  306 dye/type combinations through native crafting.
+- RF engine input supports nested rollback and configurable RF-to-MJ conversion,
+  including an exact-fit full battery. Iron/gold upgrades restore their original rates.
+  Native RF/Dynamo screens have the correct handler types and sync IDs, enforce
+  one gear per slot and reject distant use. Removed engine/Dynamo energy handles
+  reject transfers. A Dynamo/RF-pipe/engine round trip preserves fractional MJ;
+  the real chain also powers chute collection.
+- Tile updates carry their native block-entity type on the versioned channel. Replacing
+  an RF engine with a chute ignores mismatched data without applying it or producing
+  a reply. The connected client replaces the chute with an RF engine in the same tick,
+  covering the block-update/custom-packet ordering that previously caused a disconnect.
+
 The optional client run uses an isolated `verification/full-client-run/` directory.
-MJ rendering checks 768 load, connection and scrolling-texture combinations, including
+MJ and RF rendering each check 768 load, connection and scrolling-texture combinations, including
 matrix transforms, full-bright lighting and wrapped UVs staying inside the atlas sprite.
 After reaching the title screen, it checks all 928 registered visible block states,
 130 default item models and 232 explicit item/pipe/gate/wire/shard variants. It rejects missing models,
@@ -207,6 +229,6 @@ artifact/config through `full-smoke.ps1 -Client`.
 Reports are written to `verification/full-gametest-results.xml`. Test worlds/configs
 are under `verification/full-gametest-run/`. These checks establish full common-side
 initialization and the specific behaviors above, not working gameplay for every
-machine, pipe behavior or the RF engine. The client check verifies resource baking and item
+machine or pipe behavior. The client check verifies resource baking and item
 selection, not every renderer, machine animation, UI or gameplay interaction. Legacy
 guide links and some texture-animation/mipmap warnings remain.

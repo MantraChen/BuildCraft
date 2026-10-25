@@ -10,11 +10,11 @@ package buildcraft.energy.tile;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.HashMap;
 
 import javax.annotation.Nonnull;
 
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
@@ -30,7 +30,6 @@ import team.reborn.energy.api.EnergyStorage;
 
 import buildcraft.api.mj.IMjConnector;
 import buildcraft.api.mj.MjAPI;
-import buildcraft.api.mj.MjRfConversion;
 import buildcraft.api.transport.pipe.IItemPipe;
 
 import buildcraft.lib.engine.EngineConnector;
@@ -43,50 +42,34 @@ import buildcraft.lib.tile.item.StackInsertionFunction;
 import buildcraft.energy.BCEnergyGuis;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-// Forge→Fabric migration notes (R.Chen):
-//   PlayerEntity / Direction / Hand     → PlayerEntity / Direction / Hand
-//   NbtCompound / readFromNBT/writeToNBT  → NbtCompound / readNbt/writeNbt
-//   nbt.setInteger                           → nbt.putInt
-//   EnvType.CLIENT / EnvType.SERVER                → NetSide.CLIENT / NetSide.SERVER
-//   MessageContext                           → Object ctx
-//   world.isClient                           → world.isClient
-//   player.getHeldItem                       → player.getStackInHand
-//   EntityUtil.getWrenchHand                 → STUB (not yet in libLeaf)
-//   CapabilityEnergy.ENERGY / IEnergyStorage → Team Reborn EnergyStorage (rfEnergyStorage)
-//   caps.addCapabilityInstance               → removed; EnergyStorage.SIDED registration
-//                                              deferred to BCEnergyInitializer once ENGINE_RF_TYPE exists
-//   BCLibConfig.mjRfConversion               → MjRfConversion.createDefault() (BCLibConfig not in libLeaf)
-//   BCCoreItems.gearIron / gearGold          → STUB (BCCoreItems not in libLeaf)
+// Remake by FelixMantra: native transactional RF input and configurable MJ conversion.
 @SuppressWarnings("UnstableApiUsage")
 public class TileEngineRF extends TileEngineBase_BC8 {
     public static final int MAX_RF = 10_000;
     public static final double HEAT_RATE = 0.06;
     public static final double COOLDOWN_RATE = 0.01;
 
-    // STUB(R.Chen): BCCoreItems.gearIron / gearGold not yet in libLeaf.
-    // RF upgrade items will be populated once BCCoreItems is added to libLeaf.
     public static final Map<Item, Long> RF_UPGRADE = new LinkedHashMap<>();
 
     int currentRF;
     public final ItemHandlerSimple invUpgrades;
 
-    /**
-     * Team Reborn EnergyStorage replacing Forge IEnergyStorage capability.
-     * Registration via EnergyStorage.SIDED.registerForBlockEntityType(...) is deferred to
-     * BCEnergyInitializer once the ENGINE_RF BlockEntityType is registered.
-     *
-     * TODO(R.Chen): Transaction rollback not fully implemented — insert() commits eagerly.
-     * Replace with SnapshotParticipant when the full Transfer-API migration pass runs.
-     */
-    public final EnergyStorage rfEnergyStorage = new EnergyStorage() {
+    /** Native RF input; simulations and nested transactions restore the entire RF balance. */
+    public final EnergyStorage rfEnergyStorage = new RfInput();
+    private final class RfInput extends SnapshotParticipant<Integer> implements EnergyStorage {
+        @Override protected Integer createSnapshot() { return currentRF; }
+        @Override protected void readSnapshot(Integer value) { currentRF = value; }
+        @Override protected void onFinalCommit() { markDirty(); }
         @Override
-        public boolean supportsInsertion() { return true; }
+        public boolean supportsInsertion() { return isStorageAvailable(); }
 
         @Override
         public long insert(long maxAmount, TransactionContext transaction) {
+            if (maxAmount < 0) throw new IllegalArgumentException("Negative RF insertion");
+            if (!isStorageAvailable() || world.isClient) return 0;
             long max = Math.min((long) (MAX_RF - currentRF), maxAmount);
             if (max <= 0) return 0;
-            // STUB(R.Chen): transaction rollback not implemented.
+            updateSnapshots(transaction);
             currentRF += (int) max;
             return max;
         }
@@ -95,21 +78,23 @@ public class TileEngineRF extends TileEngineBase_BC8 {
         public boolean supportsExtraction() { return false; }
 
         @Override
-        public long extract(long maxAmount, TransactionContext transaction) { return 0; }
+        public long extract(long maxAmount, TransactionContext transaction) {
+            if (maxAmount < 0) throw new IllegalArgumentException("Negative RF extraction");
+            return 0;
+        }
 
         @Override
-        public long getAmount() { return currentRF; }
+        public long getAmount() { return isStorageAvailable() ? currentRF : 0; }
 
         @Override
-        public long getCapacity() { return MAX_RF; }
-    };
+        public long getCapacity() { return isStorageAvailable() ? MAX_RF : 0; }
+    }
 
     public TileEngineRF(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        // STUB(R.Chen): caps.addCapabilityInstance(CapabilityEnergy.ENERGY, ...) removed.
-        //               EnergyStorage.SIDED registration deferred to BCEnergyInitializer.
         invUpgrades = itemManager.addInvHandler("upgrades", 4, this::isValidUpgrade,
             StackInsertionFunction.getInsertionFunction(1), EnumAccess.NONE);
+        invUpgrades.setLimitedInsertor(1);
     }
 
     // BlockEntity overrides
@@ -123,7 +108,7 @@ public class TileEngineRF extends TileEngineBase_BC8 {
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        currentRF = nbt.getInt("currentRF");
+        currentRF = (int) Math.max(0, Math.min(MAX_RF, nbt.getLong("currentRF")));
     }
 
     @Override
@@ -131,7 +116,9 @@ public class TileEngineRF extends TileEngineBase_BC8 {
         super.readPayload(id, buffer, side, ctx);
         if (side == NetSide.CLIENT) {
             if (id == NET_GUI_DATA || id == NET_GUI_TICK) {
-                currentRF = buffer.readInt();
+                int amount = buffer.readInt();
+                if (amount < 0 || amount > MAX_RF) throw new IOException("Invalid RF engine balance");
+                currentRF = amount;
             }
         }
     }
@@ -160,7 +147,6 @@ public class TileEngineRF extends TileEngineBase_BC8 {
             return true;
         }
         if (!current.isEmpty()) {
-            // STUB(R.Chen): EntityUtil.getWrenchHand not yet in libLeaf; wrench check disabled.
             if (current.getItem() instanceof IItemPipe) {
                 return false;
             }
@@ -215,8 +201,7 @@ public class TileEngineRF extends TileEngineBase_BC8 {
 
     public int getRfConsumptionRate() {
         final long mjPerTick = getMjPerTick();
-        // STUB(R.Chen): BCLibConfig.mjRfConversion not in libLeaf; using default conversion ratio.
-        long mjPerRf = MjRfConversion.createDefault().mjPerRf;
+        long mjPerRf = buildcraft.lib.BCLibConfig.mjRfConversion.mjPerRf;
         return (int) (mjPerTick / mjPerRf);
     }
 
@@ -227,20 +212,17 @@ public class TileEngineRF extends TileEngineBase_BC8 {
         }
 
         if (isRedstonePowered) {
-            // STUB(R.Chen): BCLibConfig.mjRfConversion not in libLeaf; using default.
-            long mjPerRf = MjRfConversion.createDefault().mjPerRf;
+            long mjPerRf = buildcraft.lib.BCLibConfig.mjRfConversion.mjPerRf;
             int maxRf = getRfConsumptionRate();
 
-            int rfConsumed = Math.min(currentRF, maxRf);
+            int rfConsumed = (int) Math.min(Math.min(currentRF, maxRf), Math.max(0, getMaxPower() - power) / mjPerRf);
+            if (rfConsumed <= 0) return;
             long mjGenerated = rfConsumed * mjPerRf;
-
-            if (power + mjGenerated >= getMaxPower()) {
-                return;
-            }
 
             currentOutput = mjGenerated;
             addPower(mjGenerated);
             currentRF -= rfConsumed;
+            markDirty();
             heat += HEAT_RATE;
             if (heat >= 200) {
                 heat = 200;
@@ -288,11 +270,7 @@ public class TileEngineRF extends TileEngineBase_BC8 {
 
     @Override
     public long getCurrentOutput() {
-        if (currentRF > 0) {
-            return getMjPerTick();
-        } else {
-            return 0;
-        }
+        return currentOutput;
     }
 
     public int getCurrentRF() {

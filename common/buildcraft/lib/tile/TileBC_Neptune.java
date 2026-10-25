@@ -496,7 +496,7 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     public final void sendNetworkGuiTick(PlayerEntity player) {
         if (hasWorld() && !world.isClient) {
             MessageUpdateTile message = createNetworkUpdate(NET_GUI_TICK);
-            if (message.getPayloadSize() <= Short.BYTES) {
+            if (message.getPayloadSize() <= Integer.BYTES + Short.BYTES) {
                 return;
             }
             MessageManager.sendTo(message, (ServerPlayerEntity) player);
@@ -567,6 +567,8 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     public final MessageUpdateTile createMessage(int id, IPayloadWriter writer) {
         if (id < 0 || id > 0xffff) throw new IllegalArgumentException("Invalid tile message ID: " + id);
         return MessageUpdateTile.of(pos, buffer -> {
+            // Match vanilla block-entity updates: a replacement may arrive after this custom packet.
+            buffer.writeInt(net.minecraft.registry.Registries.BLOCK_ENTITY_TYPE.getRawId(getType()));
             buffer.writeShort(id);
             writer.write(buffer);
         });
@@ -641,6 +643,13 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     @Override
     public final MessageUpdateTile receivePayload(buildcraft.lib.net.NetworkContext ctx, PacketBufferBC buffer)
         throws IOException {
+        int targetType = buffer.readInt();
+        if (targetType != net.minecraft.registry.Registries.BLOCK_ENTITY_TYPE.getRawId(getType())) {
+            // The old and new machine can briefly occupy the same position on opposite sides.
+            // Its initial vanilla update supplies the new machine's state once placement arrives.
+            buffer.skipBytes(buffer.readableBytes());
+            return null;
+        }
         int id = buffer.readUnsignedShort();
         NetSide side = ctx.isClient() ? NetSide.CLIENT : NetSide.SERVER;
         readPayload(id, buffer, side, ctx);

@@ -34,6 +34,8 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
     private int shardFrames;
     private final boolean[] powerSeen = new boolean[2];
     private int powerFrames;
+    private final boolean[] rfSeen = new boolean[2];
+    private int rfFrames;
     private net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant testFluid;
 
     @Override public void onInitializeClient() {
@@ -43,6 +45,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
             var client=MinecraftClient.getInstance();
             if(stage==11 && client.player!=null && client.player.getMainHandStack().isOf(buildcraft.core.BCCoreItems.fragileFluidShard)) shardFrames++;
             if(stage==13 && powerSeen[0] && powerSeen[1]) powerFrames++;
+            if(stage==16 && rfSeen[0] && rfSeen[1]) rfFrames++;
         });
     }
 
@@ -50,7 +53,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
         if (stage == 0) {
             if (client.getOverlay() != null || !(client.currentScreen instanceof TitleScreen)) return;
             client.options.pauseOnLostFocus = false;
-            deadline = System.nanoTime() + 180_000_000_000L;
+            deadline = System.nanoTime() + 240_000_000_000L;
             stage = 1;
             var rules = new GameRules();
             rules.get(GameRules.DO_MOB_SPAWNING).set(false, null);
@@ -61,7 +64,7 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                 registries -> registries.get(RegistryKeys.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createDimensionsRegistryHolder());
             return;
         }
-        if (stage == 15) return;
+        if (stage == 21) return;
         if (System.nanoTime() > deadline) throw new IllegalStateException("Attachment client smoke timed out at stage " + stage);
         if (client.world == null || client.player == null || client.interactionManager == null || client.getServer() == null) return;
         ticks++;
@@ -247,7 +250,87 @@ public final class FullClientInteractionSmoke implements ClientModInitializer {
                     && flow.getSection(side).displayFlow==buildcraft.transport.pipe.flow.PipeFlowPower.EnumFlow.STATIONARY,"Stopped MJ pipe retained ghost energy animation");
             }
             System.out.println("BUILDCRAFT FULL CLIENT MJ: engine/wood/stone/chute work, native flow animation, recipe sync and stopped-flow clearing; failures=0");
-            stage = 15;
+            advance();
+        } else if(stage==15) {
+            var playerId=client.player.getUuid();
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();
+                for(int x=-1;x<=3;x++)world.setBlockState(POS.east(x),net.minecraft.block.Blocks.AIR.getDefaultState());
+                world.setBlockState(POS.east(3),buildcraft.factory.BCFactoryBlocks.chute.getDefaultState()
+                    .with(buildcraft.factory.BCFactoryBlocks.chute.getFacingProperty(),Direction.NORTH));
+                world.setBlockState(POS.east(2).down(),net.minecraft.block.Blocks.REDSTONE_BLOCK.getDefaultState());
+                world.setBlockState(POS.east(2),buildcraft.core.BCCoreBlocks.engine.getDefaultState()
+                    .with(buildcraft.api.properties.BuildCraftProperties.ENGINE_TYPE,buildcraft.api.enums.EnumEngineType.RF));
+                for(int x=0;x<2;x++) {
+                    world.setBlockState(POS.east(x),BCTransportBlocks.pipeHolder.getDefaultState());
+                    ((TilePipeHolder)world.getBlockEntity(POS.east(x))).onPlacedBy(null,new ItemStack(x==0?BCTransportItems.pipeRfWood:BCTransportItems.pipeRfStone));
+                }
+                world.setBlockState(POS.west(),buildcraft.energy.BCEnergyBlocks.mjDynamo.getDefaultState()
+                    .with(buildcraft.lib.block.BlockBCBase_Neptune.BLOCK_FACING_6,Direction.EAST));
+                ((buildcraft.energy.tile.TileDynamoMJ)world.getBlockEntity(POS.west())).battery.addPower(1000*buildcraft.api.mj.MjAPI.MJ,false);
+                var pos=POS.east(3);
+                var item=new net.minecraft.entity.ItemEntity(world,pos.getX()+.5,pos.getY()+.5,pos.getZ()-.2,new ItemStack(net.minecraft.item.Items.DIAMOND,3));
+                item.setNoGravity(true);item.setVelocity(Vec3d.ZERO);world.spawnEntity(item);
+                aim(client.getServer().getPlayerManager().getPlayer(playerId),Vec3d.ofCenter(POS.east()));
+            });
+            advance();
+        } else if(stage==16 && ready()) {
+            for(int i=0;i<2;i++)if(client.world.getBlockEntity(POS.east(i)) instanceof TilePipeHolder tile
+                    && tile.getPipe()!=null && tile.getPipe().flow instanceof buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux flow) {
+                for(var side:Direction.values())if(flow.getSection(side).displayPower>0) {
+                    require(flow.getSection(side).displayPower<=buildcraft.api.mj.MjAPI.MJ,"RF client load exceeded native bounds");rfSeen[i]=true;
+                }
+            }
+            if(ticks<200)return;
+            require(rfSeen[0] && rfSeen[1] && rfFrames>=10,"RF flow did not render on both pipes");
+            require(client.getNetworkHandler().getRecipeManager().get(new net.minecraft.util.Identifier("buildcrafttransport:pipe_gold_rf"))
+                .orElse(null) instanceof buildcraft.transport.recipe.PipeUpgradeRecipe,"Client lost RF upgrade recipe sync");
+            net.minecraft.client.util.ScreenshotRecorder.saveScreenshot(client.runDirectory,"rf-pipes-smoke.png",client.getFramebuffer(),
+                message -> System.out.println("BUILDCRAFT RF SCREENSHOT: "+message.getString()));
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();var chute=(buildcraft.factory.tile.TileChute)world.getBlockEntity(POS.east(3));
+                require(chute.inv.getStackInSlot(0).isOf(net.minecraft.item.Items.DIAMOND) && chute.inv.getStackInSlot(0).getCount()==3,"Integrated RF chain failed to power the chute");
+                world.setBlockState(POS.west(),net.minecraft.block.Blocks.AIR.getDefaultState());
+            });
+            advance();
+        } else if(stage==17 && ready() && ticks>=200) {
+            for(int i=0;i<2;i++) {
+                var flow=(buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux)((TilePipeHolder)client.world.getBlockEntity(POS.east(i))).getPipe().flow;
+                for(var side:Direction.values())require(flow.getSection(side).displayPower==0
+                    && flow.getSection(side).displayFlow==buildcraft.transport.pipe.flow.PipeFlowRedstoneFlux.EnumFlow.STATIONARY,"Stopped RF pipe retained ghost flow");
+            }
+            var playerId=client.player.getUuid();
+            serverWork=client.getServer().submit(() -> {
+                var world=client.getServer().getOverworld();world.setBlockState(POS.east(2).down(),net.minecraft.block.Blocks.AIR.getDefaultState());
+                var engine=(buildcraft.energy.tile.TileEngineRF)world.getBlockEntity(POS.east(2));
+                require(engine.getCurrentRF()==0,"RF engine did not drain remaining input");
+                try(var tx=net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.openOuter()) {
+                    require(engine.rfEnergyStorage.insert(321,tx)==321,"RF GUI fixture fill failed");tx.commit();
+                }
+                var player=client.getServer().getPlayerManager().getPlayer(playerId);
+                player.getInventory().setStack(9,new ItemStack(buildcraft.core.BCCoreItems.gearGold,2));player.getInventory().markDirty();player.currentScreenHandler.sendContentUpdates();
+                aim(player,Vec3d.ofCenter(POS.east(2)));
+            });
+            advance();
+        } else if(stage==18 && ready()) {
+            client.interactionManager.interactBlock(client.player,net.minecraft.util.Hand.MAIN_HAND,
+                new net.minecraft.util.hit.BlockHitResult(Vec3d.ofCenter(POS.east(2)),Direction.NORTH,POS.east(2),false));
+            advance();
+        } else if(stage==19 && ticks>=20) {
+            if(!(client.currentScreen instanceof buildcraft.energy.client.gui.GuiEngineRF))return;
+            var screen=(buildcraft.energy.container.ContainerEngineRF)client.player.currentScreenHandler;
+            require(screen.getType()==buildcraft.energy.BCEnergyScreens.RF && screen.tile.getCurrentRF()==321,"Native RF screen lost type/energy sync");
+            client.interactionManager.clickSlot(screen.syncId,0,0,net.minecraft.screen.slot.SlotActionType.QUICK_MOVE,client.player);
+            advance();
+        } else if(stage==20 && ticks>=30) {
+            var screen=(buildcraft.energy.container.ContainerEngineRF)client.player.currentScreenHandler;
+            require(screen.tile.getCurrentRF()==321 && screen.tile.invUpgrades.getStackInSlot(0).getCount()==1
+                && screen.tile.invUpgrades.getStackInSlot(1).getCount()==1 && client.player.getInventory().getStack(9).isEmpty(),"Native RF screen shift-click did not synchronize one-gear slots");
+            net.minecraft.client.util.ScreenshotRecorder.saveScreenshot(client.runDirectory,"rf-engine-screen-smoke.png",client.getFramebuffer(),
+                message -> System.out.println("BUILDCRAFT RF GUI SCREENSHOT: "+message.getString()));
+            System.out.println("BUILDCRAFT FULL CLIENT RF: dynamo/wood/stone/RF engine/chute work, RF animation, recipes, stopped flow, native GUI and gear shift-click; failures=0");
+            client.player.closeHandledScreen();
+            stage = 21;
             client.world.disconnect();
             client.disconnect();
             client.scheduleStop();

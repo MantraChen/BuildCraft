@@ -62,18 +62,25 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
     /** Shared with GPU checks; texture repeats are clipped within their atlas sprite. */
     public static void renderSections(double[] power, boolean[] connected, double[] offsets, Vec3d centerOffset,
             MatrixStack matrices, VertexConsumer vc, int light) {
+        var holder = BCTransportSprites.POWER_FLOW;
+        if (holder != null) renderSections(power, connected, offsets, centerOffset, matrices, vc, light, holder.getSprite());
+    }
+
+    public static void renderSections(double[] power, boolean[] connected, double[] offsets, Vec3d centerOffset,
+            MatrixStack matrices, VertexConsumer vc, int light, Sprite sprite) {
+        if (sprite == null) return;
         double center = 0;
         for (double value : power) if (Double.isFinite(value)) center = Math.max(center, Math.min(1, value));
         if (center <= 0) return;
         for (Direction side : Direction.values()) if (connected[side.ordinal()]) {
             double value = power[side.ordinal()];
             if (Double.isFinite(value) && value > 0) renderSidePower(side, Math.min(1, value), center,
-                offsets[side.ordinal()], matrices, vc, light);
+                offsets[side.ordinal()], matrices, vc, light, sprite);
         }
-        renderCentrePower(center, centerOffset.x, centerOffset.y, centerOffset.z, matrices, vc, light);
+        renderCentrePower(center, centerOffset.x, centerOffset.y, centerOffset.z, matrices, vc, light, sprite);
     }
 
-    private static double computeOffset(double tick0, double tick1, float partialTicks) {
+    public static double computeOffset(double tick0, double tick1, float partialTicks) {
         if (tick0 + 8 < tick1) tick0 += 16;
         else if (tick1 + 8 < tick0) tick1 += 16;
         double offset = MathUtil.interp(partialTicks, tick0, tick1);
@@ -82,18 +89,10 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
     }
 
     private static void renderSidePower(Direction side, double power, double centrePower,
-            double offset, MatrixStack matrices, VertexConsumer vc, int light) {
+            double offset, MatrixStack matrices, VertexConsumer vc, int light, Sprite sprite) {
         if (power < 0) return;
         double radius = 0.248 * power;
         if (radius >= 0.248) radius = 0.248;
-        boolean overload = false;
-
-        SpriteHolder spriteHolder = overload ? BCTransportSprites.POWER_FLOW_OVERLOAD
-                                              : BCTransportSprites.POWER_FLOW;
-        if (spriteHolder == null) return;
-        Sprite sprite = spriteHolder.getSprite();
-        if (sprite == null) return;
-
         double centreRadius = 0.252 - (0.248 * centrePower);
         Vec3d centre = VecUtil.offset(VecUtil.VEC_HALF, side, 0.25 + 0.125 - centreRadius / 2);
         Vec3d radiusV = new Vec3d(radius, radius, radius);
@@ -118,14 +117,9 @@ public enum PipeFlowRendererPower implements IPipeFlowRenderer<PipeFlowPower> {
     }
 
     private static void renderCentrePower(double power, double offsetX, double offsetY, double offsetZ,
-            MatrixStack matrices, VertexConsumer vc, int light) {
+            MatrixStack matrices, VertexConsumer vc, int light, Sprite sprite) {
         float radius = 0.248f * (float) power;
         if (radius > 0.248f) radius = 0.248f;
-
-        SpriteHolder spriteHolder = BCTransportSprites.POWER_FLOW;
-        if (spriteHolder == null) return;
-        Sprite sprite = spriteHolder.getSprite();
-        if (sprite == null) return;
 
         Vector3f centre = new Vector3f(0.5f, 0.5f, 0.5f);
         Vector3f radiusP = new Vector3f(radius, radius, radius);

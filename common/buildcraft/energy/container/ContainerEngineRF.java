@@ -16,7 +16,11 @@ import buildcraft.energy.tile.TileEngineRF;
 public class ContainerEngineRF extends ContainerBCTile<TileEngineRF> {
 
     public ContainerEngineRF(PlayerEntity player, TileEngineRF engine) {
-        super(player, engine);
+        this(player, 0, engine);
+    }
+
+    public ContainerEngineRF(PlayerEntity player, int syncId, TileEngineRF engine) {
+        super(buildcraft.energy.BCEnergyScreens.RF, player, syncId, engine);
 
         addFullPlayerInventory(95);
         for (int slot = 0; slot < 4; slot++) {

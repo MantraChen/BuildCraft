@@ -10,6 +10,8 @@ import buildcraft.lib.gui.ContainerBC_Neptune;
 public final class BCEnergyClientScreens {
     private BCEnergyClientScreens() {}
     public static void register() {
+        HandledScreens.<ContainerBC_Neptune, GuiEngineRF>register(BCEnergyScreens.RF,
+            (handler, inventory, title) -> new GuiEngineRF((ContainerEngineRF) handler, inventory, title));
         HandledScreens.<ContainerBC_Neptune, GuiDynamoMJ>register(BCEnergyScreens.DYNAMO,
             (handler, inventory, title) -> new GuiDynamoMJ((ContainerDynamoMJ) handler, inventory, title));
         HandledScreens.<ContainerBC_Neptune, GuiEngineStone_BC8>register(BCEnergyScreens.STONE,

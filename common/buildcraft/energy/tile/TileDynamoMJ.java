@@ -39,13 +39,14 @@ public class TileDynamoMJ extends TileBC_Neptune implements IEngineLikeForLedger
         () -> BCLibConfig.mjRfConversion.mjPerRf, this::outputLimit,
         () -> world == null ? 0 : world.getTime(), () -> {
             currentOutput = energyStorageUsed(); markDirty();
-        });
+        }, () -> isStorageAvailable() && !world.isClient);
     private long energyStorageUsed() { return energyStorage.usedThisTick() / BCLibConfig.mjRfConversion.mjPerRf; }
     public TileDynamoMJ(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         invUpgrades = itemManager.addInvHandler("upgrades", 4, (slot, stack) ->
             stack.isOf(BCCoreItems.gearIron) || stack.isOf(BCCoreItems.gearGold),
             StackInsertionFunction.getInsertionFunction(1), EnumAccess.NONE);
+        invUpgrades.setLimitedInsertor(1);
         caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery)));
     }
     public Direction facing() { return getCachedState().get(BlockBCBase_Neptune.BLOCK_FACING_6); }

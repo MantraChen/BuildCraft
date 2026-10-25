@@ -56,6 +56,9 @@ if ($Client) {
 if ($Interactions) {
     $interactionRun = Join-Path $verification 'full-client-interaction-run'
     New-Item -ItemType Directory -Path $interactionRun -Force | Out-Null
+    $interactionConfig = Join-Path $interactionRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $interactionConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $interactionConfig 'main.cfg') -Force
     $interactionOptions = Join-Path $interactionRun 'options.txt'
     if (-not (Test-Path -LiteralPath $interactionOptions)) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $interactionOptions -Encoding utf8

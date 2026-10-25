@@ -32,11 +32,13 @@ public class BCTransportConfig {
     public static boolean powerPipeUseOldMjTexture = false;
     public static PowerLossMode lossMode = PowerLossMode.DEFAULT;
     public static int networkUpdateRate = 4;
-    private static buildcraft.lib.config.Property propBasePowerRate, propLossMode;
+    private static buildcraft.lib.config.Property propBasePowerRate, propBaseRfRate, propLossMode;
 
     public static void preInit() {
         var config = buildcraft.core.BCCoreConfig.config;
         propBasePowerRate = config.get("general", "pipes.basePowerRate", 4).setMinValue(1).setMaxValue(40);
+        propBaseRfRate = config.get("general", "pipes.baseRfRate", 40).setMinValue(10).setMaxValue(4000);
+        buildcraft.lib.config.EnumRestartRequirement.WORLD.setTo(propBaseRfRate);
         propLossMode = config.get("experimental", "kinesisLossMode", "lossless");
         buildcraft.lib.misc.ConfigUtil.setEnumProperty(propLossMode, PowerLossMode.VALUES);
         buildcraft.lib.config.EnumRestartRequirement.WORLD.setTo(propBasePowerRate);
@@ -50,6 +52,7 @@ public class BCTransportConfig {
     public static void reloadConfig() {
         if (propBasePowerRate == null) return;
         basePowerRate = Math.max(1, Math.min(40, propBasePowerRate.getInt()));
+        baseRfRate = Math.max(10, Math.min(4000, propBaseRfRate.getInt()));
         lossMode = buildcraft.lib.misc.ConfigUtil.parseEnumForConfig(propLossMode, PowerLossMode.DEFAULT);
         configurePowerPipes();
     }
@@ -65,6 +68,20 @@ public class BCTransportConfig {
         power(BCTransportPipes.goldPower, rate * 32, 32, false);
         power(BCTransportPipes.diamondPower, rate * 64, 32, false);
         power(BCTransportPipes.diaWoodPower, rate * 64, 32, true);
+        int rfRate = Math.max(10, Math.min(4000, baseRfRate));
+        rf(BCTransportPipes.cobbleRf, rfRate, false);
+        rf(BCTransportPipes.stoneRf, rfRate * 2, false);
+        rf(BCTransportPipes.woodRf, rfRate * 4, true);
+        rf(BCTransportPipes.sandstoneRf, rfRate * 4, false);
+        rf(BCTransportPipes.quartzRf, rfRate * 8, false);
+        rf(BCTransportPipes.ironRf, rfRate * 8, false);
+        rf(BCTransportPipes.goldRf, rfRate * 32, false);
+        rf(BCTransportPipes.diamondRf, rfRate * 64, false);
+        rf(BCTransportPipes.diaWoodRf, rfRate * 64, true);
+    }
+    private static void rf(buildcraft.api.transport.pipe.PipeDefinition pipe, int rate, boolean receiver) {
+        if (pipe != null) buildcraft.api.transport.pipe.PipeApi.rfTransferData.put(pipe,
+            new buildcraft.api.transport.pipe.PipeApi.RedstoneFluxTransferInfo(rate, receiver));
     }
     private static void power(buildcraft.api.transport.pipe.PipeDefinition pipe, int rate, int divisor, boolean receiver) {
         if (pipe != null) buildcraft.api.transport.pipe.PipeApi.powerTransferData.put(pipe,

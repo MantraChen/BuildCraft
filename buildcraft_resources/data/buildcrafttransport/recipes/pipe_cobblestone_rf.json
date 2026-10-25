@@ -1,0 +1,15 @@
+{
+  "type": "buildcrafttransport:pipe_upgrade",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:pipe_cobblestone_power"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ],
+  "result": {
+    "item": "buildcrafttransport:pipe_cobblestone_rf"
+  }
+}

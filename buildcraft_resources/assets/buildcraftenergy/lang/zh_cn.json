@@ -1,4 +1,5 @@
 {
+  "tile.engine.rf.name": "RF 引擎",
   "fluid.buildcraftenergy.oil": "原油",
   "fluid.buildcraftenergy.oil_residue": "残渣",
   "fluid.buildcraftenergy.oil_heavy": "重油",

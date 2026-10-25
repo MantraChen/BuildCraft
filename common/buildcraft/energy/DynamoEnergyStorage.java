@@ -12,9 +12,15 @@ public final class DynamoEnergyStorage extends SnapshotParticipant<DynamoEnergyS
     private final MjBattery battery;
     private final LongSupplier ratio, limit, clock;
     private final Runnable changed;
+    private final java.util.function.BooleanSupplier active;
     private long tick = Long.MIN_VALUE, used;
     public DynamoEnergyStorage(MjBattery battery, LongSupplier ratio, LongSupplier limit, LongSupplier clock, Runnable changed) {
+        this(battery, ratio, limit, clock, changed, () -> true);
+    }
+    public DynamoEnergyStorage(MjBattery battery, LongSupplier ratio, LongSupplier limit, LongSupplier clock, Runnable changed,
+            java.util.function.BooleanSupplier active) {
         this.battery = battery; this.ratio = ratio; this.limit = limit; this.clock = clock; this.changed = changed;
+        this.active = active;
     }
     private long ratio() {
         long value = ratio.getAsLong();
@@ -24,12 +30,14 @@ public final class DynamoEnergyStorage extends SnapshotParticipant<DynamoEnergyS
     private void refresh() { long now = clock.getAsLong(); if (now != tick) { tick = now; used = 0; } }
     public long usedThisTick() { refresh(); return used; }
     @Override public boolean supportsInsertion() { return false; }
+    @Override public boolean supportsExtraction() { return active.getAsBoolean(); }
     @Override public long insert(long amount, TransactionContext transaction) {
         if (amount < 0) throw new IllegalArgumentException("Negative energy insertion");
         return 0;
     }
     @Override public long extract(long amount, TransactionContext transaction) {
         if (amount < 0) throw new IllegalArgumentException("Negative energy extraction");
+        if (!active.getAsBoolean()) return 0;
         refresh();
         long ratio = ratio();
         long available = Math.min(battery.getStored(), Math.max(0, limit.getAsLong() - used));
@@ -42,8 +50,8 @@ public final class DynamoEnergyStorage extends SnapshotParticipant<DynamoEnergyS
         }
         return extracted;
     }
-    @Override public long getAmount() { return battery.getStored() / ratio(); }
-    @Override public long getCapacity() { return battery.getCapacity() / ratio(); }
+    @Override public long getAmount() { return active.getAsBoolean() ? battery.getStored() / ratio() : 0; }
+    @Override public long getCapacity() { return active.getAsBoolean() ? battery.getCapacity() / ratio() : 0; }
     @Override protected State createSnapshot() { return new State(battery.getStored(), tick, used); }
     @Override protected void readSnapshot(State state) {
         battery.extractAll(); battery.addPower(state.stored, false); tick = state.tick; used = state.used;
