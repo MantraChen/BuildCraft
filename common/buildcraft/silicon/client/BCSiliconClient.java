@@ -13,7 +13,15 @@ import net.minecraft.util.math.Direction;
 public final class BCSiliconClient {
     public static final GateModel MODEL = new GateModel();
     public static final ControlPlugModel CONTROL_MODEL = new ControlPlugModel();
+    public static final LensModel LENS_MODEL = new LensModel();
     public static void register() {
+        PipeRegistryClient.INSTANCE.registerLayeredRenderer(buildcraft.silicon.plug.PluggableLens.class,(plug,matrices,consumers,light,overlay,delta)->
+            LENS_MODEL.render(plug.side,plug.colour,plug.isFilter,matrices,consumers,light,overlay));
+        net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCSiliconItems.plugLens,(stack,mode,matrices,consumers,light,overlay)->{
+            var data=buildcraft.silicon.item.ItemPluggableLens.getData(stack);
+            matrices.push();matrices.translate(7/16.0,0,0);
+            LENS_MODEL.render(Direction.WEST,data.colour(),data.isFilter(),matrices,consumers,light,overlay);matrices.pop();
+        });
         net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiIntegrationTable>register(BCSiliconScreens.INTEGRATION,
             (handler,inventory,title)->new buildcraft.silicon.gui.GuiIntegrationTable((buildcraft.silicon.container.ContainerIntegrationTable)handler,inventory,title));
         net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiAdvancedCraftingTable>register(BCSiliconScreens.ADVANCED,
@@ -29,7 +37,8 @@ public final class BCSiliconClient {
                 var trace = buildcraft.transport.BCTransportBlocks.pipeHolder.rayTrace(player.getWorld(), hit.getBlockPos(), player);
                 if (trace != null && trace.subHit > 6 && trace.subHit <= 12) {
                     var plug = tile.getPluggable(buildcraft.transport.block.BlockPipeHolder.getPartSideHit(trace));
-                    if (plug instanceof PluggableGate || plug instanceof buildcraft.silicon.plug.PluggableSidedPlate) return plug.getPickStack();
+                    if (plug instanceof PluggableGate || plug instanceof buildcraft.silicon.plug.PluggableSidedPlate
+                        || plug instanceof buildcraft.silicon.plug.PluggableLens) return plug.getPickStack();
                 }
             }
             return net.minecraft.item.ItemStack.EMPTY;

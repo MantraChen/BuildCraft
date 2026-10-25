@@ -49,8 +49,9 @@ Gates control pipe direction, item paint and MJ/RF limits. Inventory and fluid c
 use sided Fabric storage, including non-consuming sample and capacity checks.
 All 16 wire colours place on pipe corners, connect matching networks and carry gate
 signals. Breaking an attachment preserves the pipe and honours native break protection.
-Native laser assembly restores five chipsets, all 24 modified gate variants and all
-16 wire colours and three control attachments through 48 data-pack recipes. Directional lasers receive MJ through
+Native laser assembly restores five chipsets, all 24 modified gate variants,
+16 wire colours, three control attachments and 34 lens/filter variants through 82
+data-pack recipes. Directional lasers receive MJ through
 native pipes, stop at obstructions and retain bounded batteries across saves. The
 assembly screen queues recipes, keeps selections while ingredients are missing and
 preserves paid work; products prefer pipes, then inventories, then drop nearby.
@@ -76,7 +77,12 @@ queued single extractions; timer intervals are 5/10/15 seconds and light conditi
 use the sensor's face. Single-action latches persist across world reloads, and
 removing an attachment disables its conditions. Use
 `./scripts/full-smoke.ps1 -ControlPlugs` for the connected-client fixture.
-Facades, lenses and other remaining pluggables still need restoration.
+Lenses paint items crossing their face, while clear lenses remove paint. Filters
+prefer matching colours, reject other painted items and allow uncoloured fallback.
+All 34 variants support native assembly, placement, picking, drops, NBT saves and
+separate frame/glass rendering. Legacy dye damage keeps its original colour.
+Use `./scripts/full-smoke.ps1 -Lenses` for real three-way routing, resource reload
+and a complete world restart. Facades and other remaining pluggables still need restoration.
 Pipe plugs and power adaptors also have native crafting, six-face placement,
 models, picking and drops. A plug blocks the face; an adaptor keeps material flow
 blocked while accepting MJ for the extraction behavior. With automatic RF conversion

@@ -27,6 +27,10 @@ public class BCSiliconItems {
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
+        plugLens=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","plug_lens"),new ItemPluggableLens(new net.minecraft.item.Item.Settings()));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)
+            .register(entries->ItemPluggableLens.variants().forEach(data->entries.add(plugLens.getStack(data.colour(),data.isFilter()))));
         plugPulsar=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcraftsilicon","plug_pulsar"),new ItemPluggablePulsar(new net.minecraft.item.Item.Settings()));
         plugLightSensor=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,

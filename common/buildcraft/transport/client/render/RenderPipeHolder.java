@@ -40,7 +40,8 @@ public class RenderPipeHolder implements BlockEntityRenderer<TilePipeHolder> {
         VertexConsumer cutout = vertexConsumers.getBuffer(RenderLayer.getCutout());
 
         PipeWireRenderer.renderWires(entity, matrices, cutout, light);
-        renderPluggables(entity, matrices, cutout, light, tickDelta);
+        renderPluggables(entity, matrices, vertexConsumers, light, overlay, tickDelta);
+        cutout = vertexConsumers.getBuffer(RenderLayer.getCutout());
         renderContents(entity, matrices, cutout, light, tickDelta);
         if (entity.getPipe() != null && entity.getPipe().flow instanceof buildcraft.transport.pipe.flow.PipeFlowItems flow)
             PipeFlowRendererItems.render(flow, matrices, vertexConsumers, light, overlay, tickDelta);
@@ -49,11 +50,13 @@ public class RenderPipeHolder implements BlockEntityRenderer<TilePipeHolder> {
     }
 
     private static void renderPluggables(TilePipeHolder pipe, MatrixStack matrices,
-            VertexConsumer vc, int light, float tickDelta) {
+            VertexConsumerProvider consumers, int light, int overlay, float tickDelta) {
         for (Direction face : Direction.values()) {
             PipePluggable plug = pipe.getPluggable(face);
             if (plug == null) continue;
-            renderPlug(plug, matrices, vc, light, tickDelta);
+            var layered = PipeRegistryClient.getLayeredPlugRenderer(plug);
+            if (layered != null) layered.render(plug, matrices, consumers, light, overlay, tickDelta);
+            else renderPlug(plug, matrices, consumers.getBuffer(RenderLayer.getCutout()), light, tickDelta);
         }
     }
 

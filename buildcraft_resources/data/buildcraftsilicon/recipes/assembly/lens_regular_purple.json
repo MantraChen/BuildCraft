@@ -1,0 +1,15 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 500,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:purple_stained_glass"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:plug_lens",
+    "nbt": "{lens:{colour:\"PURPLE\",f:0b}}"
+  }
+}

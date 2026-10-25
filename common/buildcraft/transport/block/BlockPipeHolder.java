@@ -263,6 +263,9 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
         }
         double distLast = lastBest.getPos().squaredDistanceTo(start);
         double distNext = hitVec.squaredDistanceTo(start);
+        // A lens lies flush with an open connection. At their shared surface the
+        // attachment must win, otherwise picking/breaking it targets the whole pipe.
+        if (part > 6 && part <= 12 && lastBest.subHit <= 6 && Math.abs(distLast - distNext) < 1.0E-9) return next;
         return distLast > distNext ? next : lastBest;
     }
 

@@ -1,4 +1,10 @@
 {
+  "item.buildcraftsilicon.plug_lens": "透镜",
+  "item.buildcraftsilicon.plug_lens.clear": "透明",
+  "item.buildcraftsilicon.plug_lens.coloured": "%s透镜",
+  "item.buildcraftsilicon.plug_lens.filter": "%s过滤器",
+  "item.buildcraftsilicon.plug_lens.tip": "为穿过这一面的物品染色；透明透镜会去除颜色。",
+  "item.buildcraftsilicon.plug_lens.filter.tip": "优先通过同色物品，拒绝异色物品。未染色物品也能通过。",
   "item.buildcraftsilicon.plug_pulsar": "脉冲器",
   "item.buildcraftsilicon.plug_pulsar.tip": "右键切换；门可控制持续脉冲或单次抽取。",
   "item.buildcraftsilicon.plug_light_sensor": "光照传感器",

@@ -39,6 +39,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -ControlPlugs
 # Also verify blockers, native MJ/RF power adaptors and the RF pipe chain:
 ./scripts/full-smoke.ps1 -TransportPlugs
+# Also verify all 34 lenses/filters, transparency, routing and a world restart:
+./scripts/full-smoke.ps1 -Lenses
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -46,6 +48,8 @@ strips nested jars while remapping a development dependency, the script also ext
 the dependencies bundled in that exact artifact into `verification/full-test-libs/`.
 The isolated test config enables the optional MJ Dynamo and RF engine to include their
 registered states; it does not modify the normal client config.
+Chute fixtures clear old item/inventory entities within their own setup volume, so
+reusing the generated test world cannot introduce unintended minecart outputs.
 The optional interaction client creates its own world under
 `verification/full-client-interaction-run`, attacks a wire and gate through the native
 client interaction manager, verifies the same pipe block entity survives server replies,
@@ -162,7 +166,23 @@ breaking, preserves fractional RF credit across a complete world restart, and dr
 an item pipeline through a real Dynamo/RF-pipe/adaptor chain. Removing the adaptor
 must stop extraction; removing a blocker must reconnect the remaining item pipe.
 
-The 300 server tests currently verify:
+The lens client uses `verification/lenses-client-run/`. It checks all 34 item variants
+and six model facings, separate frame/glass geometry, vertex colours, atlas sprites
+and cache replacement after resource reload. Native insertion paints four diamonds
+red; red, blue and clear filters route eleven exact items through three real pipe
+branches. A clear input lens removes red paint, and saved in-transit cargo reaches
+the clear branch after a complete restart. Native lens/filter breaking must preserve
+the connected pipe. Screenshots include the pipeline and all 34 inventory variants.
+
+The 316 server tests currently verify:
+
+- Sixteen lens/filter tests cover 34 native and legacy variants, six-face native
+  placement, item-flow eligibility, simulated filtering, matching/clear priorities,
+  input/output paint, transactional insertion and abort, stale references, NBT and
+  creation-packet recovery, malformed packets, real three-way routing after reload,
+  clear-lens passage into a neighbouring clear filter, exact drops and 500 MJ recipes.
+  A connected lens wins a flush raycast tie with the pipe, so native breaking removes
+  the attachment and preserves the pipe on all six faces.
 
 - Fourteen transport-attachment tests cover six-face placement and eligibility,
   blocked native lookups, MJ simulation, stale handles, nested RF rollback of source
@@ -192,7 +212,7 @@ The 300 server tests currently verify:
   packets, survival unlocks/distance checks, real laser supply, wooden extraction,
   exact removal, native NBT-aware machine crafting and bounded saved energy.
 
-- Twenty-one assembly tests cover all 48 native recipes and packet synchronization,
+- Twenty-one assembly tests cover all 82 native recipes and packet synchronization,
   counted/overlapping/exact-NBT ingredients, original costs and variants, round-robin
   selections, paid work across missing inputs/deselection/reload, sided transactions,
   pipe-priority output, full-inventory spills, exact removal and bucket remainders.

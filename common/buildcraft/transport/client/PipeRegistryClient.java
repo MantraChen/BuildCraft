@@ -27,6 +27,19 @@ public enum PipeRegistryClient implements IClientRegistry {
     private final Map<Class<?>, IPipeFlowRenderer<?>> flowRenderMap = new HashMap<>();
     private final Map<Class<?>, IPipeBehaviourRenderer<?>> behaviourRenderMap = new HashMap<>();
     private final Map<Class<?>, IPlugDynamicRenderer<?>> plugRenderMap = new HashMap<>();
+    private final Map<Class<?>, LayeredPlugRenderer<?>> layeredPlugRenderMap = new HashMap<>();
+    /** A native renderer that needs more than the default pipe cutout layer. */
+    @FunctionalInterface public interface LayeredPlugRenderer<P extends PipePluggable> {
+        void render(P plug,net.minecraft.client.util.math.MatrixStack matrices,
+            net.minecraft.client.render.VertexConsumerProvider consumers,int light,int overlay,float tickDelta);
+    }
+    public <P extends PipePluggable> void registerLayeredRenderer(Class<P> type,LayeredPlugRenderer<P> renderer){
+        layeredPlugRenderMap.put(type,renderer);
+    }
+    @SuppressWarnings("unchecked")
+    public static <P extends PipePluggable> LayeredPlugRenderer<P> getLayeredPlugRenderer(P plug){
+        return (LayeredPlugRenderer<P>)INSTANCE.layeredPlugRenderMap.get(plug.getClass());
+    }
     private final Map<Class<?>, IPipeFlowBaker<?>> flowBakerMap = new HashMap<>();
     private final Map<Class<?>, IPipeBehaviourBaker<?>> behaviourBakerMap = new HashMap<>();
     private final Map<Class<?>, IPluggableStaticBaker<?>> plugBakerMap = new HashMap<>();

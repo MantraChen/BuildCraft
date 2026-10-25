@@ -1,4 +1,10 @@
 {
+  "item.buildcraftsilicon.plug_lens": "Lens",
+  "item.buildcraftsilicon.plug_lens.clear": "Clear",
+  "item.buildcraftsilicon.plug_lens.coloured": "%s Lens",
+  "item.buildcraftsilicon.plug_lens.filter": "%s Filter",
+  "item.buildcraftsilicon.plug_lens.tip": "Colours items crossing this face. A clear lens removes their colour.",
+  "item.buildcraftsilicon.plug_lens.filter.tip": "Prefers matching items and rejects other colours. Uncoloured items may pass.",
   "item.buildcraftsilicon.plug_pulsar": "Pulsar",
   "item.buildcraftsilicon.plug_pulsar.tip": "Right-click to toggle; gates can request continuous or single extraction pulses.",
   "item.buildcraftsilicon.plug_light_sensor": "Light Sensor",

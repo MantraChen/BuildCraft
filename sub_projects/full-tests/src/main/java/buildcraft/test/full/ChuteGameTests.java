@@ -148,11 +148,11 @@ public final class ChuteGameTests implements FabricGameTest {
         context.assertTrue(count(tile) == 6, "Unexpected inserted amount");
         context.getWorld().breakBlock(tile.getPos(), true);
         int contents = 0, machines = 0;
-        for (var dropped : context.getWorld().getEntitiesByClass(ItemEntity.class, new Box(tile.getPos()).expand(1), entity -> true)) {
+        for (var dropped : context.getWorld().getEntitiesByClass(ItemEntity.class, new Box(tile.getPos()).expand(1), ItemEntity::isAlive)) {
             if (dropped.getStack().isOf(Items.DIAMOND)) contents += dropped.getStack().getCount();
             if (dropped.getStack().isOf(BCFactoryBlocks.chute.asItem())) machines += dropped.getStack().getCount();
         }
-        context.assertTrue(contents == 6 && machines == 1, "Breaking chute lost/duplicated contents or the machine");
+        context.assertTrue(contents == 6 && machines == 1, "Breaking chute lost/duplicated contents or the machine: contents=" + contents + ", machines=" + machines);
         context.complete();
     }
 
@@ -249,6 +249,16 @@ public final class ChuteGameTests implements FabricGameTest {
         context.assertTrue(handler.getSlot(0).getStack().isOf(expected), "Missing or wrong native crafting result: " + expected);
     }
     private static TileChute place(TestContext context, Direction facing) {
+        // Reused GameTest worlds may retain inventory entities from an older test
+        // layout even after its block template resets. They are real chute outputs:
+        // clear only this fixture's mouth/output volume before arranging the test.
+        context.getWorld().getOtherEntities(null, new Box(context.getAbsolutePos(LOCAL)).expand(2),
+            entity -> entity instanceof ItemEntity || entity instanceof Inventory && !(entity instanceof net.minecraft.entity.LivingEntity))
+            .forEach(entity -> {
+                // Removing a storage minecart can spill its inventory into the test.
+                if (entity instanceof Inventory inventory) inventory.clear();
+                entity.discard();
+            });
         context.setBlockState(LOCAL, BCFactoryBlocks.chute.getDefaultState().with(BCFactoryBlocks.chute.getFacingProperty(), facing));
         return (TileChute) context.getBlockEntity(LOCAL);
     }

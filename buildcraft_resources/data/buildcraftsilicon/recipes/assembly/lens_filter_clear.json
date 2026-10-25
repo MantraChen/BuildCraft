@@ -1,0 +1,20 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 500,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:glass"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:iron_bars"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:plug_lens",
+    "nbt": "{lens:{colour:\"_NULL\",f:1b}}"
+  }
+}

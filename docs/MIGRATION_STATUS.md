@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **300 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **316 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1052,6 +1052,46 @@ to true. Packet synchronization retains these counts, flags and NBT.
   `verification/transport-plugs-tests-01.log`, `verification/transport-plugs-client-03.log`
   and `verification/transport-plugs-client-run/screenshots/`. The isolated client
   config enables automatic RF conversion and a 0.15 MJ/item cost to exercise rounding.
+
+### Native lenses and colour filters
+
+- Restored the original 34 variants: sixteen coloured lenses/filters and a clear
+  version of each. They attach only to item pipes, preserve open connections, and
+  support native placement, picking, drops, creative entries and EN/ZH tooltips.
+  The tooltips include `Remake by FelixMantra`.
+- Regular lenses paint cargo only when it crosses their face, on entry or exit;
+  a clear lens removes paint. Filters never paint: matching cargo gets priority,
+  other painted cargo is refused, and uncoloured cargo may use a coloured filter
+  as a lower-priority route. Clear filters prefer uncoloured cargo and reject paint.
+- Added 34 assembly recipes at the original 500 MJ cost. Each uses glass of its
+  colour, plus iron bars for filters; clear variants use plain glass. The complete
+  native assembly list now contains 82 recipes.
+- NBT and bounded creation packets retain colour/filter state. Legacy item damage
+  uses the original reversed dye order; legacy block colour IDs and the old
+  `SILVER` enum name restore the correct colour. Detached/stale attachments cannot
+  keep painting or filtering, and native transactional insertion publishes painted
+  cargo only after its final commit.
+- Original frame/glass models use separate native cutout/translucent buffers.
+  Six-face geometry and tint caches rebuild after atlas reload. At a shared surface,
+  attachment raycasts win ties with a pipe connection, so clicking a connected lens
+  picks/removes the lens instead of destroying the whole pipe.
+- Sixteen packaged tests cover all variants/facings, simulation, routing priorities,
+  transaction rollback, stale references, save/packet compatibility, live three-way
+  delivery, clear-lens passage through a neighbouring filter, native breaking,
+  exact drops and recipe costs. The suite now contains 316 required tests.
+  Reproduce with `./scripts/full-smoke.ps1 -Lenses`.
+- The client fixture additionally checks every variant/facing before and after
+  resource reload, native input painting, three branch destinations, attachment
+  removal and a complete world restart with deliberately slow in-transit cargo.
+  It requires exactly four red-routed diamonds, three blue-routed emeralds, two
+  uncoloured gold ingots and two cleared diamonds, with no quantity changes.
+- Verified results: `verification/lenses-tests-11.log` reports all 316 required
+  tests passing; `verification/lenses-client-11.log` finishes with `failures=0`.
+  The client also verifies all 34 creative-search entries. Four screenshots in
+  `verification/lenses-client-run/screenshots/` cover the live pipeline, restored
+  clear lens and inventory variants with the remake credit. Reused-world chute
+  fixtures now empty/remove stale inventory entities before setup, preventing
+  previous runs' minecarts or their spilled contents from affecting exact counts.
 
 ### Development-only placeholders in the original baseline
 

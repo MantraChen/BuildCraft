@@ -29,8 +29,7 @@ public class BCSiliconPlugs {
 
     public static void preInit() {
         gate = register("gate", PluggableGate::new, PluggableGate::new);
-        // STUB(R.Chen): PluggableLens not in libLeaf — deferred until lens is migrated.
-        // lens = register("lens", PluggableLens::new, PluggableLens::new);
+        lens = register("lens", buildcraft.silicon.plug.PluggableLens::new, buildcraft.silicon.plug.PluggableLens::new);
         pulsar = register("pulsar", PluggablePulsar::new, PluggablePulsar::new);
         lightSensor = register("daylight_sensor", buildcraft.silicon.plug.PluggableLightSensor::new);
         timer = register("timer", buildcraft.silicon.plug.PluggableTimer::new);

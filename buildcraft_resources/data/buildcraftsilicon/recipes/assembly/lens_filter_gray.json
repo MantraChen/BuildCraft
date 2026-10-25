@@ -1,0 +1,20 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 500,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:gray_stained_glass"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:iron_bars"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:plug_lens",
+    "nbt": "{lens:{colour:\"GRAY\",f:1b}}"
+  }
+}
