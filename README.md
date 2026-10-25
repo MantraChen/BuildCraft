@@ -82,7 +82,15 @@ prefer matching colours, reject other painted items and allow uncoloured fallbac
 All 34 variants support native assembly, placement, picking, drops, NBT saves and
 separate frame/glass rendering. Legacy dye damage keeps its original colour.
 Use `./scripts/full-smoke.ps1 -Lenses` for real three-way routing, resource reload
-and a complete world restart. Facades and other remaining pluggables still need restoration.
+and a complete world restart.
+Facades now preserve full block states, six-face textures, biome tints and glass
+transparency. Solid plates block connections; hollow plates leave a visible opening
+and allow transport. Assembly consumes three structure pipes, one matching block and
+64 MJ to produce six facades; a one-item crafting recipe toggles the hollow form.
+Phased facades follow live coloured-wire signals and keep their states across saves.
+The native registry supplies 4,204 basic assembly variants in the current mod set,
+plus the original phased creative example. Use `./scripts/full-smoke.ps1 -Facades`
+for resource reload, routing, native breaking and a complete client-world restart.
 Pipe plugs and power adaptors also have native crafting, six-face placement,
 models, picking and drops. A plug blocks the face; an adaptor keeps material flow
 blocked while accepting MJ for the extraction behavior. With automatic RF conversion

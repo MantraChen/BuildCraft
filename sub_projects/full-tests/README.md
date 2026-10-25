@@ -174,7 +174,14 @@ branches. A clear input lens removes red paint, and saved in-transit cargo reach
 the clear branch after a complete restart. Native lens/filter breaking must preserve
 the connected pipe. Screenshots include the pipeline and all 34 inventory variants.
 
-The 316 server tests currently verify:
+The 332 server tests currently verify:
+
+- Sixteen facade tests cover all 2,113 discovered states, 4,204 generated recipes,
+  native compatibility hooks, packet/NBT bounds and legacy wrapper/colour migration.
+  They exercise assembly energy and ingredient conservation, data-pack replacement,
+  state-preserving hollow crafting, every pipe flow and all six attachment faces,
+  real sided item storage, partial breaking, live wire phases, dynamic support shape,
+  native blast resistance and more than 512 synchronized assembly choices.
 
 - Sixteen lens/filter tests cover 34 native and legacy variants, six-face native
   placement, item-flow eligibility, simulated filtering, matching/clear priorities,
@@ -456,3 +463,10 @@ initialization and the specific behaviors above, not working gameplay for every
 machine or pipe behavior. The client check verifies resource baking and item
 selection, not every renderer, machine animation, UI or gameplay interaction. Legacy
 guide links and some texture-animation/mipmap warnings remain.
+
+Run `./scripts/full-smoke.ps1 -Facades` for the facade client fixture in
+`verification/facades-client-run/`. It validates all creative entries, six-face
+solid/hollow geometry, native UV orientation, inventory icon bounds, textures,
+resource reload, live wire phase synchronization, exact item routing, native
+partial breaking and full-world save/restart. Screenshots are stored in its
+`screenshots/` directory.

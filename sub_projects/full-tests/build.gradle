@@ -17,6 +17,11 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 loom {
     runs {
+        facadeClientSmoke {
+            client()
+            runDir '../../verification/facades-client-run'
+            vmArg '-Dbuildcraft.facadeClientSmoke=true'
+        }
         lensClientSmoke {
             client()
             runDir '../../verification/lenses-client-run'

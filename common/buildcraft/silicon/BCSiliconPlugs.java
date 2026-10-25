@@ -33,8 +33,7 @@ public class BCSiliconPlugs {
         pulsar = register("pulsar", PluggablePulsar::new, PluggablePulsar::new);
         lightSensor = register("daylight_sensor", buildcraft.silicon.plug.PluggableLightSensor::new);
         timer = register("timer", buildcraft.silicon.plug.PluggableTimer::new);
-        // STUB(R.Chen): PluggableFacade not in libLeaf — deferred.
-        // facade = register("facade", PluggableFacade::new, PluggableFacade::new);
+        facade = register("facade", buildcraft.silicon.plug.PluggableFacade::new, buildcraft.silicon.plug.PluggableFacade::new);
     }
 
     private static PluggableDefinition register(String name, IPluggableCreator creator) {

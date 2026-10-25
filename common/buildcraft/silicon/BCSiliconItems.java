@@ -27,6 +27,15 @@ public class BCSiliconItems {
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
+        plugFacade=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","plug_facade"),new ItemPluggableFacade(new net.minecraft.item.Item.Settings()));
+        buildcraft.api.facades.FacadeAPI.facadeItem=plugFacade;
+        buildcraft.api.facades.FacadeAPI.registry=buildcraft.silicon.plug.FacadeStateManager.INSTANCE;
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE).register(entries->{
+            var example=ItemPluggableFacade.phasedExample();if(example!=null)entries.add(plugFacade.createFacadeStack(example));
+            for(var state:buildcraft.silicon.plug.FacadeStateManager.INSTANCE.getValidFacades())if(state.isVisible)
+                for(boolean hollow:new boolean[]{false,true})entries.add(plugFacade.createFacadeStack(buildcraft.silicon.plug.FacadeInstance.createSingle(state,hollow)));
+        });
         plugLens=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcraftsilicon","plug_lens"),new ItemPluggableLens(new net.minecraft.item.Item.Settings()));
         net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)

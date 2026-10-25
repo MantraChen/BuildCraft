@@ -36,7 +36,20 @@
   "gui.buildcraftsilicon.gate.statement_help": "左键选择，右键清除",
   "gui.buildcraftsilicon.gate.parameter_help": "拿着样本物品点击，或点击切换参数选项",
   "gui.buildcraftsilicon.gate.link": "使用 %s 与下一组联接",
-  "gate.side.down": "下", "gate.side.up": "上", "gate.side.north": "北",
-  "gate.side.south": "南", "gate.side.west": "西", "gate.side.east": "东",
-  "gate.modifier.lapis": "青金石升级", "gate.modifier.quartz": "石英升级", "gate.modifier.diamond": "钻石升级"
+  "gate.side.down": "下",
+  "gate.side.up": "上",
+  "gate.side.north": "北",
+  "gate.side.south": "南",
+  "gate.side.west": "西",
+  "gate.side.east": "东",
+  "gate.modifier.lapis": "青金石升级",
+  "gate.modifier.quartz": "石英升级",
+  "gate.modifier.diamond": "钻石升级",
+  "item.buildcraftsilicon.plug_facade.basic": "外观板：%s",
+  "item.buildcraftsilicon.plug_facade.phased": "相位外观板",
+  "item.buildcraftsilicon.plug_facade.solid": "实心 · 阻止管道连接",
+  "item.buildcraftsilicon.plug_facade.hollow": "镂空 · 允许管道连接",
+  "item.buildcraftsilicon.plug_facade.default": "默认",
+  "item.buildcraftsilicon.plug_facade.phase": "%s：%s",
+  "item.buildcraftsilicon.plug_facade": "外观板"
 }

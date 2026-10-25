@@ -25,7 +25,7 @@ public class BCTransportBlocks {
     public static void preInit() {
         var id = new net.minecraft.util.Identifier("buildcrafttransport", "pipe_holder");
         pipeHolder = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.BLOCK, id,
-            new BlockPipeHolder(net.minecraft.block.AbstractBlock.Settings.create().strength(0.25F, 3F).nonOpaque(), ""));
+            new BlockPipeHolder(net.minecraft.block.AbstractBlock.Settings.create().strength(0.25F, 3F).nonOpaque().dynamicBounds(), ""));
         pipeHolderTile = buildcraft.lib.registry.BlockEntityRegistry.register(id, TilePipeHolder.class,
             TilePipeHolder::new, pipeHolder);
         net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntity((tile, face) -> {

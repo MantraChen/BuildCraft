@@ -9,6 +9,8 @@ package buildcraft.silicon;
 
 /** Native data-pack recipe registration. Remake by FelixMantra. */
 public class BCSiliconRecipes {
+    public static final net.minecraft.recipe.SpecialRecipeSerializer<buildcraft.silicon.recipe.FacadeSwapRecipe> FACADE_SWAP=
+        new net.minecraft.recipe.SpecialRecipeSerializer<>(buildcraft.silicon.recipe.FacadeSwapRecipe::new);
     public static final net.minecraft.recipe.RecipeType<buildcraft.silicon.recipe.NativeIntegrationRecipe> INTEGRATION=new net.minecraft.recipe.RecipeType<>() {
         @Override public String toString(){return "buildcraftsilicon:integration";}
     };
@@ -20,6 +22,7 @@ public class BCSiliconRecipes {
     public static final net.minecraft.recipe.SpecialRecipeSerializer<buildcraft.silicon.recipe.GateCraftingRecipe> GATE_CRAFTING=
         new net.minecraft.recipe.SpecialRecipeSerializer<>(buildcraft.silicon.recipe.GateCraftingRecipe::new);
     public static void init() {
+        net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER,new net.minecraft.util.Identifier("buildcraftsilicon","facade_swap"),FACADE_SWAP);
         net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer.register(buildcraft.silicon.recipe.RedstoneEngineIngredient.SERIALIZER);
         var integration=new net.minecraft.util.Identifier("buildcraftsilicon","integration");
         net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_TYPE,integration,INTEGRATION);

@@ -36,7 +36,20 @@
   "gui.buildcraftsilicon.gate.statement_help": "Left-click to choose; right-click to clear",
   "gui.buildcraftsilicon.gate.parameter_help": "Click with a sample item, or click to cycle options",
   "gui.buildcraftsilicon.gate.link": "Join with the next pair using %s",
-  "gate.side.down": "Down", "gate.side.up": "Up", "gate.side.north": "North",
-  "gate.side.south": "South", "gate.side.west": "West", "gate.side.east": "East",
-  "gate.modifier.lapis": "Lapis upgrade", "gate.modifier.quartz": "Quartz upgrade", "gate.modifier.diamond": "Diamond upgrade"
+  "gate.side.down": "Down",
+  "gate.side.up": "Up",
+  "gate.side.north": "North",
+  "gate.side.south": "South",
+  "gate.side.west": "West",
+  "gate.side.east": "East",
+  "gate.modifier.lapis": "Lapis upgrade",
+  "gate.modifier.quartz": "Quartz upgrade",
+  "gate.modifier.diamond": "Diamond upgrade",
+  "item.buildcraftsilicon.plug_facade.basic": "Facade: %s",
+  "item.buildcraftsilicon.plug_facade.phased": "Phased Facade",
+  "item.buildcraftsilicon.plug_facade.solid": "Solid · blocks pipe connections",
+  "item.buildcraftsilicon.plug_facade.hollow": "Hollow · allows pipe connections",
+  "item.buildcraftsilicon.plug_facade.default": "Default",
+  "item.buildcraftsilicon.plug_facade.phase": "%s: %s",
+  "item.buildcraftsilicon.plug_facade": "Facade"
 }

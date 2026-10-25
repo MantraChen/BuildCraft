@@ -75,8 +75,9 @@ public final class GuiAssemblyTable extends GuiBC8<ContainerAssemblyTable> {
             int index=page*12+(mx-x-116)/18+(my-y-36)/18*3;var choices=choices();
             if(index<choices.size()) {
                 var entry=choices.get(index);var output=container.tile.preview(entry.getKey());
-                context.drawTooltip(textRenderer,List.of(output.getName(),Text.translatable(
-                    entry.getValue()==EnumAssemblyRecipeState.POSSIBLE?"gui.buildcraftsilicon.assembly.select":"gui.buildcraftsilicon.assembly.remove")),Optional.empty(),mx,my);
+                var tooltip=new ArrayList<>(output.getTooltip(client.player,net.minecraft.client.item.TooltipContext.Default.BASIC));
+                tooltip.add(Text.translatable(entry.getValue()==EnumAssemblyRecipeState.POSSIBLE?"gui.buildcraftsilicon.assembly.select":"gui.buildcraftsilicon.assembly.remove"));
+                context.drawTooltip(textRenderer,tooltip,Optional.empty(),mx,my);
             }
         }
     }

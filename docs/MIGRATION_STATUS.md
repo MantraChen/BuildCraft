@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **316 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **332 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1110,3 +1110,60 @@ validation. Compile/package/startup success does not establish that every machin
 ready for a survival world.
 
 Remake by FelixMantra.
+
+### Native facades
+
+- Restored full-state basic and phased facades, native item/attachment registration,
+  picking, survival drops, permissions and placement on item/fluid/MJ/RF/structure
+  pipes. Solid plates block connections; hollow plates allow them. Native dynamic
+  support shapes follow solid facades, and the explosion calculation uses the
+  represented block's blast resistance.
+- The registry discovers 2,113 eligible block states in the current mod set, with
+  2,102 visible/craftable states. Liquids, block entities, invisible models and
+  non-full shapes are excluded. Native `FacadeAPI.disableBlock` and
+  `mapStateToStack` replace the old no-op Forge IMC calls. Mappings copy item NBT;
+  empty mappings hide states from crafting and creative entries. Call these hooks
+  during common initialization, before recipe reload.
+- Generated native assembly recipes retain the original three structure pipes +
+  one represented block, 64 MJ and six-output cost. Both forms produce 4,204
+  generated recipes, in addition to the existing 82 assembly recipes. All generated
+  recipes round-trip over the native recipe serializer (670,824 payload bytes for
+  the facade recipes in this fixture). Explicit data-pack entries win over defaults.
+  For example, `buildcraftsilicon:assembly/facades/minecraft/stone/solid` is the
+  plain stone recipe; property variants use a stable SHA-256 property suffix.
+- A one-item special crafting recipe toggles solid/hollow without losing phases,
+  properties, custom names or unrelated item NBT. Assembly previews now show state
+  property tooltips so log axes and other variants can be distinguished.
+- Expanded the bounded recipe display from 512 to 4,096 entries while retaining
+  the 512-selection limit. Assembly caches the native recipe-map generation and
+  copied inventory values, so unchanged tables do not scan thousands of recipes
+  each tick. Reloads, recipe replacement and in-place stack changes invalidate it.
+- The original phased implementation stored colours but never changed its active
+  world state. It now selects the first powered colour in stored order, or the
+  default state (first state if no default exists). Up to seventeen unique phases
+  are retained and synchronized. The original stone / red oak planks / cyan oak
+  log creative example is available; the original baseline supplied no phased
+  assembly recipe. Add-ons can create phased items through the public facade API.
+- Ported the original beveled 2/16-thick surfaces and 8/16 hollow opening. Rendering
+  uses native per-face models, preserves original UV rotation, applies biome tint,
+  separates translucent glass and invalidates cached geometry on resource reload.
+  GUI item transforms fit within inventory slots. Both languages and tooltips
+  include the facade names, state details and `Remake by FelixMantra`.
+  Solid world facades retain the original pipe cap behind the plate, including
+  when the represented material is transparent glass.
+- Legacy pre-wrapper saves and `SILVER` colour names are accepted. Invalid phase
+  counts, duplicate colours and packet indices are bounded/rejected; invalid saved
+  facades recover to stone. This is not a general converter for renamed Minecraft
+  blocks in arbitrary 1.12 worlds.
+- Sixteen new tests bring the complete artifact suite to 332 required GameTests.
+  The client fixture checks all 4,205 creative variants, seventeen representative
+  block states in both forms on six faces, UV orientation, hole geometry, sprites,
+  biome tint presence, inventory bounds and resource reload. It places attachments
+  through the native interaction manager, routes exactly three diamonds through a
+  hollow facade, synchronizes wire-driven phase changes, restarts the full world,
+  checks persistence and removes one facade without destroying the pipe.
+- Final verification: `verification/facades-full-7.log` records all 332 required
+  server tests passing and the real client fixture finishing with `failures=0`.
+  The four reviewed screenshots under `verification/facades-client-run/screenshots/`
+  show transparent/active facades, the hollow log opening, the default phase and
+  correctly sized inventory variants with the remake credit.

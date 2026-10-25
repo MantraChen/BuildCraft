@@ -49,7 +49,7 @@ public final class AssemblyGameTests implements FabricGameTest {
     private static int count(BarrelBlockEntity barrel,Item item){int n=0;for(int i=0;i<barrel.size();i++)if(barrel.getStack(i).isOf(item))n+=barrel.getStack(i).getCount();return n;}
     @GameTest(templateName=EMPTY_STRUCTURE)
     public void allNativeAssemblyRecipesRoundTripAndProduceExactOutput(TestContext c) {
-        var recipes=c.getWorld().getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY);
+        var recipes=c.getWorld().getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY).stream().filter(r->!r.getId().getPath().startsWith("assembly/facades/")).toList();
         c.assertTrue(recipes.size()==82,"Expected five chipsets, 24 gates, sixteen wires, three controls and 34 lenses/filters");
         var tile=table(c);c.setBlockState(POS.down(),Blocks.BARREL);var barrel=(BarrelBlockEntity)c.getBlockEntity(POS.down());
         for(var original:recipes) {

@@ -165,6 +165,16 @@ public class BlockPipeHolder extends BlockBCBase_Neptune implements BlockEntityP
         return shape;
     }
 
+    @Override
+    public VoxelShape getSidesShape(BlockState state,BlockView world,BlockPos pos) {
+        var tile=getPipe(world,pos);VoxelShape shape=VoxelShapes.empty();
+        if(tile!=null)for(var face:DIRECTIONS){
+            var plug=tile.getPluggable(face);
+            if(plug!=null && plug.isSideSolid())shape=VoxelShapes.union(shape,VoxelShapes.cuboid(plug.getBoundingBox()));
+        }
+        return shape;
+    }
+
     /** The collision/raytrace box for a pipe connection of the given length (was inline in the Forge collision +
      * raytrace loops; {@code BoundingBoxUtil.makeFrom} is not yet migrated, so the {@link Box} is built directly). */
     private static Box connectionBox(Direction face, float conSize) {

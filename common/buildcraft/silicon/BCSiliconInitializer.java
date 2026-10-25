@@ -50,7 +50,7 @@ public class BCSiliconInitializer implements ModInitializer {
 
         // --- Forge init (BCSilicon.init) -----------------------------------------
         BCSiliconRecipes.init();
-        // STUB(R.Chen): FacadeAPI.registerCompat() — deferred until FacadeStateManager lands.
+        // Facade compatibility hooks are applied lazily after all mod blocks have registered.
 
         // --- Forge postInit (BCSilicon.postInit) ---------------------------------
         // STUB(R.Chen): BCSiliconStatements.preInit() is a static init call — safe to call here

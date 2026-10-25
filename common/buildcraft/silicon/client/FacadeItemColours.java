@@ -1,20 +1,14 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.silicon.client;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
-/**
- * STUB(R.Chen): FacadeItemColours implementation deferred until the client render/model layer
- * (FRAPI, BakedModel, ItemColors, DetachedRenderer) is migrated to Fabric 1.20.1.
- */
-@Environment(EnvType.CLIENT)
-public class FacadeItemColours {
-    // STUB(R.Chen): full client implementation deferred.
+import buildcraft.silicon.item.ItemPluggableFacade;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.color.item.ItemColorProvider;
+import net.minecraft.item.ItemStack;
+/** Native item tint lookup for the currently displayed facade phase. */
+public final class FacadeItemColours implements ItemColorProvider {
+    public static final FacadeItemColours INSTANCE=new FacadeItemColours();
+    private FacadeItemColours(){}
+    @Override public int getColor(ItemStack stack,int tint){
+        return MinecraftClient.getInstance().getBlockColors().getColor(ItemPluggableFacade.getStates(stack).getCurrentStateForStack().stateInfo.state,null,null,tint);
+    }
 }

@@ -1,20 +1,8 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.silicon.client.model.key;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
-/**
- * STUB(R.Chen): KeyPlugFacade implementation deferred until the client render/model layer
- * (FRAPI, BakedModel, ItemColors, DetachedRenderer) is migrated to Fabric 1.20.1.
- */
-@Environment(EnvType.CLIENT)
-public class KeyPlugFacade {
-    // STUB(R.Chen): full client implementation deferred.
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.Direction;
+public final class KeyPlugFacade {
+    public final BlockState state;public final Direction side;public final boolean isHollow;
+    public KeyPlugFacade(BlockState state,Direction side,boolean hollow){this.state=state;this.side=side;isHollow=hollow;}
 }

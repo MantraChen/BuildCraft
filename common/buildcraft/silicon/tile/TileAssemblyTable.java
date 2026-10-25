@@ -27,12 +27,14 @@ import buildcraft.silicon.recipe.NativeAssemblyRecipe;
 public class TileAssemblyTable extends TileLaserTableBase {
     public static final IdAllocator IDS=TileBC_Neptune.IDS.makeChild("assembly_table");
     public static final int MAX_SELECTIONS=512;
+    public static final int MAX_CHOICES=4096;
     public final ItemHandlerSimple inv=itemManager.addInvHandler("inv",12,ItemHandlerManager.EnumAccess.BOTH,EnumPipePart.VALUES);
     public SortedMap<Identifier,EnumAssemblyRecipeState> recipesStates=new TreeMap<>();
     private final Set<Identifier> selected=new HashSet<>();
     private Identifier active,after;
     private NativeAssemblyRecipe recipe;
-    private long refreshed=Long.MIN_VALUE;
+    private Object recipeGeneration;
+    private List<ItemStack> lastInputs=List.of();
     private boolean dirty=true,crafting;
     public TileAssemblyTable(BlockEntityType<?> type,BlockPos pos,BlockState state){super(type,pos,state);}
     @Override public IdAllocator getIdAllocator(){return IDS;}
@@ -56,9 +58,10 @@ public class TileAssemblyTable extends TileLaserTableBase {
         dirty=true;markDirty();refresh();return true;
     }
     private void refresh() {
-        if(world==null || world.isClient || crafting || !isStorageAvailable()
-            || !dirty && refreshed==world.getTime() && (active==null || find(active)==recipe))return;
-        dirty=false;refreshed=world.getTime();
+        if(world==null || world.isClient || crafting || !isStorageAvailable())return;
+        var generation=((buildcraft.lib.recipe.RecipeGeneration)world.getRecipeManager()).buildcraft$recipeGeneration();
+        if(!dirty && recipeGeneration==generation && inputsUnchanged())return;
+        dirty=false;recipeGeneration=generation;lastInputs=inv.stacks.stream().map(ItemStack::copy).toList();
         SortedMap<Identifier,EnumAssemblyRecipeState> next=new TreeMap<>();
         SortedMap<Identifier,NativeAssemblyRecipe> ready=new TreeMap<>();
         var available=world.getRecipeManager().listAllOfType(BCSiliconRecipes.ASSEMBLY);
@@ -79,11 +82,15 @@ public class TileAssemblyTable extends TileLaserTableBase {
         recipe=active==null?null:ready.get(active);
         if(active!=null)next.put(active,EnumAssemblyRecipeState.SAVED_ENOUGH_ACTIVE);
         // Keep queued/active entries visible even with very large data packs.
-        if(next.size()>MAX_SELECTIONS) {
+        if(next.size()>MAX_CHOICES) {
             var trim=next.entrySet().iterator();
-            while(next.size()>MAX_SELECTIONS && trim.hasNext())if(trim.next().getValue()==EnumAssemblyRecipeState.POSSIBLE)trim.remove();
+            while(next.size()>MAX_CHOICES && trim.hasNext())if(trim.next().getValue()==EnumAssemblyRecipeState.POSSIBLE)trim.remove();
         }
         if(!next.equals(recipesStates)){recipesStates=next;sendNetworkGuiUpdate(NET_GUI_DATA);}
+    }
+    private boolean inputsUnchanged(){
+        if(lastInputs.size()!=inv.stacks.size())return false;
+        for(int i=0;i<lastInputs.size();i++)if(!ItemStack.areEqual(lastInputs.get(i),inv.stacks.get(i)))return false;return true;
     }
     @Override public long getTarget() {
         if(world!=null && world.isClient) {
@@ -145,21 +152,21 @@ public class TileAssemblyTable extends TileLaserTableBase {
                 if(id!=null && entry.getInt("state")>0)selected.add(id);
             }
         }
-        recipe=null;dirty=true;refreshed=Long.MIN_VALUE;
+        recipe=null;dirty=true;recipeGeneration=null;lastInputs=List.of();
     }
     @Override public void writePayload(int id,PacketBufferBC buffer,NetSide side) {
         super.writePayload(id,buffer,side);
         if(side==NetSide.SERVER && id==NET_GUI_DATA) {
-            refresh();buffer.writeVarInt(Math.min(MAX_SELECTIONS,recipesStates.size()));
+            refresh();buffer.writeVarInt(Math.min(MAX_CHOICES,recipesStates.size()));
             int count=0;for(var entry:recipesStates.entrySet()) {
-                if(count++>=MAX_SELECTIONS)break;buffer.writeIdentifier(entry.getKey());buffer.writeByte(entry.getValue().ordinal());
+                if(count++>=MAX_CHOICES)break;buffer.writeIdentifier(entry.getKey());buffer.writeByte(entry.getValue().ordinal());
             }
         }
     }
     @Override public void readPayload(int id,PacketBufferBC buffer,NetSide side,Object context) throws IOException {
         super.readPayload(id,buffer,side,context);
         if(side==NetSide.CLIENT && id==NET_GUI_DATA) {
-            int count=buffer.readVarInt();if(count<0 || count>MAX_SELECTIONS)throw new IOException("Invalid assembly choice count");
+            int count=buffer.readVarInt();if(count<0 || count>MAX_CHOICES)throw new IOException("Invalid assembly choice count");
             SortedMap<Identifier,EnumAssemblyRecipeState> next=new TreeMap<>();int activeCount=0;
             for(int i=0;i<count;i++) {
                 var key=buffer.readIdentifier();int value=buffer.readUnsignedByte();

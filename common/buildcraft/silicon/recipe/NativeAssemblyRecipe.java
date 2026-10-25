@@ -40,6 +40,8 @@ public final class NativeAssemblyRecipe implements Recipe<Inventory> {
     public ItemStack output(){return output.copy();}
     /** Capacity matching prevents broad and exact ingredients from consuming the same items twice. */
     public int[] allocate(List<ItemStack> stacks) {
+        // Quickly reject unrelated facade/block recipes before constructing the shared capacity graph.
+        for(var input:inputs){int count=0;for(var stack:stacks)if(input.test(stack))count+=stack.getCount();if(count<input.count())return null;}
         return buildcraft.lib.recipe.IngredientAllocation.allocate(inputs.stream()
             .map(input->new buildcraft.lib.recipe.IngredientAllocation.Requirement(input::test,input.count())).toList(),stacks);
     }

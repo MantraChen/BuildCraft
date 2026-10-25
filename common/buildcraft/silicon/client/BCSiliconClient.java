@@ -14,7 +14,12 @@ public final class BCSiliconClient {
     public static final GateModel MODEL = new GateModel();
     public static final ControlPlugModel CONTROL_MODEL = new ControlPlugModel();
     public static final LensModel LENS_MODEL = new LensModel();
+    public static final FacadeModel FACADE_MODEL = new FacadeModel();
     public static void register() {
+        PipeRegistryClient.INSTANCE.registerLayeredRenderer(buildcraft.silicon.plug.PluggableFacade.class,(plug,matrices,consumers,light,overlay,delta)->
+            FACADE_MODEL.render(plug.active().state,plug.side,plug.isHollow(),plug.holder.getPipeWorld(),plug.holder.getPipePos(),matrices,consumers,light,overlay));
+        net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCSiliconItems.plugFacade,buildcraft.silicon.client.model.plug.ModelFacadeItem.INSTANCE);
+        net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(FacadeItemColours.INSTANCE,BCSiliconItems.plugFacade);
         PipeRegistryClient.INSTANCE.registerLayeredRenderer(buildcraft.silicon.plug.PluggableLens.class,(plug,matrices,consumers,light,overlay,delta)->
             LENS_MODEL.render(plug.side,plug.colour,plug.isFilter,matrices,consumers,light,overlay));
         net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(BCSiliconItems.plugLens,(stack,mode,matrices,consumers,light,overlay)->{
@@ -38,7 +43,7 @@ public final class BCSiliconClient {
                 if (trace != null && trace.subHit > 6 && trace.subHit <= 12) {
                     var plug = tile.getPluggable(buildcraft.transport.block.BlockPipeHolder.getPartSideHit(trace));
                     if (plug instanceof PluggableGate || plug instanceof buildcraft.silicon.plug.PluggableSidedPlate
-                        || plug instanceof buildcraft.silicon.plug.PluggableLens) return plug.getPickStack();
+                        || plug instanceof buildcraft.silicon.plug.PluggableLens || plug instanceof buildcraft.silicon.plug.PluggableFacade) return plug.getPickStack();
                 }
             }
             return net.minecraft.item.ItemStack.EMPTY;

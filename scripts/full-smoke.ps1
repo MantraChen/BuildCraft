@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -225,5 +225,17 @@ if ($Lenses) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $lensOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runLensClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Facades) {
+    $facadeRun = Join-Path $verification 'facades-client-run'
+    $facadeConfig = Join-Path $facadeRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $facadeConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $facadeConfig 'main.cfg') -Force
+    $facadeOptions = Join-Path $facadeRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $facadeOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $facadeOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runFacadeClientSmoke --console=plain
 }
 exit $LASTEXITCODE
