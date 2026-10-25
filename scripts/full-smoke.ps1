@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -76,5 +76,17 @@ if ($Quarry) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $quarryOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runQuarryClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($MiningWell) {
+    $wellRun = Join-Path $verification 'mining-well-client-run'
+    $wellConfig = Join-Path $wellRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $wellConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $wellConfig 'main.cfg') -Force
+    $wellOptions = Join-Path $wellRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $wellOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $wellOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runMiningWellClientSmoke --console=plain
 }
 exit $LASTEXITCODE

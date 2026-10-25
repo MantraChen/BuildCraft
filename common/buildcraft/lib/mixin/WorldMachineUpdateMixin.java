@@ -7,9 +7,13 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(World.class)
-public abstract class WorldQuarryUpdateMixin {
+public abstract class WorldMachineUpdateMixin {
     @Inject(method="setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;II)Z",at=@At("RETURN"))
     private void buildcraft_notifyQuarries(BlockPos pos,BlockState state,int flags,int depth,CallbackInfoReturnable<Boolean> result) {
-        if(result.getReturnValueZ())buildcraft.builders.BCBuildersEventDist.INSTANCE.blockChanged((World)(Object)this,pos);
+        if(result.getReturnValueZ()) {
+            var world=(World)(Object)this;
+            buildcraft.builders.BCBuildersEventDist.INSTANCE.blockChanged(world,pos);
+            buildcraft.factory.MiningWellUpdates.changed(world,pos);
+        }
     }
 }

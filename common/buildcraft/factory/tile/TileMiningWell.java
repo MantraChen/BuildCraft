@@ -1,118 +1,149 @@
 /*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+ * Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native Fabric excavation. Remake by FelixMantra.
  */
 package buildcraft.factory.tile;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.block.BlockState;
+import net.minecraft.block.FluidBlock;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtHelper;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
-import buildcraft.api.core.EnumPipePart;
 import buildcraft.api.core.SafeTimeTracker;
 import buildcraft.api.mj.IMjReceiver;
-
+import buildcraft.core.BCCoreConfig;
+import buildcraft.factory.MiningWellUpdates;
+import buildcraft.lib.misc.BlockUtil;
+import buildcraft.lib.misc.InventoryUtil;
 import buildcraft.lib.mj.MjBatteryReceiver;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 
-// Forge→Fabric migration notes (R.Chen):
-//   IWorldEventListener       → STUB: world event listener deferred (WorldEventListenerAdapter
-//                               not yet in libLeaf; polling via SafeTimeTracker used instead).
-//   ServerWorld               → ServerWorld
-//   BlockState               → BlockState
-//   world.isAir(pos)     → world.isAir(pos)
-//   world.isOutsideBuildHeight→ world.isOutOfHeightLimit(pos)
-//   world.sendBlockBreakProgress → world.setBlockBreakingInfo
-//   BlockUtil.computeBlockBreakPower / breakBlockAndGetDrops / isUnbreakableBlock / getFluidWithFlowing
-//                             → STUB: BlockUtil methods not yet migrated (Phase 4E).
-//   CapUtil.CAP_ITEM_TRANSACTOR → STUB: Forge capability (deferred to Phase 4F).
-//   InventoryUtil.addToBestAcceptor → STUB: not in migrated InventoryUtil yet.
+/** Mines one vertical column, preserving paid work while power or permission is unavailable. */
 public class TileMiningWell extends TileMiner {
-    private boolean shouldCheck = true;
-    private final SafeTimeTracker tracker = new SafeTimeTracker(256);
+    private boolean shouldCheck=true, changingColumn;
+    private final SafeTimeTracker tracker=new SafeTimeTracker(256);
+    private BlockState miningState;
+    private int retryTicks, lastDepth=-1;
 
-    // STUB(R.Chen): IWorldEventListener (WorldEventListenerAdapter) not yet migrated.
-    // The Fabric WorldEventListener interface requires many method implementations;
-    // WorldEventListenerAdapter will be ported in a dedicated lib.getWorld() pass.
-    // Until then, shouldCheck is set only via the SafeTimeTracker polling path below.
-
-    public TileMiningWell(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
-        // STUB(R.Chen): CapUtil.CAP_ITEM_TRANSACTOR + AutomaticProvidingTransactor —
-        //               Forge capability; deferred to Phase 4F (Transfer-API item lookup).
+    public TileMiningWell(BlockEntityType<?> type,BlockPos pos,BlockState state) {
+        super(type,pos,state);
     }
 
-    @Override
-    protected void mine() {
-        if (currentPos != null && canBreak()) {
-            shouldCheck = true;
-            // STUB(R.Chen): BlockUtil.computeBlockBreakPower / breakBlockAndGetDrops not yet migrated.
-            // Full mining logic (MJ cost, block breaking, drops) deferred to Phase 4E.
-            // The tile will tick normally but not actually mine until BlockUtil is ported.
+    @Override protected void mine() {
+        if (world.isReceivingRedstonePower(pos)) return;
+        if (lastDepth!=miningDepth()) {lastDepth=miningDepth();shouldCheck=true;}
+        if (currentPos!=null && (!validWorkPosition(currentPos) || world.getBlockState(currentPos)!=miningState))
+            shouldCheck=true;
+        if (shouldCheck || currentPos==null && tracker.markTimeIfDelay(world)) {
+            shouldCheck=false;
             nextPos();
-        } else if (shouldCheck || tracker.markTimeIfDelay(world)) {
-            nextPos();
-            if (currentPos == null) {
-                shouldCheck = false;
-            }
         }
+        if (currentPos==null) return;
+        if (retryTicks>0) {retryTicks--;return;}
+        long cost=BlockUtil.computeBlockBreakPower(world,currentPos,BCCoreConfig.miningMultiplier);
+        progress=Math.min(progress,cost);
+        long added=battery.extractPower(0,cost-progress);
+        progress+=added;
+        if (added>0) {
+            markChunkDirty();
+            world.setBlockBreakingInfo(pos.hashCode(),currentPos,(int)(9D*progress/cost));
+        }
+        if (progress<cost) return;
+
+        var target=currentPos;
+        changingColumn=true;
+        try {
+            var drops=BlockUtil.breakBlockAndGetDrops((ServerWorld)world,target,new ItemStack(Items.DIAMOND_PICKAXE),getOwner(),false);
+            if(drops.isEmpty()) {retryTicks=20;return;}
+            clearCracks();
+            progress=0;miningState=null;
+            drops.get().forEach(stack->InventoryUtil.addToBestAcceptor(world,pos,null,stack));
+            nextPos();
+            markChunkDirty();
+        } finally {changingColumn=false;}
     }
 
-    private boolean canBreak() {
-        // STUB(R.Chen): BlockUtil.isUnbreakableBlock + getFluidWithFlowing not yet migrated.
-        // Conservatively return false until the full BlockUtil is ported (Phase 4E).
-        if (world.isAir(currentPos)) {
-            return false;
-        }
-        return false; // STUB(R.Chen): fluid viscosity + unbreakable checks deferred
+    private boolean passable(BlockPos cell) {
+        var state=world.getBlockState(cell);
+        return state.isAir() || isTubeBlock(world,cell) || state.getBlock() instanceof FluidBlock
+            && FluidVariantAttributes.getViscosity(FluidVariant.of(state.getFluidState().getFluid()),world)<=1000;
     }
 
     private void nextPos() {
-        currentPos = pos;
-        while (true) {
-            currentPos = currentPos.down();
-            if (world.isOutOfHeightLimit(currentPos)) {
-                break;
-            }
-            if (pos.getY() - currentPos.getY() > MINING_MAX_DEPTH) {
-                break;
-            }
-            if (canBreak()) {
-                updateLength();
-                return;
-            } else if (!world.isAir(currentPos) && !isTubeBlock(world, currentPos)) {
-                break;
-            }
+        BlockPos target=null;
+        for(int depth=1;depth<=miningDepth();depth++) {
+            BlockPos cell=pos.down(depth);
+            if(!world.isChunkLoaded(cell) || !world.getWorldBorder().contains(cell))break;
+            if(passable(cell))continue;
+            var state=world.getBlockState(cell);
+            if(!(state.getBlock() instanceof FluidBlock) && state.getHardness(world,cell)>=0)target=cell;
+            break;
         }
-        currentPos = null;
-        updateLength();
+        BlockState nextState=target==null?null:world.getBlockState(target);
+        if(!java.util.Objects.equals(currentPos,target) || miningState!=null && miningState!=nextState) {
+            clearCracks();progress=0;retryTicks=0;
+        }
+        currentPos=target;miningState=nextState;
+        boolean wasChanging=changingColumn;
+        changingColumn=true;
+        try {
+            if(!updateLength()) {
+                clearCracks();currentPos=null;miningState=null;progress=0;
+            }
+        } finally {changingColumn=wasChanging;}
+        markChunkDirty();
     }
 
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        // STUB(R.Chen): world.addEventListener(worldEventListener) deferred —
-        //               WorldEventListenerAdapter not yet in libLeaf.
+    @Override protected boolean validWorkPosition(BlockPos cell) {
+        return super.validWorkPosition(cell) && cell.getX()==pos.getX() && cell.getZ()==pos.getZ()
+            && cell.getY()<pos.getY() && (long)pos.getY()-cell.getY()<=miningDepth();
     }
 
-    @Override
-    public void onRemove() {
-        super.onRemove();
-        // STUB(R.Chen): world.removeEventListener(worldEventListener) deferred.
-        if (currentPos != null) {
-            // STUB(R.Chen): world.setBlockBreakingInfo(entityId, pos, -1) — cancel break animation.
-            //               Full signature: world.setBlockBreakingInfo(int entityId, BlockPos, int progress)
+    public void onColumnChanged(BlockPos cell) {
+        if(!changingColumn && cell.getX()==pos.getX() && cell.getZ()==pos.getZ() && cell.getY()<pos.getY()) {
+            shouldCheck=true;retryTicks=0;
         }
     }
 
-    @Override
-    protected IMjReceiver createMjReceiver() {
-        return new MjBatteryReceiver(battery);
+    private void clearCracks() {
+        if(currentPos!=null && world!=null && !world.isClient)world.setBlockBreakingInfo(pos.hashCode(),currentPos,-1);
+    }
+
+    @Override public void onLoad() {super.onLoad();MiningWellUpdates.register(this);shouldCheck=true;}
+    @Override public void cancelRemoval() {super.cancelRemoval();MiningWellUpdates.register(this);}
+    @Override public void markRemoved() {clearCracks();MiningWellUpdates.unregister(this);super.markRemoved();}
+    @Override public void onRemove() {
+        if(!isStorageAvailable() || world.isClient)return;
+        clearCracks();MiningWellUpdates.unregister(this);super.onRemove();
+    }
+
+    @Override public void readFromNBT(NbtCompound nbt) {
+        super.readFromNBT(nbt);
+        miningState=nbt.contains("miningState")?NbtHelper.toBlockState(Registries.BLOCK.getReadOnlyWrapper(),nbt.getCompound("miningState")):null;
+        shouldCheck=true;retryTicks=0;
+    }
+
+    @Override public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+        if(miningState!=null)nbt.put("miningState",NbtHelper.fromBlockState(miningState));
+    }
+
+    @Override protected IMjReceiver createMjReceiver() {
+        return new MjBatteryReceiver(battery) {
+            @Override public boolean canReceive() {return isStorageAvailable() && !world.isClient;}
+            @Override public long getPowerRequested() {return canReceive()?super.getPowerRequested():0;}
+            @Override public long receivePower(long amount,boolean simulate) {
+                if(amount<0 || !canReceive())return amount;
+                long left=super.receivePower(amount,simulate);
+                if(!simulate && left!=amount)markChunkDirty();
+                return left;
+            }
+        };
     }
 }

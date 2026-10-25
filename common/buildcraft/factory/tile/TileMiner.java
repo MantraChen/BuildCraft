@@ -37,31 +37,17 @@ import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-// Forge→Fabric migration notes (R.Chen):
-//   ITickable.update()        → tick() + static ticker() wired in the owning Block.getTicker()
-//   Side / @SideOnly          → NetSide / @Environment(EnvType.*)
-//   NbtCompound            → NbtCompound (Yarn rename)
-//   NBTUtil.createPosTag      → NbtHelper.fromBlockPos
-//   NBTUtil.getPosFromTag     → NbtHelper.toBlockPos
-//   world.getTime() → world.getTime()
-//   world.isClient            → world.isClient
-//   world.rand                → world.random
-//   world.setBlockToAir       → world.removeBlock(pos, false)
-//   Box / INFINITE  → Fabric render bounds are handled via BuiltinModelItemRenderer / BER
-//   BCCoreConfig.miningMaxDepth→ MINING_MAX_DEPTH stub constant
-//   BCFactoryBlocks.tube      → isTubeBlock() stub (returns false until BCFactoryBlocks is in libLeaf)
+/** Shared native shaft, energy, persistence and render synchronization. Remake by FelixMantra. */
 public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, buildcraft.api.tiles.IHasWork {
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("miner");
     public static final int NET_LED_STATUS = IDS.allocId("LED_STATUS");
     public static final int NET_WANTED_Y = IDS.allocId("WANTED_Y");
 
-    // STUB(R.Chen): BCCoreConfig.miningMaxDepth — inline constant until BCCoreConfig lands in libLeaf.
-    protected static final int MINING_MAX_DEPTH = 256;
-
-    protected int progress = 0;
+    protected long progress = 0;
     protected BlockPos currentPos = null;
 
     private int wantedLength = 0;
+    private int tubeReach;
     private double currentLength = 0;
     private double lastLength = 0;
     private int offset;
@@ -75,7 +61,12 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     }
 
     @Override
-    public boolean hasWork() { return !isComplete; }
+    public boolean hasWork() { return isStorageAvailable() && !isComplete(); }
+
+    public long getStoredPower() { return battery.getStored(); }
+    public long getPaidWork() { return progress; }
+    public BlockPos getCurrentPos() { return currentPos; }
+    public int getWantedLength() { return wantedLength; }
 
     protected abstract void mine();
 
@@ -89,6 +80,7 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
 
     /** Ticking logic. Replaces {@code ITickable.update()}. */
     public void tick() {
+        if (!isStorageAvailable()) return;
         if (world.isClient) {
             lastLength = currentLength;
             if (Math.abs(wantedLength - currentLength) <= 0.01) {
@@ -99,7 +91,9 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
             return;
         }
 
+        long before=battery.getStored();
         battery.tick(getWorld(), getPos());
+        if (before!=battery.getStored()) markChunkDirty();
 
         if (world.getTime() % 10 == offset) {
             sendNetworkUpdate(NET_LED_STATUS);
@@ -116,48 +110,82 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     @Override
     public void onLoad() {
         super.onLoad();
-        offset = world.random.nextInt(10);
+        if(world!=null)offset = world.random.nextInt(10);
     }
 
     @Override
     public void onRemove() {
+        if (!isStorageAvailable() || world.isClient) return;
         super.onRemove();
-        for (int y = pos.getY() - 1; y > pos.getY() - MINING_MAX_DEPTH; y--) {
-            BlockPos blockPos = new BlockPos(pos.getX(), y, pos.getZ());
-            if (isTubeBlock(world, blockPos)) {
-                world.removeBlock(blockPos, false);
-            } else {
-                break;
-            }
-        }
+        retractTubes(0);
     }
 
-    protected void updateLength() {
-        int newY = getTargetPos() != null ? getTargetPos().getY() : pos.getY();
-        int newLength = pos.getY() - newY;
-        if (newLength != wantedLength) {
-            for (int y = pos.getY() - 1; y > pos.getY() - MINING_MAX_DEPTH; y--) {
-                BlockPos blockPos = new BlockPos(pos.getX(), y, pos.getZ());
-                if (isTubeBlock(world, blockPos)) {
-                    world.removeBlock(blockPos, false);
-                } else {
-                    break;
-                }
-            }
-            for (int y = pos.getY() - 1; y > newY; y--) {
-                BlockPos blockPos = new BlockPos(pos.getX(), y, pos.getZ());
-                // STUB(R.Chen): BCFactoryBlocks.tube.getDefaultState() — tube block not yet in libLeaf.
-                //               Tube placement deferred until BCFactoryBlocks is migrated.
-            }
-            currentLength = wantedLength = newLength;
+    protected int maxShaftLength() {
+        return world==null ? 4096 : Math.max(0,Math.min(4096,pos.getY()-world.getBottomY()));
+    }
+
+    protected int miningDepth() {
+        return Math.min(maxShaftLength(),Math.max(0,buildcraft.core.BCCoreConfig.miningMaxDepth));
+    }
+
+    /** Repair only the shaft's replaceable cells; never erase an intervening solid block. */
+    protected boolean updateLength() {
+        if (world==null || world.isClient) return false;
+        BlockPos target=getTargetPos();
+        int length=target==null?0:pos.getY()-target.getY();
+        if (length<0 || length>maxShaftLength()) length=0;
+        boolean success=true;
+        int reach=Math.max(0,length-1);
+        for (int depth=1;depth<=reach;depth++) {
+            BlockPos cell=pos.down(depth);
+            if (!isTubeBlock(world,cell) && !placeTube(cell)) {success=false;length=0;reach=0;break;}
+            tubeReach=Math.max(tubeReach,depth);
+        }
+        retractTubes(reach);
+        if (wantedLength!=length) {
+            currentLength=wantedLength=length;
             sendNetworkUpdate(NET_WANTED_Y);
         }
+        markChunkDirty();
+        return success;
     }
 
-    /** STUB(R.Chen): BCFactoryBlocks.tube — returns false until BCFactoryBlocks is in libLeaf. */
-    @SuppressWarnings("unused")
-    protected boolean isTubeBlock(net.minecraft.world.World w, BlockPos blockPos) {
-        return false;
+    private boolean placeTube(BlockPos cell) {
+        if (!world.isInBuildLimit(cell) || !world.getWorldBorder().contains(cell) || !world.isChunkLoaded(cell)) return false;
+        var state=world.getBlockState(cell);
+        boolean water=state.getBlock() instanceof net.minecraft.block.FluidBlock
+            && net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes.getViscosity(
+                net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(state.getFluidState().getFluid()),world)<=1000;
+        if (!state.isAir() && !water) return false;
+        var player=buildcraft.lib.misc.FakePlayerProvider.INSTANCE.getFakePlayer((net.minecraft.server.world.ServerWorld)world,getOwner(),cell);
+        if (!world.canPlayerModifyAt(player,cell)) return false;
+        var previous=player.getMainHandStack();
+        player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,net.minecraft.item.ItemStack.EMPTY);
+        try {
+            var hit=new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(cell),Direction.UP,cell,false);
+            if (net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(
+                    player,world,net.minecraft.util.Hand.MAIN_HAND,hit)!=net.minecraft.util.ActionResult.PASS) return false;
+            return world.setBlockState(cell,buildcraft.factory.BCFactoryBlocks.tube.getDefaultState());
+        } finally {player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND,previous);}
+    }
+
+    private void retractTubes(int retain) {
+        if(world==null || world.isClient || !world.isChunkLoaded(pos))return;
+        for(int depth=retain+1;depth<=Math.min(tubeReach,maxShaftLength());depth++) {
+            BlockPos cell=pos.down(depth);
+            if(world.getBlockEntity(cell) instanceof TileMiner)break;
+            if(isTubeBlock(world,cell))world.removeBlock(cell,false);
+        }
+        tubeReach=retain;
+    }
+
+    protected boolean isTubeBlock(net.minecraft.world.World level,BlockPos cell) {
+        return level.getBlockState(cell).isOf(buildcraft.factory.BCFactoryBlocks.tube);
+    }
+
+    protected boolean validWorkPosition(BlockPos cell) {
+        return cell!=null && Math.abs((long)cell.getX())<=30_000_000L && Math.abs((long)cell.getZ())<=30_000_000L
+            && (world==null ? Math.abs((long)cell.getY())<=4096 : world.isInBuildLimit(cell) && world.getWorldBorder().contains(cell));
     }
 
     protected BlockPos getTargetPos() {
@@ -175,7 +203,7 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     }
 
     public boolean isComplete() {
-        return world.isClient ? isComplete : currentPos == null;
+        return world!=null && world.isClient ? isComplete : currentPos == null;
     }
 
     @Override
@@ -196,18 +224,20 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
             nbt.put("currentPos", NbtHelper.fromBlockPos(currentPos));
         }
         nbt.putInt("wantedLength", wantedLength);
-        nbt.putInt("progress", progress);
+        nbt.putLong("progress", progress);
+        nbt.putInt("tubeReach",tubeReach);
         nbt.put("battery", battery.writeToNbt());
     }
 
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        if (nbt.contains("currentPos")) {
-            currentPos = NbtHelper.toBlockPos(nbt.getCompound("currentPos"));
-        }
-        wantedLength = nbt.getInt("wantedLength");
-        progress = nbt.getInt("progress");
+        currentPos=nbt.contains("currentPos")?NbtHelper.toBlockPos(nbt.getCompound("currentPos")):null;
+        if (!validWorkPosition(currentPos))currentPos=null;
+        wantedLength=Math.max(0,Math.min(maxShaftLength(),nbt.getInt("wantedLength")));
+        currentLength=lastLength=wantedLength;
+        tubeReach=Math.max(0,Math.min(maxShaftLength(),nbt.contains("tubeReach")?nbt.getInt("tubeReach"):wantedLength-1));
+        progress=currentPos==null?0:Math.max(0,nbt.getLong("progress"));
         // TODO(R.Chen): remove legacy mj_battery migration once all worlds are updated
         if (nbt.contains("mj_battery")) {
             nbt.put("battery", nbt.get("mj_battery"));
@@ -237,15 +267,19 @@ public abstract class TileMiner extends TileBC_Neptune implements buildcraft.lib
     public void readPayload(int id, PacketBufferBC buffer, NetSide side, /* STUB(R.Chen): MessageContext */ Object ctx)
         throws IOException {
         super.readPayload(id, buffer, side, ctx);
-        if (side == NetSide.CLIENT) {
-            if (id == NET_RENDER_DATA) {
-                readPayload(NET_LED_STATUS, buffer, side, ctx);
-                currentLength = lastLength = wantedLength = buffer.readInt();
-            } else if (id == NET_LED_STATUS) {
-                isComplete = buffer.readBoolean();
-                battery.readFromBuffer(buffer);
-            } else if (id == NET_WANTED_Y) {
-                wantedLength = buffer.readInt();
+        if (side==NetSide.CLIENT) {
+            if (id==NET_RENDER_DATA || id==NET_LED_STATUS) {
+                boolean complete=buffer.readBoolean();
+                long energy=buffer.readLong();
+                int length=id==NET_RENDER_DATA?buffer.readInt():wantedLength;
+                if (energy<0 || length<0 || length>maxShaftLength())throw new IOException("Invalid miner render state");
+                isComplete=complete;
+                var tag=new NbtCompound();tag.putLong("stored",energy);battery.readFromNbt(tag);
+                if(id==NET_RENDER_DATA)currentLength=lastLength=wantedLength=length;
+            } else if (id==NET_WANTED_Y) {
+                int length=buffer.readInt();
+                if(length<0 || length>maxShaftLength())throw new IOException("Invalid miner shaft length");
+                wantedLength=length;
             }
         }
     }

@@ -41,6 +41,9 @@ public class BCFactoryInitializer implements ModInitializer {
         BCFactoryTags.register();
         BCFactoryBlocks.fmlPreInit();
         BCFactoryItems.fmlPreInit();
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlockEntity(
+            (tile,face)->net.fabricmc.fabric.api.transfer.v1.storage.Storage.empty(),
+            buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.factory.tile.TileMiningWell.class));
         BCFactoryScreens.register();
         net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) ->
             !(state.getBlock() instanceof buildcraft.factory.block.BlockTube tube) || !tube.isConnectedToMiner(world, pos));

@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **126 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **138 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -335,11 +335,13 @@ features explicitly as work proceeds.
   the native pipe mesh and charge/work LED geometry. Volume marker signals and cached
   path/volume connections render through a scoped world-render callback. Architect scan
   surfaces use translucent native buffers, clipped bounds and fading ticks; scan caches
-  clear on world changes/disconnect. Quarry appearance and drill movement have now
-  been observed in the real client; the other machine integrations still need validation.
+  clear on world changes/disconnect. Quarry appearance/drill movement and mining-well
+  shaft/LED appearance have now been observed in the real client; other integrations
+  still need validation.
 - Mining tubes now use native shape/hardness settings, bounded vertical owner lookup and
   Fabric's cancellable block-break event to protect a connected miner's tube in creative
-  mode. Actual miner placement/retraction and this callback await full-world validation.
+  mode. Mining-well shaft placement, repair, retraction and this callback now pass
+  full-mod world tests; pump operation remains unfinished.
 - Restored bundled schematic compatibility rules and native server-data additions at
   `data/<namespace>/buildcraft/builders/rules/*.json`. Rules publish only after a complete
   successful load, support block-state/tag selectors and retain declared rule order.
@@ -635,6 +637,34 @@ features explicitly as work proceeds.
   and native excavation delivers exactly four diamond blocks and four gold blocks.
   This run passes and saves/exits cleanly; its screenshot is
   `verification/quarry-client-run/screenshots/quarry-smoke.png`.
+
+### Native mining wells
+
+- Replaced the mining-well no-op loop with vertical excavation, hardness-based MJ
+  consumption, native protected drops, pipe-first sided output and exact overflow.
+  Water columns are passable; bedrock and viscous fluids stop the shaft. The original
+  iron/gear/pickaxe recipe and native recipe-book unlock are restored.
+- Native world changes are indexed by exact column and immediately retarget the
+  machine. Redstone pauses work without consuming ordinary stored power. Depth
+  configuration uses the actual world height and can change while the miner runs.
+- Paid work uses 64-bit values and saves the target block state. Reloading preserves
+  progress beyond the old integer range; changing targets cannot reuse that work.
+  Native break protection retains paid work for a later permitted retry. Invalid
+  saved positions and malformed render/length packets do not corrupt machine state.
+- Shafts place actual tube blocks only in passable cells and honor native interaction
+  protection. Repair/retraction preserves new solid obstructions and removes the old
+  lower tubes. Connected tubes reject creative breaking; detached tubes can be removed.
+  Removing the miner cleans its shaft and invalidates cached energy endpoints.
+- Twelve additional packaged-mod tests pass, bringing the suite to **138**. Coverage
+  includes native engine → MJ pipes → mining-well excavation, live pipe output,
+  full-inventory overflow, partial/reloaded work, protected cells, redstone, depth
+  changes and actual survival crafting.
+- The real client passes native placement, visible shaft extension and LED state,
+  saving/reopening 40 MJ of partial work, then excavation powered only by an engine
+  and wooden/stone MJ pipes. It observes both longer and fully retracted shafts,
+  checks exact diamond/gold-block output, and removes the miner through native player
+  breaking. Both active/completed screenshots were inspected; the client saves/exits
+  cleanly. Images are in `verification/mining-well-client-run/screenshots/`.
 
 Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

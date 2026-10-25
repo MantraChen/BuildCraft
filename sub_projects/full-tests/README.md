@@ -15,6 +15,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Client -Interactions
 # Also verify quarry placement, excavation and a complete world restart:
 ./scripts/full-smoke.ps1 -Quarry
+# Also verify mining-well animation, saved work and engine-driven excavation:
+./scripts/full-smoke.ps1 -MiningWell
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -50,7 +52,14 @@ It requires the distant quarry to load from its saved tickets, preserve paid wor
 animate its drill and deliver exactly four diamond blocks and four gold blocks.
 It captures `screenshots/quarry-smoke.png` before saving and exiting.
 
-The 126 server tests currently verify:
+The mining-well client uses `verification/mining-well-client-run/`. It places a well
+through native item interaction, observes its extended shaft/LED, saves 40 MJ of paid
+work and reopens the same world. A creative engine then drives wooden/stone MJ pipes
+to finish mining, with exact diamond/gold-block output and automatic shaft retraction.
+It checks native removal and stale energy rejection, capturing
+`screenshots/mining-well-active.png` and `screenshots/mining-well-complete.png`.
+
+The 138 server tests currently verify:
 
 - Construction, native entity-type compatibility and NBT round trips for all 849
   non-null BuildCraft block-entity states. Water springs intentionally use scheduled
@@ -216,6 +225,12 @@ The 126 server tests currently verify:
   malformed saved tasks/render packets and actual survival crafting/advancements.
   A creative engine drives excavation through wooden/stone MJ pipes without directly
   injecting energy into the quarry battery.
+
+- Twelve mining-well tests cover native loot and exact hardness costs, tube placement,
+  repair/retraction, connected/disconnected creative breaking, 64-bit paid work and
+  reload, native break/interaction protection, redstone pause, water/lava/bedrock,
+  pipe output and full-inventory overflow, live depth/target changes, malformed
+  saved/render state, real engine/MJ-pipe input and original survival crafting.
 
 The optional client run uses an isolated `verification/full-client-run/` directory.
 MJ and RF rendering each check 768 load, connection and scrolling-texture combinations, including

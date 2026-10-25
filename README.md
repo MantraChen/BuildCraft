@@ -81,6 +81,10 @@ break protection and send mined loot to pipes or nearby inventories. Partially p
 tasks and energy survive saving. Each quarry owns persistent native chunk tickets,
 independent of other quarries and vanilla forced chunks. The original gear/pickaxe
 recipe and localized placement/completion advancements are restored.
+Mining wells now excavate a vertical column using native loot and sided item output.
+Their shafts extend, repair and retract, honour mining/interaction protection, and
+stop at bedrock or viscous fluids. Redstone pauses mining. Paid work uses 64-bit MJ
+values and survives reloading; native engine/pipe power and the survival recipe work.
 See [the full-mod fixture](sub_projects/full-tests/README.md).
 Add `-Client` to also launch a real GPU client and check all registered block/item
 models plus the restored item variants, then exit automatically.
@@ -89,6 +93,8 @@ wire, gate and whole-pipe breaking, including vanilla prediction acknowledgement
 then tank-to-pipe fluid transport, native fluid-cache replies and empty-state synchronization.
 Add `-Quarry` to verify native quarry placement, client animation, saving/reopening a
 world and automatic loading of a distant quarry, then inspect its exact mined output.
+Add `-MiningWell` to inspect its visible shaft and LED state, reopen partially paid
+work, and finish excavation using an engine and MJ pipes before testing removal.
 Use `./gradlew runClient` for a development client. Finish compilation before starting
 manual tests; recompiling its class directories while the game runs can cause missing-class errors.
 

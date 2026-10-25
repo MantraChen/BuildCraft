@@ -22,9 +22,11 @@
       "buildcraft.test.full.MachineRecoveryGameTests",
       "buildcraft.test.full.PowerPipeGameTests",
       "buildcraft.test.full.RfPipeGameTests",
-      "buildcraft.test.full.QuarryGameTests"
+      "buildcraft.test.full.QuarryGameTests",
+      "buildcraft.test.full.MiningWellGameTests"
     ],
     "client": [
+      "buildcraft.test.full.MiningWellClientSmoke",
       "buildcraft.test.full.QuarryClientSmoke",
       "buildcraft.test.full.FullClientSmoke",
       "buildcraft.test.full.FullClientInteractionSmoke"
