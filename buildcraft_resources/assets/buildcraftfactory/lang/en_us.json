@@ -1,4 +1,10 @@
 {
+  "block.buildcraftfactory.flood_gate": "Flood Gate",
+  "advancements.buildcraftfactory.fluid_storage.title": "Fluid Storage",
+  "advancements.buildcraftfactory.fluid_storage.description": "Store fluid in a tank — Remake by FelixMantra",
+  "block.buildcraftfactory.flood_gate.tip": "Stores 2 buckets. Wrench a side to open or close its outlet.",
+  "advancements.buildcraftfactory.flooding_the_world.title": "Flooding the World",
+  "advancements.buildcraftfactory.flooding_the_world.remake_description": "Place fluid with a flood gate — Remake by FelixMantra",
   "block.buildcraftfactory.heat_exchange": "Heat Exchanger",
   "block.buildcraftfactory.heat_exchange.remake_hint": "Align 3–5 blocks; use a wrench to reverse the structure.",
   "advancements.buildcraftfactory.heat_exchange.remake_title": "Heat Exchange",

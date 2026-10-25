@@ -45,6 +45,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Facades
 # Also verify gate copier packets, empty/full models, live GUI updates and saved settings:
 ./scripts/full-smoke.ps1 -GateCopier
+# Also verify flood gate buckets, outlets, engine/pipe supply and two world restarts:
+./scripts/full-smoke.ps1 -FloodGate
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -487,3 +489,17 @@ The client fixture exercises native copy/paste packets, empty/full model predica
 before and after resource reload, open gate-screen row/group synchronization,
 a complete world restart and native sneak-clear retaining unrelated item tags.
 It stores filled/cleared item and pasted/live screen captures in `screenshots/`.
+
+Run `./scripts/full-smoke.ps1 -FloodGate` for the flood gate client fixture in
+`verification/flood-gate-client-run/`. Twenty additional server tests cover
+all six transactional fluid ports, exact tagged droplets, whole-bucket cadence,
+liquid/gas search direction, existing source traversal, obstruction and outlet
+changes, native protection and owner identity, stale interfaces, legacy outlet
+NBT, radius and per-tick search limits, unloaded chunks, native buckets, removal
+recovery, malformed packets, Nether evaporation, crafting, wooden-pipe supply
+and the restored tank/flooding advancements.
+The client fixture checks all 32 outlet models on every face before and after
+resource reload. It exercises real bucket/wrench/break packets, two complete
+world restarts, an engine feeding wooden/stone fluid pipes, exactly three water
+sources and recovery of the remaining 37 droplets. Screenshots are stored in
+its `screenshots/` directory.

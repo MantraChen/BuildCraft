@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **346 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **366 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -1211,3 +1211,48 @@ Remake by FelixMantra.
   Machine-recovery test setup also clears old item entities from its expanded
   counting volume, retaining the original exact drop assertions on reused worlds.
   Existing guide recipe and texture-animation/mipmap warnings are unchanged.
+
+### Native flood gate
+
+- Replaced the empty flood-gate tick with a native two-bucket tank and connected
+  world filling. All six faces expose Fabric transactional storage; five outlets
+  start open, while the top has no outlet into the world. Wrenches toggle outlets
+  through native interaction packets and update the original 32 block models.
+  Closing an outlet does not disconnect its fluid input.
+- Retained the original no-MJ, one-bucket-per-sixteen-active-ticks behavior,
+  nearest-first search, 64-block radius, 4,096 placement candidates and idle
+  backoff. Search work yields after 1,024 positions per tick and never loads an
+  absent chunk. Liquid searches downward and horizontally; lighter-than-air
+  fluids search upward and horizontally. Existing matching sources are traversed
+  without charging a bucket; air and matching flowing fluid can be filled.
+  Solid/waterlogged blocks, plants and different fluids are preserved.
+- Every placement rechecks the connected path, open outlet, live block entity,
+  current target and native owner protection. A blocked or closed path cannot
+  produce detached fluid at a stale queued target. Native bucket placement
+  preserves dimension behavior, including Nether water evaporation. A successful
+  placement extracts exactly one bucket; fractional/tagged buffered fluid is
+  retained, and registered tank recovery handles removal without stale access.
+- Outlet state and exact tank contents persist. Legacy byte-array outlet masks
+  are accepted without enabling the top outlet; derived searches rebuild after
+  loading. Client snapshots validate the mask, fluid and bounded amount before
+  applying them. Purely visual outlet changes avoid neighbor-shape updates that
+  would otherwise force an adjacent chunk to load.
+- Restored the original iron/bar/gear/tank crafting recipe, recipe-book unlock,
+  flooding advancement and missing fluid-storage parent advancement. Manual
+  tank insertion awards the parent before column balancing; successful flooding
+  awards its online owner through the native server-world overload. English and
+  Chinese usage text and the tooltip include `Remake by FelixMantra`.
+- Twenty additional GameTests bring the packaged-mod suite to 366 passing tests
+  in `verification/flood-gate-tests-4.log`. Coverage includes transactional and
+  tagged remainders, protected/removed machines, path changes, bounded/unloaded
+  searches, gas/liquid direction, legacy saves, malformed snapshots, Nether
+  evaporation, crafting, native buckets, wooden-pipe extraction and advancements.
+- Real-client validation in `verification/flood-gate-client-3.log` finishes with
+  `failures=0` and a clean shutdown. It verifies all 32 models on six faces across
+  resource reload, real placement/bucket/wrench/break packets, two full saved-world
+  restarts, an engine driving wooden/stone fluid pipes, exactly three water sources
+  and recovery of the final 37 droplets. Three reviewed screenshots show closed
+  buffered outlets, the filled channel and the final closed state. Removal checks
+  allow vanilla water to enter the vacated block and carry the recovered shard;
+  teleport acknowledgements complete before subsequent native interactions.
+  Existing guide recipe and texture-animation/mipmap warnings remain.

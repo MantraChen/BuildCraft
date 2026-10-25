@@ -41,6 +41,9 @@ public class BlockFloodGate extends BlockBCTile_Neptune {
 
     public BlockFloodGate(AbstractBlock.Settings material, String id) {
         super(material, id);
+        BlockState state=getDefaultState();
+        for(var property:CONNECTED_MAP.values())state=state.with(property,true);
+        setDefaultState(state);
     }
 
     @Override
@@ -69,25 +72,20 @@ public class BlockFloodGate extends BlockBCTile_Neptune {
     public boolean onBlockActivated(World world, BlockPos pos, BlockState state, PlayerEntity player, Hand hand,
         Direction side, float hitX, float hitY, float hitZ) {
         ItemStack heldItem = player.getStackInHand(hand);
-        if (heldItem.getItem() instanceof IToolWrench) {
-            if (!world.isClient) {
-                if (side != Direction.UP) {
-                    BlockEntity tile = world.getBlockEntity(pos);
-                    if (tile instanceof TileFloodGate) {
-                        if (CONNECTED_MAP.containsKey(side)) {
-                            TileFloodGate floodGate = (TileFloodGate) tile;
-                            if (!floodGate.openSides.remove(side)) {
-                                floodGate.openSides.add(side);
-                            }
-                            floodGate.queue.clear();
-                            floodGate.sendNetworkUpdate(TileBC_Neptune.NET_RENDER_DATA);
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
+        if (heldItem.getItem() instanceof IToolWrench wrench) {
+            var hit=new net.minecraft.util.hit.BlockHitResult(new net.minecraft.util.math.Vec3d(pos.getX()+hitX,pos.getY()+hitY,pos.getZ()+hitZ),side,pos,false);
+            if(!(world.getBlockEntity(pos) instanceof TileFloodGate gate) || !gate.canInteractWith(player)
+                || !CONNECTED_MAP.containsKey(side) || !wrench.canWrench(player,hand,heldItem,hit))return false;
+            if(!gate.toggleSide(player,side))return false;
+            if(!world.isClient)wrench.wrenchUsed(player,hand,heldItem,hit);
+            return true;
         }
         return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
+    }
+
+    @Override public void appendTooltip(ItemStack stack,BlockView world,List<net.minecraft.text.Text> tooltip,net.minecraft.client.item.TooltipContext context){
+        super.appendTooltip(stack,world,tooltip,context);
+        tooltip.add(net.minecraft.text.Text.translatable("block.buildcraftfactory.flood_gate.tip"));
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
     }
 }

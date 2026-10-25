@@ -147,6 +147,15 @@ or tanks. Renewable water respects real source neighbors, support, config and th
 native game rule. Protected cells, waterlogged hosts, full/incompatible tanks and saved
 partial work are handled without duplicating fluid. Manual buckets, removal recovery,
 the survival recipe and owner advancements are restored.
+Flood gates now accept fluid from buckets or pipes into a two-bucket buffer and
+place one bucket every sixteen active ticks, without MJ. Wrench any face except
+the top to toggle its outlet; closing an outlet still allows pipe input on that
+face. Connected searches stay within 64 blocks and loaded chunks, moving liquids
+downward and gases upward. Saved outlets, exact droplet remainders, native placement
+protection and removal recovery are supported. The original crafting recipe,
+tank/flooding advancements and `Remake by FelixMantra` tooltip are restored.
+Use `./scripts/full-smoke.ps1 -FloodGate` for native bucket/wrench interactions,
+engine-driven pipe supply and two complete saved-world restarts.
 Automatic item workbenches now craft from a ghost pattern using native recipes and
 atomic item transfers. They complete a passive craft in ten seconds, or use up to
 40 MJ to accelerate it. Exact item/NBT filters, dynamic results, recipe remainders,

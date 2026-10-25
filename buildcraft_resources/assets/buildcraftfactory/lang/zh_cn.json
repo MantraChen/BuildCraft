@@ -1,4 +1,10 @@
 {
+  "block.buildcraftfactory.flood_gate": "泛流闸",
+  "advancements.buildcraftfactory.fluid_storage.title": "流体存储",
+  "advancements.buildcraftfactory.fluid_storage.description": "将流体储存到储罐中 — Remake by FelixMantra",
+  "block.buildcraftfactory.flood_gate.tip": "可存储 2 桶流体；使用扳手打开或关闭对应侧的出口。",
+  "advancements.buildcraftfactory.flooding_the_world.title": "淹没世界",
+  "advancements.buildcraftfactory.flooding_the_world.remake_description": "使用泛流闸向世界放出流体 — Remake by FelixMantra",
   "block.buildcraftfactory.heat_exchange": "热交换器",
   "block.buildcraftfactory.heat_exchange.remake_hint": "将 3～5 个方块同向排列，使用扳手反转整组机器。",
   "advancements.buildcraftfactory.heat_exchange.remake_title": "热量交换",

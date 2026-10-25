@@ -41,8 +41,12 @@ public class TileTank extends TileBC_Neptune implements TickingBlockEntity, IDeb
     @Override public void onLoad() { super.onLoad(); contentsDirty = true; }
     @Override public boolean onActivated(PlayerEntity player, Hand hand, Direction facing, float x, float y, float z) {
         if (!canInteractWith(player)) return false;
+        long before=tank.getStorage().getAmount();
         if (super.onActivated(player, hand, facing, x, y, z)) {
-            if (!world.isClient) balanceTankFluids();
+            if (!world.isClient) {
+                if(tank.getStorage().getAmount()>before)buildcraft.lib.misc.AdvancementUtil.unlockAdvancement(player,new net.minecraft.util.Identifier("buildcraftfactory","fluid_storage"));
+                balanceTankFluids();
+            }
             return true;
         }
         if (!world.isClient) buildcraft.factory.BCFactoryScreens.openTank(player, this);
