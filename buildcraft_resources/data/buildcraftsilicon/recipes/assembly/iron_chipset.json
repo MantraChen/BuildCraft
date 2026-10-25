@@ -1,0 +1,21 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 20000,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:redstone"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:iron_ingot"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:redstone_chipset",
+    "count": 1,
+    "nbt": "{chipset:\"iron\"}"
+  }
+}

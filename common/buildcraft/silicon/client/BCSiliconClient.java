@@ -13,6 +13,11 @@ import net.minecraft.util.math.Direction;
 public final class BCSiliconClient {
     public static final GateModel MODEL = new GateModel();
     public static void register() {
+        net.minecraft.client.gui.screen.ingame.HandledScreens.<buildcraft.lib.gui.ContainerBC_Neptune,buildcraft.silicon.gui.GuiAssemblyTable>register(BCSiliconScreens.ASSEMBLY,
+            (handler,inventory,title)->new buildcraft.silicon.gui.GuiAssemblyTable((buildcraft.silicon.container.ContainerAssemblyTable)handler,inventory,title));
+        net.minecraft.client.render.block.entity.BlockEntityRendererFactories.register(buildcraft.lib.registry.BlockEntityRegistry.type(buildcraft.silicon.tile.TileLaser.class),buildcraft.silicon.client.render.RenderLaser::new);
+        net.minecraft.client.item.ModelPredicateProviderRegistry.register(BCSiliconItems.redstoneChipset,
+            new net.minecraft.util.Identifier("buildcraftsilicon","chipset"),(stack,world,entity,seed)->buildcraft.api.enums.EnumRedstoneChipset.fromStack(stack).ordinal()/4f);
         net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
             if (result instanceof net.minecraft.util.hit.BlockHitResult hit && hit.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK
                 && player.getWorld().getBlockEntity(hit.getBlockPos()) instanceof buildcraft.transport.tile.TilePipeHolder tile) {

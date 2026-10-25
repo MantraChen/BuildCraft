@@ -1,0 +1,23 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 80000,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "buildcraftsilicon:plug_gate"
+      },
+      "nbt": "{gate:{logic:0b,material:1b,modifier:0b}}"
+    },
+    {
+      "ingredient": {
+        "item": "buildcraftsilicon:redstone_chipset"
+      },
+      "nbt": "{chipset:\"diamond\"}"
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:plug_gate",
+    "count": 1,
+    "nbt": "{gate:{logic:0b,material:1b,modifier:3b}}"
+  }
+}

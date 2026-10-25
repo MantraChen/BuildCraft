@@ -49,7 +49,15 @@ Gates control pipe direction, item paint and MJ/RF limits. Inventory and fluid c
 use sided Fabric storage, including non-consuming sample and capacity checks.
 All 16 wire colours place on pipe corners, connect matching networks and carry gate
 signals. Breaking an attachment preserves the pipe and honours native break protection.
-Gate/wire crafting and the remaining pluggables still need restoration.
+Native laser assembly restores five chipsets, all 24 modified gate variants and all
+16 wire colours through 45 data-pack recipes. Directional lasers receive MJ through
+native pipes, stop at obstructions and retain bounded batteries across saves. The
+assembly screen queues recipes, keeps selections while ingredients are missing and
+preserves paid work; products prefer pipes, then inventories, then drop nearby.
+Basic gates, iron upgrades and AND/OR conversion also work in a normal crafting table.
+Run `./scripts/full-smoke.ps1 -Assembly` for the native screen, world restart and live
+engine/pipe/laser production fixture. Other pluggables and the advanced/integration
+tables still need restoration.
 Fluid pipes now expose native transactional storage, retain exact droplets/NBT through
 save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
 clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.

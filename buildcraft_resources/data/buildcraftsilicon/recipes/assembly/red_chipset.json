@@ -1,0 +1,16 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 10000,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:redstone"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:redstone_chipset",
+    "count": 1,
+    "nbt": "{chipset:\"red\"}"
+  }
+}

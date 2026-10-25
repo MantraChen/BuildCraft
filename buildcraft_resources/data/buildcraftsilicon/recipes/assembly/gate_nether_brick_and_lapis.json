@@ -1,0 +1,22 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 80000,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "buildcraftsilicon:plug_gate"
+      },
+      "nbt": "{gate:{logic:0b,material:2b,modifier:0b}}"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:lapis_lazuli"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:plug_gate",
+    "count": 1,
+    "nbt": "{gate:{logic:0b,material:2b,modifier:1b}}"
+  }
+}

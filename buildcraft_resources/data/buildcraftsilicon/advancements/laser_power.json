@@ -1,0 +1,23 @@
+{
+  "parent": "buildcraftcore:wrenched",
+  "display": {
+    "icon": {
+      "item": "buildcraftsilicon:redstone_chipset",
+      "nbt": "{chipset:\"red\"}"
+    },
+    "title": {
+      "translate": "advancements.buildcraftsilicon.laser_power.title"
+    },
+    "description": {
+      "translate": "advancements.buildcraftsilicon.laser_power.remake_description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "code_trigger": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "buildcraftsilicon:items/redstone_chipset/red"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "buildcraftsilicon:chipset": 0.25
+      },
+      "model": "buildcraftsilicon:item/redstone_chipset_iron"
+    },
+    {
+      "predicate": {
+        "buildcraftsilicon:chipset": 0.5
+      },
+      "model": "buildcraftsilicon:item/redstone_chipset_gold"
+    },
+    {
+      "predicate": {
+        "buildcraftsilicon:chipset": 0.75
+      },
+      "model": "buildcraftsilicon:item/redstone_chipset_quartz"
+    },
+    {
+      "predicate": {
+        "buildcraftsilicon:chipset": 1.0
+      },
+      "model": "buildcraftsilicon:item/redstone_chipset_diamond"
+    }
+  ]
+}

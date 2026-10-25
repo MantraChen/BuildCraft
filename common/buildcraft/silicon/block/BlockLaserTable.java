@@ -22,11 +22,7 @@ import buildcraft.silicon.tile.TileChargingTable;
 import buildcraft.silicon.tile.TileIntegrationTable;
 import buildcraft.silicon.tile.TileProgrammingTable_Neptune;
 
-/**
- * Screen opening and table shape still require native client integration.
- * BCSiliconGuis.openGui deferred until ExtendedScreenHandlerType is registered.
- * isOpaqueCube/isFullCube/getBlockLayer do not exist in 1.20.1 — removed.
- */
+/** Original nine-pixel table profile; each tile handles its native interaction. */
 public class BlockLaserTable extends BlockBCTile_Neptune implements ILaserTargetBlock {
     private final EnumLaserTableType type;
 
@@ -53,10 +49,7 @@ public class BlockLaserTable extends BlockBCTile_Neptune implements ILaserTarget
         }
     }
 
-    // STUB(R.Chen): onUse (was onBlockActivated) deferred — BCSiliconGuis.openGui needs
-    // ExtendedScreenHandlerType registration first.
-    // STUB(R.Chen): getBoundingBox/VoxelShape (was Box) deferred to lib.block phase.
-
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public boolean canUse(net.minecraft.entity.player.PlayerEntity player) { return true; }
+    @Override public net.minecraft.util.shape.VoxelShape getOutlineShape(BlockState state,net.minecraft.world.BlockView world,BlockPos pos,net.minecraft.block.ShapeContext context) {
+        return net.minecraft.block.Block.createCuboidShape(0,0,0,16,9,16);
+    }
 }

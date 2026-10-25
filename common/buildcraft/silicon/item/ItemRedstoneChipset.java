@@ -9,13 +9,17 @@ package buildcraft.silicon.item;
 
 import net.minecraft.item.Item;
 
-/**
- * STUB(R.Chen): Full ItemRedstoneChipset implementation deferred until lib.item (ItemBC_Neptune, IItemPluggable,
- * model registration) is migrated to Fabric 1.20.1.
- */
+/** Original five chipset materials preserved as native NBT variants. */
 public class ItemRedstoneChipset extends Item {
 
     public ItemRedstoneChipset(Settings settings) {
         super(settings);
+    }
+    @Override public net.minecraft.text.Text getName(net.minecraft.item.ItemStack stack) {
+        return net.minecraft.text.Text.translatable("item.buildcraftsilicon.redstone_chipset."+buildcraft.api.enums.EnumRedstoneChipset.fromStack(stack).asString());
+    }
+    @Override public void appendTooltip(net.minecraft.item.ItemStack stack,net.minecraft.world.World world,
+            java.util.List<net.minecraft.text.Text> tooltip,net.minecraft.client.item.TooltipContext context) {
+        tooltip.add(net.minecraft.text.Text.literal("Remake by FelixMantra").formatted(net.minecraft.util.Formatting.GOLD));
     }
 }

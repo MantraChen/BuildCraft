@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **218 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **239 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -299,8 +299,7 @@ features explicitly as work proceeds.
   demand probes and actual delivery. Rollback restores buffers and tick quotas together.
   Native RF animation shares the matrix/atlas-safe geometry path, with 768 additional
   GPU cases. Redstone converts all nine MJ pipe materials to RF and undo preserves dye.
-  Obsidian/stripes behavior, gate/wire crafting
-  and remaining pluggables still require integration. Registration of a pipe type
+  Obsidian/stripes behavior and remaining pluggables still require integration. Registration of a pipe type
   does not establish its special behavior. Pluggable render APIs remain client-only
   so dedicated servers can load all pipe definitions.
 - Separated client packet callbacks from common network initialization. Removed source
@@ -836,7 +835,49 @@ features explicitly as work proceeds.
   fixture failures. All four screenshots were visually inspected in
   `verification/oil-generation-client-run/screenshots/`.
 
-Remaining work includes remaining resource/model/recipe migration, gate/wire crafting and other pluggable
+### Native laser assembly and silicon production
+
+- Restored the six-direction laser cone (six blocks) with air-only line of sight,
+  a bounded 1,024 MJ battery, the original ramp up to 4 MJ/t, native MJ discovery
+  and exact unaccepted-energy refunds. Target validation runs before each transfer;
+  obstructions, rotation, removal and completed work stop the beam. Battery saves
+  survive reload while targets are reacquired. Native vertex rendering uses the
+  original power-coloured laser textures.
+- The assembly table now uses twelve native input slots, native inventory transfers
+  and a real screen with paged recipe choices, selection colours and synchronized
+  MJ progress. Selected recipes rotate through available inputs and remain queued
+  when ingredients run out. Generic paid MJ survives selection/input changes and
+  saves. Products prefer item pipes, then inventories, then spill; each completed
+  craft pays its exact cost and returns native container remainders.
+- Registered `buildcraftsilicon:assembly` as a native data-pack recipe type. The
+  shipped 45 recipes cover five chipset variants, six base/18 upgraded gates and
+  sixteen wire colours, preserving original costs and output counts. Counted
+  ingredients support optional exact SNBT; capacity matching handles overlapping
+  ingredients without double spending. Recipe synchronization retains full NBT.
+  Replacement/removal resolves against the current native recipe manager.
+- Native chipsets have distinct NBT, names, models and creative variants; their
+  tooltip and assembly screen include `Remake by FelixMantra`. Lasers and assembly
+  tables have survival recipes, and successful assembly grants a native advancement.
+  A normal crafting table can make basic gates/iron upgrades and flip all 24 AND/OR
+  variants while retaining custom names. Tables use their original nine-pixel shape.
+- Twenty-one additional tests bring the packaged suite to **239 passing tests**,
+  covering the recipes, transactions, output paths, queue/reload behavior, lasers,
+  malformed payloads, screen distance checks, survival crafting and owner advancement.
+- The real client fixture passes native placement, shift-click input, actual recipe
+  toggle packets and five distinct chipset models. A complete world restart retains
+  2,500 MJ, ingredients and the selected recipe. Four creative engines feed wooden/
+  stone MJ pipes and lasers, producing exactly one red chipset, eight blue wires and
+  one iron AND gate at the original costs. Completion clears every beam and retains
+  missing-input selections; the owner advancement and stale laser rejection pass.
+  Five screenshots were visually inspected under
+  `verification/assembly-client-run/screenshots/`, including the original table GUI,
+  visible laser production, queued recipes and actual output barrel. The fixture
+  exits cleanly with zero failures.
+- Advanced/integration/charging tables, remaining silicon pluggables and legacy
+  assembly-script/guide integration are still pending. Native data packs are the
+  supported recipe source for the restored assembly table.
+
+Remaining work includes remaining resource/model/recipe migration and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy
 integration, larger quarry/third-party compatibility scenarios, and broader connected-client/save-reload gameplay
 validation. Compile/package/startup success does not establish that every machine is

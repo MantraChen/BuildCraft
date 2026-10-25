@@ -1,0 +1,21 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "mj": 80000,
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "minecraft:redstone"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:diamond"
+      }
+    }
+  ],
+  "result": {
+    "item": "buildcraftsilicon:redstone_chipset",
+    "count": 1,
+    "nbt": "{chipset:\"diamond\"}"
+  }
+}

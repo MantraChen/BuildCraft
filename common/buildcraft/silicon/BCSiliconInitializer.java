@@ -45,13 +45,11 @@ public class BCSiliconInitializer implements ModInitializer {
         BCSiliconScreens.register();
         BCSiliconPlugs.preInit();
         // STUB(R.Chen): BCSiliconSprites.fmlPreInit() — register sprites via Fabric Atlas event.
-        // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for each of:
-        //               ASSEMBLY_TABLE, ADVANCED_CRAFTING_TABLE, INTEGRATION_TABLE.
+        // Advanced crafting and integration tables still need native screens and behavior.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCSiliconProxy) → Fabric lifecycle callbacks.
 
         // --- Forge init (BCSilicon.init) -----------------------------------------
-        // STUB(R.Chen): BCSiliconRecipes.init() — port assembly/facade/swap recipes to Fabric
-        //               recipe JSON + RecipeType/RecipeSerializer.
+        BCSiliconRecipes.init();
         // STUB(R.Chen): FacadeAPI.registerCompat() — deferred until FacadeStateManager lands.
 
         // --- Forge postInit (BCSilicon.postInit) ---------------------------------

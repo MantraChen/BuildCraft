@@ -14,7 +14,7 @@ import buildcraft.silicon.item.ItemPluggableLens;
 import buildcraft.silicon.item.ItemPluggablePulsar;
 import buildcraft.silicon.item.ItemRedstoneChipset;
 
-/** Native gate registration; other silicon items still await restoration. */
+/** Native gates and five NBT chipset variants; remaining pluggables await restoration. */
 public class BCSiliconItems {
 
     // Other silicon items remain unregistered until their behavior is migrated.
@@ -27,6 +27,10 @@ public class BCSiliconItems {
     public static ItemPluggableFacade plugFacade;
 
     public static void preInit() {
+        redstoneChipset=net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
+            new net.minecraft.util.Identifier("buildcraftsilicon","redstone_chipset"),new ItemRedstoneChipset(new net.minecraft.item.Item.Settings()));
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)
+            .register(entries->{for(var chipset:buildcraft.api.enums.EnumRedstoneChipset.values())entries.add(chipset.getStack());});
         plugGate = net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.ITEM,
             new net.minecraft.util.Identifier("buildcraftsilicon", "plug_gate"), new ItemPluggableGate(new net.minecraft.item.Item.Settings()));
         net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(net.minecraft.item.ItemGroups.REDSTONE)

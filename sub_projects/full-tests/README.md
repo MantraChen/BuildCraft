@@ -27,6 +27,8 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -HeatExchange
 # Also verify natural oil in a normal world, both biomes, pumping and save/reload:
 ./scripts/full-smoke.ps1 -OilGeneration
+# Also verify laser assembly, real recipe clicks, saved MJ and engine-driven production:
+./scripts/full-smoke.ps1 -Assembly
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -111,7 +113,24 @@ native biome search, checks desert sand, and reopens the entire save. Screenshot
 are `natural-oil-field.png`, `natural-oil-pumping.png`, `oil-desert-biome.png` and
 `oil-ocean-biome.png` under that run's `screenshots/` directory.
 
-The 218 server tests currently verify:
+The assembly client uses `verification/assembly-client-run/`. It places a native
+table, shift-clicks real materials, toggles recipe previews through the real GUI,
+checks all five chipset models and reopens a save with 2,500 MJ paid work. Four
+creative engines feed wooden/stone MJ pipes and directional lasers. The fixture
+requires exactly one red chipset, eight blue wires and an iron AND gate, along
+with stopped beams, saved missing-input selections and the owner advancement.
+Screenshots include partial work, live lasers, queued recipes and the output barrel.
+
+The 239 server tests currently verify:
+
+- Twenty-one assembly tests cover all 45 native recipes and packet synchronization,
+  counted/overlapping/exact-NBT ingredients, original costs and variants, round-robin
+  selections, paid work across missing inputs/deselection/reload, sided transactions,
+  pipe-priority output, full-inventory spills, exact removal and bucket remainders.
+  Six laser facings, cone/range limits, glass obstruction, rotation/target removal,
+  bounded/simulated MJ, low-battery ramping, fractional final transfer, stale handles,
+  malformed NBT/packets, data-pack replacement/removal and protected GUI choices are
+  checked. Native crafting checks basic gates, iron upgrades and all 24 logic flips.
 
 - Eighteen oil-generation tests cover native feature/data-pack/biome registration,
   climate reachability and toggles, actual surface predicates, deterministic seeds

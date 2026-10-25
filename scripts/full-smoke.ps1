@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -148,5 +148,17 @@ if ($OilGeneration) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $oilOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runOilGenerationClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($Assembly) {
+    $assemblyRun = Join-Path $verification 'assembly-client-run'
+    $assemblyConfig = Join-Path $assemblyRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $assemblyConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $assemblyConfig 'main.cfg') -Force
+    $assemblyOptions = Join-Path $assemblyRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $assemblyOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $assemblyOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runAssemblyClientSmoke --console=plain
 }
 exit $LASTEXITCODE

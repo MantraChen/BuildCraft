@@ -1,311 +1,146 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Native directional laser transport. Remake by FelixMantra.
  */
 package buildcraft.silicon.tile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import javax.annotation.Nonnull;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
+import java.util.*;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
-import buildcraft.api.core.SafeTimeTracker;
-import buildcraft.api.mj.ILaserTarget;
-import buildcraft.api.mj.MjAPI;
-import buildcraft.api.mj.MjBattery;
+import net.minecraft.util.math.*;
+import buildcraft.api.mj.*;
 import buildcraft.api.properties.BuildCraftProperties;
 import buildcraft.api.tiles.IDebuggable;
-
-import buildcraft.lib.block.ILocalBlockUpdateSubscriber;
-import buildcraft.lib.block.LocalBlockUpdateNotifier;
-import buildcraft.lib.misc.LocaleUtil;
-// STUB(R.Chen): MessageUtil.writeBlockPos/readBlockPos not in migrated MessageUtil — inlined.
-import buildcraft.lib.misc.NBTUtilBC;
+import buildcraft.lib.misc.PositionUtil;
 import buildcraft.lib.misc.data.AverageLong;
+import buildcraft.lib.misc.data.IdAllocator;
 import buildcraft.lib.net.PacketBufferBC;
-import buildcraft.lib.tile.TileBC_Neptune;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
+import buildcraft.lib.tile.*;
 
-// STUB(R.Chen): BCSiliconBlocks import removed — referenced only in stub comment.
-
-/**
- * Tile entity for the BuildCraft Laser block.
- *
- * STUB(R.Chen): VolumeUtil.iterateCone() not in libLeaf — target position search replaced with a
- * no-op stub; targets will never be found until VolumeUtil is migrated (Phase 4E).
- * STUB(R.Chen): LocalBlockUpdateNotifier world event listener stub — subscribes but no block
- * updates propagated until a mixin/Fabric event wires notifySubscribersInRange().
- * STUB(R.Chen): IDetachedRenderer/AdvDebuggerLaser, getRenderBoundingBox deferred to client phase.
- */
-public class TileLaser extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, ILocalBlockUpdateSubscriber {
-    private static final int TARGETING_RANGE = 6;
-
-    private final SafeTimeTracker clientLaserMoveInterval = new SafeTimeTracker(5, 10);
-    private final SafeTimeTracker serverTargetMoveInterval = new SafeTimeTracker(10, 20);
-
-    private final List<BlockPos> targetPositions = new ArrayList<>();
+public final class TileLaser extends TileBC_Neptune implements TickingBlockEntity,IDebuggable {
+    public static final IdAllocator IDS=TileBC_Neptune.IDS.makeChild("laser");
+    public static final int TARGETING_RANGE=6;
+    public static final long CAPACITY=1024*MjAPI.MJ,MAX_PER_TICK=4*MjAPI.MJ;
+    private final List<BlockPos> targets=new ArrayList<>();
+    private final AverageLong average=new AverageLong(100);
+    private final Connector connector=new Connector();
+    private long stored,lastTransfer,clientAverage,nextScan,nextChoose;
     private BlockPos targetPos;
     public Vec3d laserPos;
-    private boolean worldHasUpdated = true;
+    private boolean scanNeeded=true;
 
-    private final AverageLong avgPower = new AverageLong(100);
-    private long averageClient;
-    private final MjBattery battery;
-
-    public TileLaser(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
-        battery = new MjBattery(1024 * MjAPI.MJ);
-        caps.addProvider(new buildcraft.api.mj.MjCapabilityHelper(new buildcraft.lib.mj.MjBatteryReceiver(battery)));
+    public TileLaser(BlockEntityType<?> type,BlockPos pos,BlockState state){super(type,pos,state);}
+    @Override public IdAllocator getIdAllocator(){return IDS;}
+    public long getStoredPower(){return stored;}
+    public long getMaxPowerPerTick(){return MAX_PER_TICK;}
+    public long getAverageClient(){return clientAverage;}
+    public long getLastTransfer(){return lastTransfer;}
+    public BlockPos getTargetPos(){return targetPos;}
+    @Override public IMjConnector getMjConnector(Direction side){return isStorageAvailable()?connector:null;}
+    @Override public void onLoad(){super.onLoad();scanNeeded=true;}
+    @Override public void onNeighbourBlockChanged(Block block,BlockPos neighbor){super.onNeighbourBlockChanged(block,neighbor);scanNeeded=true;}
+    private Direction facing(){return getCachedState().get(BuildCraftProperties.BLOCK_FACING_6);}
+    private boolean inCone(BlockPos at) {
+        var d=at.subtract(pos);var face=facing();
+        int forward=d.getX()*face.getOffsetX()+d.getY()*face.getOffsetY()+d.getZ()*face.getOffsetZ();
+        if(forward<1 || forward>TARGETING_RANGE)return false;
+        return switch(face.getAxis()) {
+            case X -> Math.abs(d.getY())<forward && Math.abs(d.getZ())<forward;
+            case Y -> Math.abs(d.getX())<forward && Math.abs(d.getZ())<forward;
+            case Z -> Math.abs(d.getX())<forward && Math.abs(d.getY())<forward;
+        };
     }
-
-    public static <T extends TileLaser> BlockEntityTicker<T> ticker() {
-        return (world, pos, state, be) -> be.tick();
-    }
-
-    @Override
-    public int getUpdateRange() {
-        return TARGETING_RANGE;
-    }
-
-    @Override
-    public BlockPos getSubscriberPos() {
-        return getPos();
-    }
-
-    @Override
-    public void setWorldUpdated(World world, BlockPos eventPos, BlockState oldState, BlockState newState, int flags) {
-        this.worldHasUpdated = true;
-    }
-
-    private void findPossibleTargets() {
-        targetPositions.clear();
-        // STUB(R.Chen): VolumeUtil.iterateCone() not in libLeaf — target scanning disabled.
-        // When VolumeUtil is migrated, restore:
-        //   BlockState state = world.getBlockState(pos);
-        //   if (state.getBlock() != BCSiliconBlocks.laser) return;
-        //   Direction face = state.get(BuildCraftProperties.BLOCK_FACING_6);
-        //   VolumeUtil.iterateCone(world, pos, face, TARGETING_RANGE, true, (w, s, p, visible) -> { ... });
-    }
-
-    private void randomlyChooseTargetPos() {
-        List<BlockPos> targetsNeedingPower = new ArrayList<>();
-        for (BlockPos position : targetPositions) {
-            if (isPowerNeededAt(position)) {
-                targetsNeedingPower.add(position);
-            }
+    private ILaserTarget target(BlockPos at) {
+        if(at==null || !inCone(at) || !world.isChunkLoaded(at) || !(world.getBlockState(at).getBlock() instanceof ILaserTargetBlock)
+            || !(world.getBlockEntity(at) instanceof ILaserTarget target) || target.isInvalidTarget())return null;
+        for(var between:PositionUtil.getAllOnPath(pos,at)) {
+            if(between.equals(pos) || between.equals(at))continue;
+            if(!world.isChunkLoaded(between) || !world.isAir(between))return null;
         }
-        if (targetsNeedingPower.isEmpty()) {
-            targetPos = null;
+        return target;
+    }
+    private void scan() {
+        targets.clear();
+        for(int x=-TARGETING_RANGE;x<=TARGETING_RANGE;x++)for(int y=-TARGETING_RANGE;y<=TARGETING_RANGE;y++)for(int z=-TARGETING_RANGE;z<=TARGETING_RANGE;z++) {
+            BlockPos at=pos.add(x,y,z);
+            if(inCone(at) && target(at)!=null)targets.add(at);
+        }
+        nextScan=world.getTime()+20;scanNeeded=false;
+    }
+    private void choose() {
+        var candidates=new ArrayList<BlockPos>();
+        for(var at:targets){var target=target(at);if(target!=null && target.getRequiredLaserPower()>0)candidates.add(at);}
+        targetPos=candidates.isEmpty()?null:candidates.get(world.random.nextInt(candidates.size()));
+        nextChoose=world.getTime()+10+world.random.nextInt(21);
+    }
+    @Override public void tick() {
+        if(world==null || !isStorageAvailable())return;
+        if(world.isClient) {
+            if(targetPos==null || lastTransfer<=0)laserPos=null;
+            else if(laserPos==null || world.getTime()%5==0)
+                laserPos=Vec3d.of(targetPos).add((5.5+world.random.nextInt(6))/16,.5625,(5.5+world.random.nextInt(6))/16);
             return;
         }
-        targetPos = targetsNeedingPower.get(world.random.nextInt(targetsNeedingPower.size()));
-    }
-
-    private boolean isPowerNeededAt(BlockPos position) {
-        if (position != null) {
-            if (world.getBlockEntity(position) instanceof ILaserTarget target) {
-                return target.getRequiredLaserPower() > 0;
+        average.tick();BlockPos before=targetPos;boolean wasFiring=lastTransfer>0;lastTransfer=0;
+        if(scanNeeded || world.getTime()>=nextScan)scan();
+        var target=target(targetPos);
+        if(target==null || target.getRequiredLaserPower()<=0 || world.getTime()>=nextChoose){choose();target=target(targetPos);}
+        if(target!=null && stored>0) {
+            long ramp=MAX_PER_TICK*(stored+MAX_PER_TICK)/(CAPACITY/2);
+            long sent=Math.min(stored,Math.min(MAX_PER_TICK,Math.min(ramp,Math.max(0,target.getRequiredLaserPower()))));
+            if(sent>0) {
+                long excess=target.receiveLaserPower(sent);
+                if(excess<0 || excess>sent)throw new IllegalStateException("Invalid laser target energy remainder");
+                lastTransfer=sent-excess;stored-=lastTransfer;
+                if(lastTransfer>0){average.push(lastTransfer);markDirty();}
             }
         }
-        return false;
-    }
-
-    private ILaserTarget getTarget() {
-        if (targetPos != null) {
-            if (world.getBlockEntity(targetPos) instanceof ILaserTarget target) {
-                return target;
-            }
-        }
-        return null;
-    }
-
-    private void updateLaser() {
-        if (targetPos != null) {
-            laserPos = new Vec3d(targetPos.getX(), targetPos.getY(), targetPos.getZ())
-                .add(
-                    (5 + world.random.nextInt(6) + 0.5) / 16D,
-                    9 / 16D,
-                    (5 + world.random.nextInt(6) + 0.5) / 16D
-                );
-        } else {
-            laserPos = null;
-        }
-    }
-
-    public long getAverageClient() {
-        return averageClient;
-    }
-
-    public long getMaxPowerPerTick() {
-        return 4 * MjAPI.MJ;
-    }
-
-    public void tick() {
-        if (world.isClient) {
-            // set laser render position on client side
-            if (clientLaserMoveInterval.markTimeIfDelay(world) || targetPos == null) {
-                updateLaser();
-            }
-            return;
-        }
-
-        // set target tile on server side
-        avgPower.tick();
-
-        BlockPos previousTargetPos = targetPos;
-        if (worldHasUpdated) {
-            findPossibleTargets();
-            worldHasUpdated = false;
-        }
-
-        if (!isPowerNeededAt(targetPos)) {
-            targetPos = null;
-        }
-
-        if (serverTargetMoveInterval.markTimeIfDelay(world) || !isPowerNeededAt(targetPos)) {
-            randomlyChooseTargetPos();
-        }
-
-        ILaserTarget target = getTarget();
-        if (target != null) {
-            long max = getMaxPowerPerTick();
-            max *= battery.getStored() + max;
-            max /= battery.getCapacity() / 2;
-            max = Math.min(Math.min(max, getMaxPowerPerTick()), target.getRequiredLaserPower());
-            long power = battery.extractPower(0, max);
-            long excess = target.receiveLaserPower(power);
-            if (excess > 0) {
-                battery.addPowerChecking(excess, false);
-            }
-            avgPower.push(power - excess);
-        } else {
-            avgPower.clear();
-        }
-
-        if (!Objects.equals(previousTargetPos, targetPos) || true) {
+        if(!Objects.equals(before,targetPos) || wasFiring!=(lastTransfer>0) || world.getTime()%5==0)
             sendNetworkUpdate(NET_RENDER_DATA);
-        }
-
-        markChunkDirty();
     }
-
-    @Override
-    public void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
-        // MjBattery.writeToNbt returns a NbtCompound (migrated API)
-        nbt.put("battery", battery.writeToNbt());
-        if (laserPos != null) {
-            nbt.put("laser_pos", NBTUtilBC.writeVec3d(laserPos));
+    private final class Connector implements IMjReceiver,IMjReadable {
+        @Override public boolean canConnect(IMjConnector other){return isStorageAvailable() && other!=null;}
+        @Override public boolean canReceive(){return isStorageAvailable() && world!=null && !world.isClient;}
+        @Override public long getPowerRequested(){return canReceive()?CAPACITY-stored:0;}
+        @Override public long receivePower(long amount,boolean simulate) {
+            if(amount<0)throw new IllegalArgumentException("Negative laser energy");
+            long accepted=Math.min(amount,getPowerRequested());
+            if(!simulate && accepted>0){stored+=accepted;markDirty();}
+            return amount-accepted;
         }
-        if (targetPos != null) {
-            nbt.put("target_pos", NBTUtilBC.writeBlockPos(targetPos));
-        }
-        avgPower.writeToNbt(nbt, "average_power");
+        @Override public long getStored(){return isStorageAvailable()?stored:0;}
+        @Override public long getCapacity(){return isStorageAvailable()?CAPACITY:0;}
     }
-
-    @Override
-    public void readFromNBT(NbtCompound nbt) {
+    @Override public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);var battery=new NbtCompound();battery.putLong("stored",stored);nbt.put("battery",battery);
+    }
+    @Override public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        // TODO(R.Chen): remove legacy key in next version
-        if (nbt.contains("mj_battery")) {
-            nbt.put("battery", nbt.get("mj_battery"));
-        }
-        battery.readFromNbt(nbt.getCompound("battery"));
-        targetPos = NBTUtilBC.readBlockPos(nbt.get("target_pos"));
-        laserPos = NBTUtilBC.readVec3d(nbt.get("laser_pos"));
-        avgPower.readFromNbt(nbt, "average_power");
+        stored=Math.max(0,Math.min(CAPACITY,nbt.getCompound(nbt.contains("battery")?"battery":"mj_battery").getLong("stored")));
+        targetPos=null;lastTransfer=0;laserPos=null;scanNeeded=true;
     }
-
-    @Override
-    public void writePayload(int id, PacketBufferBC buffer, TileBC_Neptune.NetSide side) {
-        super.writePayload(id, buffer, side);
-        if (side == TileBC_Neptune.NetSide.SERVER) {
-            if (id == NET_RENDER_DATA) {
-                battery.writeToBuffer(buffer);
-                buffer.writeBoolean(targetPos != null);
-                if (targetPos != null) {
-                    // STUB(R.Chen): inline writeBlockPos (MessageUtil version not migrated)
-                    buffer.writeInt(targetPos.getX());
-                    buffer.writeInt(targetPos.getY());
-                    buffer.writeInt(targetPos.getZ());
-                }
-                buffer.writeLong((long) avgPower.getAverage());
-            }
+    @Override public void writePayload(int id,PacketBufferBC buffer,NetSide side) {
+        super.writePayload(id,buffer,side);
+        if(side==NetSide.SERVER && id==NET_RENDER_DATA) {
+            buffer.writeLong(stored);buffer.writeBoolean(targetPos!=null);
+            if(targetPos!=null)buffer.writeBlockPos(targetPos);
+            buffer.writeLong(lastTransfer);buffer.writeLong(Math.max(0,Math.min(MAX_PER_TICK,Math.round(average.getAverage()))));
         }
     }
-
-    @Override
-    public void readPayload(int id, PacketBufferBC buffer, TileBC_Neptune.NetSide side, Object ctx) throws IOException {
-        super.readPayload(id, buffer, side, ctx);
-        if (side == TileBC_Neptune.NetSide.CLIENT) {
-            if (id == NET_RENDER_DATA) {
-                battery.readFromBuffer(buffer);
-                if (buffer.readBoolean()) {
-                    // STUB(R.Chen): inline readBlockPos (MessageUtil version not migrated)
-                    targetPos = new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt());
-                } else {
-                    targetPos = null;
-                }
-                averageClient = buffer.readLong();
-            }
+    @Override public void readPayload(int id,PacketBufferBC buffer,NetSide side,Object context) throws IOException {
+        super.readPayload(id,buffer,side,context);
+        if(side==NetSide.CLIENT && id==NET_RENDER_DATA) {
+            long energy=buffer.readLong();BlockPos at=buffer.readBoolean()?buffer.readBlockPos():null;
+            long sent=buffer.readLong(),avg=buffer.readLong();
+            if(energy<0 || energy>CAPACITY || sent<0 || sent>MAX_PER_TICK || avg<0 || avg>MAX_PER_TICK
+                || at!=null && !inCone(at) || at==null && sent!=0)throw new IOException("Invalid laser state");
+            stored=energy;targetPos=at;lastTransfer=sent;clientAverage=avg;
+            if(at==null || sent==0)laserPos=null;
         }
     }
-
-    @Override
-    public void getDebugInfo(List<String> left, List<String> right, Direction side) {
-        left.add("battery = " + battery.getDebugString());
-        left.add("target = " + targetPos);
-        left.add("laser = " + laserPos);
-        left.add("average = " + LocaleUtil.localizeMjFlow(averageClient == 0 ? (long) avgPower.getAverage() : averageClient));
+    @Override public void getDebugInfo(List<String> left,List<String> right,Direction side) {
+        left.add("MJ = "+stored+"/"+CAPACITY);left.add("laser target = "+targetPos);left.add("sent = "+lastTransfer);
     }
-
-    @Override
-    public void cancelRemoval() {
-        super.cancelRemoval();
-        if (world != null && !world.isClient) {
-            LocalBlockUpdateNotifier.instance(world).registerSubscriberForUpdateNotifications(this);
-        }
-    }
-
-    @Override
-    public void markRemoved() {
-        super.markRemoved();
-        if (world != null && !world.isClient) {
-            LocalBlockUpdateNotifier.instance(world).removeSubscriberFromUpdateNotifications(this);
-        }
-    }
-
-    /** STUB(R.Chen): getRenderBoundingBox not a standard Fabric BlockEntity method — kept as
-     * environment-annotated helper for any render code that calls it explicitly. */
-    @Nonnull
-    @Environment(EnvType.CLIENT)
-    public net.minecraft.util.math.Box getRenderBoundingBox() {
-        // STUB(R.Chen): lib.misc.data.Box.extendToEncompass deferred. Return unit box around tile.
-        return new net.minecraft.util.math.Box(
-            getPos().getX(), getPos().getY(), getPos().getZ(),
-            getPos().getX() + 1, getPos().getY() + 1, getPos().getZ() + 1
-        );
-    }
-
-    // STUB(R.Chen): getDebugRenderer() / IDetachedRenderer / AdvDebuggerLaser deferred to client render phase.
-
-    // @Override removed (R.Chen): no longer overrides — Phase 10
-    public void render(float partialTicks) { /* STUB */ }
 }

@@ -16,6 +16,11 @@ import buildcraft.transport.tile.TilePipeHolder;
 
 public final class BCSiliconScreens {
     private BCSiliconScreens() {}
+    public static final ScreenHandlerType<buildcraft.silicon.container.ContainerAssemblyTable> ASSEMBLY=new ExtendedScreenHandlerType<>((syncId,inventory,data)->{
+        var pos=data.readBlockPos();
+        if(!(inventory.player.getWorld().getBlockEntity(pos) instanceof buildcraft.silicon.tile.TileAssemblyTable tile))throw new IllegalStateException("Missing assembly table at "+pos);
+        return new buildcraft.silicon.container.ContainerAssemblyTable(inventory.player,syncId,tile);
+    });
     public static final ScreenHandlerType<ContainerGate> GATE = new ExtendedScreenHandlerType<>((syncId, inventory, data) -> {
         var pos = data.readBlockPos();
         int side = data.readUnsignedByte();
@@ -25,7 +30,20 @@ public final class BCSiliconScreens {
         screen.readOpeningData(data);
         return screen;
     });
-    public static void register() { Registry.register(Registries.SCREEN_HANDLER, new Identifier("buildcraftsilicon", "gate"), GATE); }
+    public static void register() {
+        Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftsilicon","assembly_table"),ASSEMBLY);
+        Registry.register(Registries.SCREEN_HANDLER,new Identifier("buildcraftsilicon","gate"),GATE);
+    }
+    public static void openAssembly(PlayerEntity player,buildcraft.silicon.tile.TileAssemblyTable tile) {
+        if(!(player instanceof ServerPlayerEntity) || !tile.canInteractWith(player))return;
+        player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+            public Text getDisplayName(){return tile.getCachedState().getBlock().getName();}
+            public void writeScreenOpeningData(ServerPlayerEntity user,PacketByteBuf data){data.writeBlockPos(tile.getPos());}
+            public ScreenHandler createMenu(int syncId,PlayerInventory inventory,PlayerEntity user) {
+                return tile.canInteractWith(user)?new buildcraft.silicon.container.ContainerAssemblyTable(user,syncId,tile):null;
+            }
+        });
+    }
     public static void open(PlayerEntity player, PluggableGate gate) {
         var holder = gate.holder;
         if (!(player instanceof ServerPlayerEntity) || !holder.canPlayerInteract(player) || holder.getPluggable(gate.side) != gate) return;
