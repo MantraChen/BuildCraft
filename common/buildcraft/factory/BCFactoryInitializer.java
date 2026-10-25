@@ -41,8 +41,8 @@ public class BCFactoryInitializer implements ModInitializer {
         BCFactoryTags.register();
         BCFactoryBlocks.fmlPreInit();
         BCFactoryItems.fmlPreInit();
-        // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for each of:
-        //               AUTO_WORKBENCH_ITEMS, CHUTE, TANK, DISTILLER.
+        BCFactoryScreens.register();
+        // Remaining native screens: AUTO_WORKBENCH_ITEMS, CHUTE, DISTILLER.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCFactoryEventDist.INSTANCE) —
         //               port TextureStitchEvent to Fabric ClientSpriteRegistryCallback once
         //               factory render layer is migrated.

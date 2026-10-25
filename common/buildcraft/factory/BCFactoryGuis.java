@@ -19,6 +19,10 @@ public enum BCFactoryGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
+        if (this == TANK && player.getWorld().getBlockEntity(pos) instanceof buildcraft.factory.tile.TileTank tank) {
+            BCFactoryScreens.openTank(player, tank);
+            return;
+        }
         // STUB(R.Chen): Forge player.openGui → Fabric ScreenHandler, deferred — Phase 10
     }
 }

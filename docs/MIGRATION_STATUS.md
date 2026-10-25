@@ -58,18 +58,18 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 93 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 87 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **96 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **110 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **31 world tests passed** after 93 regression tests.
+- Headless Fabric GameTest: **33 world tests passed** after 110 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
   Energy; final packaged-jar validation remains blocked on full compilation.
-- Client model/GUI fixture: **24 tests passed**, plus the expression library's 13 tests.
+- Client model/GUI fixture: **27 tests passed**, plus the expression library's 13 tests.
   Real engine JSON and Minecraft sprite/vertex classes are used without a GL context.
   All five engine variants bake across every power stage and facing; referenced textures
   exist. Tests cover piston movement, stage emission, alias UVs, parent cycles/reuse,
@@ -80,6 +80,28 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Replaced the tank's zero-return Fabric adapter and broken Forge storage shim with
+  one transaction-aware droplet store. Legacy mB constructors/methods convert exactly
+  once; partial mB quantities survive native transfers and saves. Variant/NBT isolation,
+  capacity bounds, simulation, nested rollback, commit callbacks and first-fluid locks
+  are covered. Imported Forge saves use mB; earlier Fabric saves retain droplets.
+- Bucket exchanges use real Fabric item contexts, committing container replacement,
+  overflow and fluid changes together. Fourteen new regression tests include insufficient
+  capacity, stacked-bucket overflow rejection, outer abort, column conservation and
+  incompatible-fluid barriers and all 30 oil/fuel bucket variants. Two additional world
+  tests verify survival inventory overflow and creative container preservation without
+  duplicate returned buckets. Machine tank managers persist named tanks and expose
+  native fluid storage; the actual tank tile now registers its storage, settles connected
+  vertical tanks, updates comparators and synchronizes exact fluid amounts.
+- Tank screens now register a real extended screen handler with the server's sync ID
+  and block position, validate use, and support cursor clicks and inventory shift-clicks.
+  Shared tank widgets/help metadata no longer carry client-only class annotations.
+  GUI fill textures, translucent world cuboids, native tank blockstates, crafting, loot
+  and English/Chinese names are wired. Three geometry tests cover outward winding,
+  gas/liquid fill bounds and face masks. Actual tank placement, screen opening, multiplayer
+  synchronization, world save/reload and GPU output still require full-mod startup;
+  the subsystem tests do not establish these integration results. Other machine screens,
+  refinery simulation and sided machine-specific fluid policies remain unfinished.
 - Restored all ten oil/fuel families at three heat levels as native source/flowing
   pairs, world blocks and buckets, registered before the oil spring uses them.
   Flow retains variable quanta, viscosity-dependent tick rates, gas rising, liquid

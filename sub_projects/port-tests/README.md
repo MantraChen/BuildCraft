@@ -13,18 +13,22 @@ The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not crea
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
 compilation or startup; the root `build` and real client/server checks remain required.
 
-Current coverage: 96 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 110 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
 resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
 policy, persistent configuration (legacy files, reloads, migrations, defaults and bounds),
 packet framing/ownership/size limits, delayed task ordering, and item/fluid cache round trips,
 bounded requests, defensive copies, session reset, marker message codecs and repeatable
 native registry metadata, and guide stack literals with native registry validation,
-embedded SNBT commas and damage/NBT preservation.
+embedded SNBT commas and damage/NBT preservation. Fourteen fluid-storage regressions
+cover exact droplet/mB conversion, old saves, capacity bounds, fluid/NBT isolation,
+nested rollback, first-fluid lock rollback, defensive snapshots, native bucket exchanges,
+insufficient capacity, stacked-bucket overflow rejection, column settling/barriers and
+round-trip exchanges for all 30 production oil/fuel buckets.
 Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 
-For the regression tests followed by 31 tests in a real Minecraft world:
+For the regression tests followed by 33 tests in a real Minecraft world:
 
 ```powershell
 ./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
@@ -46,7 +50,9 @@ variants and native buckets, source-only collection, real scheduled gravity tick
 gas rising, spread beyond vanilla's eight levels, finite source removal, density-based
 water displacement and collision barriers. The 20×8×8 empty fluid template reserves
 each test's channel independently. Reports are written to
-`verification/gametest-results.xml`. This still loads selected production classes;
+`verification/gametest-results.xml`. Two tank interaction tests use real server players
+to exercise survival overflow and creative container preservation/return-item deduplication.
+This still loads selected production classes;
 full BuildCraft registration, rendering, machines and transport require separate checks.
 
 Remake by FelixMantra.

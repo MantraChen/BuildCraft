@@ -37,7 +37,7 @@ public class BlockTank extends BlockBCTile_Neptune implements ICustomPipeConnect
     private static final Box BOUNDING_BOX = new Box(2 / 16D, 0 / 16D, 2 / 16D, 14 / 16D, 16 / 16D, 14 / 16D);
 
     public BlockTank(AbstractBlock.Settings material, String id) {
-        super(material, id);
+        super(material.nonOpaque(), id);
     }
 
     @Override
@@ -96,6 +96,23 @@ public class BlockTank extends BlockBCTile_Neptune implements ICustomPipeConnect
             return ((TileTank) tile).getComparatorLevel();
         }
         return 0;
+    }
+
+    @Override public net.minecraft.util.shape.VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos,
+            net.minecraft.block.ShapeContext context) {
+        return net.minecraft.util.shape.VoxelShapes.cuboid(BOUNDING_BOX);
+    }
+    @Override public boolean hasComparatorOutput(BlockState state) { return true; }
+    @Override public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
+        return getComparatorInputOverride(state, world, pos);
+    }
+    @Override public BlockState getPlacementState(net.minecraft.item.ItemPlacementContext context) {
+        return getActualState(getDefaultState(), context.getWorld(), context.getBlockPos());
+    }
+    @Override public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighbor,
+            net.minecraft.world.WorldAccess world, BlockPos pos, BlockPos neighborPos) {
+        return direction == Direction.DOWN ? getActualState(state, world, pos)
+            : super.getStateForNeighborUpdate(state, direction, neighbor, world, pos, neighborPos);
     }
 
     @Override

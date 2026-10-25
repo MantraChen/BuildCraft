@@ -20,7 +20,6 @@ import com.google.common.collect.ForwardingList;
 import buildcraft.lib.misc.LocaleUtil;
 import buildcraft.lib.misc.StringUtilBC;
 
-@Environment(EnvType.CLIENT)
 public class ToolTip extends ForwardingList<String> implements RandomAccess {
 
     /* If the impl list class does not implement RandomAccess then the interface MUST be removed from this class */

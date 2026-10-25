@@ -6,7 +6,7 @@
   "environment": "server",
   "entrypoints": {
     "server": ["buildcraft.test.PortTestRunner"],
-    "fabric-gametest": ["buildcraft.test.lib.world.MiningGameTests", "buildcraft.test.lib.world.NetworkGameTests", "buildcraft.test.lib.world.BlockEntityRegistryGameTests", "buildcraft.test.lib.world.MachineApiGameTests", "buildcraft.test.lib.world.FluidGameTests"]
+    "fabric-gametest": ["buildcraft.test.lib.world.MiningGameTests", "buildcraft.test.lib.world.NetworkGameTests", "buildcraft.test.lib.world.BlockEntityRegistryGameTests", "buildcraft.test.lib.world.MachineApiGameTests", "buildcraft.test.lib.world.FluidGameTests", "buildcraft.test.lib.world.TankInteractionGameTests"]
   },
   "depends": {
     "fabricloader": ">=0.15.11",

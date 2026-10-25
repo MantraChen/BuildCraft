@@ -51,7 +51,11 @@ public abstract class ContainerBC_Neptune extends ScreenHandler implements build
     private final List<Widget_Neptune<?>> widgets = new ArrayList<>();
 
     public ContainerBC_Neptune(PlayerEntity player, int syncId) {
-        super(null, syncId);
+        this(null, player, syncId);
+    }
+
+    public ContainerBC_Neptune(net.minecraft.screen.ScreenHandlerType<?> type, PlayerEntity player, int syncId) {
+        super(type, syncId);
         this.player = player;
     }
 

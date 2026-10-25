@@ -30,22 +30,15 @@ public class ContainerDistiller extends ContainerBCTile<TileDistiller_BC8> {
         widgetOutputLiquidTank = addWidget(new WidgetFluidTank(this, tank.tankLiquidOut));
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
-        // The only slots are player slots -- try to interact with the tank
-
-        if (!player.getWorld().isClient) {
-            Slot slot = inventorySlots.get(index);
-            ItemStack stack = slot.getStack();
-            ItemStack original = stack.copy();
-            stack = tile.tankIn.transferStackToTank(this, stack);
-            if (!ItemStack.areEqual(stack, original)) {
-                slot.setStack(stack);
+    @Override
+    public ItemStack quickMove(PlayerEntity player, int index) {
+        if (!player.getWorld().isClient && canUse(player) && index >= 0 && index < slots.size()) {
+            Slot slot = slots.get(index);
+            if (slot.inventory == player.getInventory() && tile.tankIn.interactInventorySlot(this, slot)) {
                 sendContentUpdates();
-                return ItemStack.EMPTY;
             }
         }
-
-        return super.transferStackInSlot(player, index);
+        // Fluid exchange already changed the actual inventory transactionally; no ordinary item move occurred.
+        return ItemStack.EMPTY;
     }
 }

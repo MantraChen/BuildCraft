@@ -308,7 +308,7 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     /** Called whenever {@link #onRemove()} is called (by default). */
     public void addDrops(DefaultedList<ItemStack> toDrop, int fortune) {
         itemManager.addDrops(toDrop);
-        tankManager.addDrops(toDrop);
+        // Fluid contents have no item representation when a machine is broken.
     }
 
     public void onPlacedBy(LivingEntity placer, ItemStack stack) {
@@ -344,6 +344,7 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
 
     public boolean onActivated(PlayerEntity player, Hand hand, Direction facing, float hitX, float hitY,
         float hitZ) {
+        if (!canInteractWith(player)) return false;
         return tankManager.onActivated(player, getPos(), hand);
     }
 
@@ -362,7 +363,13 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
         return caps.getMjConnector();
     }
 
-    // Item caps
+    // Native fluid and item storage lookups.
+    @Nullable
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant>
+        getFluidStorage(@Nullable Direction side) {
+        return tankManager.isEmpty() ? null : tankManager;
+    }
+
     public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant>
         getItemStorage(@Nullable Direction side) {
         return itemManager.getStorage(side);
@@ -424,7 +431,8 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     }
 
     public boolean canInteractWith(PlayerEntity player) {
-        if (world.getBlockEntity(pos) != this) {
+        if (world == null || isRemoved() || player.isSpectator() || player.getWorld() != world || !world.isChunkLoaded(pos)
+            || world.getBlockEntity(pos) != this) {
             return false;
         }
         if (player.squaredDistanceTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) > 64.0D) {

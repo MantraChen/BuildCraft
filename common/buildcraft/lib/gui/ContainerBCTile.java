@@ -16,7 +16,11 @@ public abstract class ContainerBCTile<T extends TileBC_Neptune> extends Containe
     public final T tile;
 
     public ContainerBCTile(PlayerEntity player, int syncId, T tile) {
-        super(player, syncId);
+        this(null, player, syncId, tile);
+    }
+
+    public ContainerBCTile(net.minecraft.screen.ScreenHandlerType<?> type, PlayerEntity player, int syncId, T tile) {
+        super(type, player, syncId);
         this.tile = tile;
         if (!tile.getWorld().isClient) {
             tile.onPlayerOpen(player);

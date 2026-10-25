@@ -30,7 +30,7 @@ import buildcraft.lib.gui.pos.MousePosition;
 /** Forge GuiContainer → Fabric HandledScreen. Manages BuildCraft GUI element trees. */
 @Environment(EnvType.CLIENT)
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class BuildCraftGui extends HandledScreen {
+public class BuildCraftGui extends HandledScreen<ContainerBC_Neptune> {
 
     /** Area covering the full logical screen (scaled GUI coordinates). */
     public static IGuiArea createScreenArea() {
@@ -68,7 +68,7 @@ public class BuildCraftGui extends HandledScreen {
     /** Forge-compat: maps to {@link #backgroundHeight}. Setting this also updates backgroundHeight. */
     protected int ySize = 166;
 
-    public BuildCraftGui(ScreenHandler handler, PlayerInventory inv, Text title) {
+    public BuildCraftGui(ContainerBC_Neptune handler, PlayerInventory inv, Text title) {
         super(handler, inv, title);
         this.rootElement = createWindowedArea(this);
         lowerLeftLedgerPos = rootElement.offset(0, 5);

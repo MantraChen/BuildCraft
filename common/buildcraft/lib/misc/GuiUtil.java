@@ -309,24 +309,15 @@ public class GuiUtil {
     }
 
     public static void drawFluid(IGuiArea position, FluidStackBC fluid, int capacity) {
-        if (fluid == null || fluid.amount <= 0) return;
-        drawFluid(position, fluid, (int) fluid.amount, capacity);
+        if (fluid != null) buildcraft.lib.gui.GuiFluidRenderer.draw(position, fluid, fluid.amount,
+            buildcraft.lib.compat.BCFluidStorage.mBToDroplets(capacity));
     }
 
+    /** Legacy overload: explicit amount and capacity are both in mB. */
     public static void drawFluid(IGuiArea position, FluidStackBC fluid, int amount, int capacity) {
-        if (fluid == null || amount <= 0) return;
-
-        double height = amount * position.getHeight() / capacity;
-
-        double startX = position.getX();
-        double startY;
-        double endX = startX + position.getWidth();
-        double endY;
-
-        // STUB(R.Chen): isGaseous removed in 1.20.1; assume non-gaseous
-        startY = position.getEndY();
-        endY = startY - height;
-        // STUB(R.Chen): FluidRenderer.drawFluidForGui removed — use VertexConsumer path
+        buildcraft.lib.gui.GuiFluidRenderer.draw(position, fluid,
+            buildcraft.lib.compat.BCFluidStorage.mBToDroplets(amount),
+            buildcraft.lib.compat.BCFluidStorage.mBToDroplets(capacity));
     }
 
     public static AutoGlScissor scissor(double x, double y, double width, double height) {

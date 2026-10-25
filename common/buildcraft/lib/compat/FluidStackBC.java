@@ -125,6 +125,12 @@ public final class FluidStackBC {
     @Nullable
     public static FluidStackBC fromNbt(NbtCompound tag) {
         if (tag == null || tag.isEmpty()) return EMPTY;
+        if (tag.contains("FluidName")) {
+            Fluid legacy = FluidRegistryBC.getFluid(tag.getString("FluidName"));
+            if (legacy == null) return EMPTY;
+            FluidVariant variant = FluidVariant.of(legacy, tag.contains("Tag") ? tag.getCompound("Tag") : null);
+            return ofMilliBuckets(variant, Math.max(0, tag.getInt("Amount")));
+        }
         FluidVariant fv = FluidVariant.fromNbt(tag);
         if (fv.isBlank()) return EMPTY;
         long amt = tag.getLong("Amount");

@@ -12,7 +12,6 @@ import net.fabricmc.api.Environment;
 
 import buildcraft.lib.gui.pos.IGuiArea;
 
-@Environment(EnvType.CLIENT)
 public class ElementHelpInfo {
     public final String title;
     public final String text;

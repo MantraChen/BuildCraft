@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["ggg", "g g", "ggg"],
+  "key": {"g": {"item": "minecraft:glass"}},
+  "result": {"item": "buildcraftfactory:tank"}
+}

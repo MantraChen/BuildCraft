@@ -41,7 +41,8 @@ public final class FluidRegistryBC {
     @Nullable
     public static Fluid getFluid(String name) {
         if (name == null || name.isEmpty()) return null;
-        Identifier id = name.contains(":") ? new Identifier(name) : new Identifier("minecraft", name);
+        Identifier id = Identifier.tryParse(name);
+        if (id == null) return null;
         Fluid fluid = Registries.FLUID.get(id);
         // Imported saves/scripts used Forge's unnamespaced oil/fuel names.
         if (fluid == Fluids.EMPTY && !name.contains(":")) {

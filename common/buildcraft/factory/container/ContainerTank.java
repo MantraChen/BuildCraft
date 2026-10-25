@@ -19,30 +19,27 @@ public class ContainerTank extends ContainerBCTile<TileTank> {
     public final WidgetFluidTank widgetTank;
 
     public ContainerTank(PlayerEntity player, TileTank tank) {
-        super(player, tank);
+        this(player, 0, tank);
+    }
+
+    public ContainerTank(PlayerEntity player, int syncId, TileTank tank) {
+        super(buildcraft.factory.BCFactoryScreens.TANK, player, syncId, tank);
 
         addFullPlayerInventory(99);
 
         widgetTank = addWidget(new WidgetFluidTank(this, tank.tank));
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
-        // The only slots are player slots -- try to interact with the tank
-
-        if (!player.getWorld().isClient) {
-            Slot slot = inventorySlots.get(index);
-            ItemStack stack = slot.getStack();
-            ItemStack original = stack.copy();
-            stack = tile.tank.transferStackToTank(this, stack);
-            tile.balanceTankFluids();
-            if (!ItemStack.areEqual(stack, original)) {
-                slot.setStack(stack);
+    @Override
+    public ItemStack quickMove(PlayerEntity player, int index) {
+        if (!player.getWorld().isClient && canUse(player) && index >= 0 && index < slots.size()) {
+            Slot slot = slots.get(index);
+            if (slot.inventory == player.getInventory() && tile.tank.interactInventorySlot(this, slot)) {
+                tile.balanceTankFluids();
                 sendContentUpdates();
-                return ItemStack.EMPTY;
             }
         }
-
-        return super.transferStackInSlot(player, index);
+        // Fluid exchange already changed the actual inventory transactionally; no ordinary item move occurred.
+        return ItemStack.EMPTY;
     }
 }

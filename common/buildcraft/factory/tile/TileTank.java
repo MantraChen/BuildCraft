@@ -1,96 +1,86 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.factory.tile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-
-import buildcraft.api.core.EnumPipePart;
 import buildcraft.api.tiles.IDebuggable;
-
+import buildcraft.lib.fluid.Tank;
+import buildcraft.lib.fluid.FluidTankColumn;
 import buildcraft.lib.misc.data.IdAllocator;
 import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
+import buildcraft.lib.tile.TickingBlockEntity;
 
-// Forge→Fabric migration notes (R.Chen):
-//   ITickable.update()         → tick() + static ticker()
-//   FluidStack/FluidTankProperties/IFluidHandlerAdv → STUB (Transfer-API, Phase 4E)
-//   Tank/FluidSmoother         → STUB (Phase 4E)
-//   IFluidFilter/IFluidHandlerAdv → STUB (api.core not fully in libLeaf)
-//   onActivated(PlayerEntity)  → onActivated(PlayerEntity) in TileBC_Neptune (already migrated)
-//   onPlacedBy(LivingEntity) → onPlacedBy(LivingEntity) in TileBC_Neptune
-//   PlayerEntity               → PlayerEntity
-//   Direction                 → Direction
-//   NbtCompound             → NbtCompound
-//   Side                       → NetSide
-//   balanceTankFluids / getTanks → STUB (Tank not in libLeaf)
-public class TileTank extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
+public class TileTank extends TileBC_Neptune implements TickingBlockEntity, IDebuggable {
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("tank");
     public static final int NET_FLUID_DELTA = IDS.allocId("FLUID_DELTA");
-
-    // STUB(R.Chen): Tank + FluidSmoother deferred to Phase 4E (Transfer-API fluid migration).
-    public final buildcraft.lib.fluid.Tank tank;
-    // public final FluidSmoother smoothedTank;
-
-    private int lastComparatorLevel;
+    public final Tank tank;
+    private int lastComparatorLevel = -1;
+    private boolean contentsDirty = true;
 
     public TileTank(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        // STUB(R.Chen): Tank capacity / capability registration deferred.
-        tank = new buildcraft.lib.fluid.Tank("tank", 16000, this);
+        tank = tankManager.add(new Tank("tank", 16000, this));
     }
-
-    @Override
-    public IdAllocator getIdAllocator() {
-        return IDS;
-    }
-
+    @Override public IdAllocator getIdAllocator() { return IDS; }
     public int getComparatorLevel() {
-        // STUB(R.Chen): tank.getFluidAmount() / getCapacity() deferred.
-        return 0;
+        long amount = tank.getStorage().getAmount(), capacity = tank.getStorage().getCapacity();
+        return amount == 0 ? 0 : 1 + (int) (14 * amount / capacity);
     }
-
-    /** BlockEntityTicker wired in BlockTank.getTicker(). Replaces ITickable.update(). */
-    @SuppressWarnings("unchecked")
-    public static <T extends TileTank> BlockEntityTicker<T> ticker() {
-        return (world, pos, state, be) -> be.tick();
+    @Override public void markDirty() { super.markDirty(); contentsDirty = true; }
+    @Override public void onNeighbourBlockChanged(net.minecraft.block.Block block, BlockPos neighbor) {
+        super.onNeighbourBlockChanged(block, neighbor); contentsDirty = true;
     }
-
-    public void tick() {
-        // STUB(R.Chen): smoothedTank.tick(world) + comparator level check deferred (Phase 4E).
+    @Override public void onLoad() { super.onLoad(); contentsDirty = true; }
+    @Override public boolean onActivated(PlayerEntity player, Hand hand, Direction facing, float x, float y, float z) {
+        if (!canInteractWith(player)) return false;
+        if (super.onActivated(player, hand, facing, x, y, z)) {
+            if (!world.isClient) balanceTankFluids();
+            return true;
+        }
+        if (!world.isClient) buildcraft.factory.BCFactoryScreens.openTank(player, this);
+        return true;
     }
-
-    // Networking
-
-    @Override
-    public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
+    public void balanceTankFluids() {
+        if (world == null || world.isClient || isRemoved()) return;
+        BlockPos bottom = pos;
+        while (world.isInBuildLimit(bottom.down()) && world.getBlockEntity(bottom.down()) instanceof TileTank) bottom = bottom.down();
+        List<TileTank> column = new ArrayList<>();
+        for (BlockPos scan = bottom; world.isInBuildLimit(scan) && world.getBlockEntity(scan) instanceof TileTank other; scan = scan.up()) {
+            column.add(other);
+        }
+        FluidTankColumn.settle(column.stream().map(tile -> tile.tank.getStorage()).toList());
+        for (TileTank tile : column) tile.updateContents();
+    }
+    private void updateContents() {
+        if (!contentsDirty) return;
+        contentsDirty = false;
+        int comparator = getComparatorLevel();
+        if (comparator != lastComparatorLevel) {
+            lastComparatorLevel = comparator;
+            world.updateComparators(pos, getCachedState().getBlock());
+        }
+        sendNetworkUpdate(NET_RENDER_DATA);
+    }
+    @Override public void tick() {
+        if (world != null && !world.isClient && contentsDirty) balanceTankFluids();
+    }
+    @Override public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
         super.writePayload(id, buffer, side);
-        // STUB(R.Chen): smoothedTank payloads deferred — FluidSmoother not in libLeaf.
+        if (side == NetSide.SERVER && id == NET_RENDER_DATA) tank.writeToBuffer(buffer);
     }
-
-    @Override
-    public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
+    @Override public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
         super.readPayload(id, buffer, side, ctx);
-        // STUB(R.Chen): smoothedTank payloads deferred — FluidSmoother not in libLeaf.
+        if (side == NetSide.CLIENT && id == NET_RENDER_DATA) tank.readFromBuffer(buffer);
     }
-
-    // IDebuggable
-
-    @Override
-    public void getDebugInfo(List<String> left, List<String> right, Direction side) {
-        left.add("fluid = STUB(Tank not yet migrated)");
+    @Override public void getDebugInfo(List<String> left, List<String> right, Direction side) {
+        left.add("fluid = " + tank.getDebugString());
     }
 }
