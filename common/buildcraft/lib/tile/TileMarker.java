@@ -40,7 +40,8 @@ public abstract class TileMarker<C extends MarkerConnection<C>> extends TileBC_N
     @Override
     public void onChunkUnload() {
         super.onChunkUnload();
-        getLocalCache().unloadMarker(getPos());
+        // A block removal may have already removed membership before Fabric's unload event.
+        if (getLocalCache().hasLoadedOrUnloadedMarker(getPos())) getLocalCache().unloadMarker(getPos());
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1

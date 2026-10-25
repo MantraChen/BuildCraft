@@ -58,6 +58,27 @@ public class BCLibInitializer implements ModInitializer {
     }
 
     private static void registerLifecycleEvents() {
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((entity, world) -> {
+            if (entity instanceof buildcraft.lib.tile.TileBC_Neptune tile) {
+                // Fabric may notify before NBT is applied; initialize on the next game tick.
+                buildcraft.lib.misc.MessageUtil.doDelayedServer(world.getServer(), () -> {
+                    if (!tile.isRemoved() && world.isChunkLoaded(tile.getPos())
+                        && world.getBlockEntity(tile.getPos()) == tile) tile.onLoad();
+                });
+            }
+        });
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((entity, world) -> {
+            if (entity instanceof buildcraft.lib.tile.TileBC_Neptune tile) tile.onChunkUnload();
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+            buildcraft.lib.misc.MessageUtil.doDelayedServer(server, () -> {
+                if (!handler.isConnectionOpen()) return;
+                buildcraft.lib.marker.MarkerCache.onPlayerJoinWorld(handler.player);
+            }));
+        net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, from, to) ->
+            buildcraft.lib.misc.MessageUtil.doDelayedServer(to.getServer(), () -> {
+                if (player.networkHandler.isConnectionOpen()) buildcraft.lib.marker.MarkerCache.onPlayerJoinWorld(player);
+            }));
         // Forge: FMLServerStartingEvent → register command
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onServerStarting();
@@ -70,10 +91,11 @@ public class BCLibInitializer implements ModInitializer {
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(buildcraft.lib.misc.MessageUtil::stopServer);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> buildcraft.lib.net.cache.BuildCraftObjectCaches.onServerStopped());
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> buildcraft.lib.marker.MarkerCache.clearServer());
 
         // Forge: WorldEvent.Unload (server side)
         ServerWorldEvents.UNLOAD.register((server, world) -> {
-            // STUB(R.Chen): MarkerCache.onWorldUnload(world); FakePlayerProvider.unloadWorld(world);
+            buildcraft.lib.marker.MarkerCache.onWorldUnload(world);
         });
     }
 }

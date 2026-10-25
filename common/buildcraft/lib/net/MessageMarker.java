@@ -1,93 +1,62 @@
 /*
  * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  */
-
 package buildcraft.lib.net;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-
-import io.netty.buffer.ByteBuf;
-
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+/** Immutable marker membership/connection update, scoped to its source dimension. */
+public final class MessageMarker implements FabricPacket {
+    public static final int MAX_POSITIONS = 32767;
+    public static final PacketType<MessageMarker> TYPE = PacketType.create(
+        new Identifier("buildcraft", "markers"), MessageMarker::read);
+    public final Identifier dimension;
+    public final int cacheId;
+    public final boolean add, connection;
+    public final List<BlockPos> positions;
 
-import buildcraft.api.core.BCLog;
-
-import buildcraft.lib.BCLibProxy;
-import buildcraft.lib.marker.MarkerCache;
-import buildcraft.lib.misc.MessageUtil;
-
-public class MessageMarker implements IMessage {
-    private static final boolean DEBUG = MessageManager.DEBUG;
-
-    public boolean add, multiple, connection;
-    public int cacheId, count;
-    public final List<BlockPos> positions = new ArrayList<>();
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void fromBytes(ByteBuf buf) {
-        PacketBufferBC packet = PacketBufferBC.asPacketBufferBc(buf);
-        add = packet.readBoolean();
-        multiple = packet.readBoolean();
-        connection = packet.readBoolean();
-        cacheId = packet.readShort();
-        if (multiple) {
-            count = packet.readShort();
-        } else {
-            count = 1;
+    public MessageMarker(Identifier dimension, int cacheId, boolean add, boolean connection, Collection<BlockPos> positions) {
+        if (cacheId < 0 || cacheId > 32767 || positions.isEmpty() || positions.size() > MAX_POSITIONS) {
+            throw new IllegalArgumentException("Invalid marker cache or position count");
         }
-        for (int i = 0; i < count; i++) {
-            positions.add(MessageUtil.readBlockPos(packet));
-        }
+        this.dimension = java.util.Objects.requireNonNull(dimension);
+        this.cacheId = cacheId;
+        this.add = add;
+        this.connection = connection;
+        this.positions = positions.stream().map(BlockPos::toImmutable).toList();
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void toBytes(ByteBuf buf) {
-        count = positions.size();
-        multiple = count != 1;
-        PacketBufferBC packet = PacketBufferBC.asPacketBufferBc(buf);
-        packet.writeBoolean(add);
-        packet.writeBoolean(multiple);
-        packet.writeBoolean(connection);
-        packet.writeShort(cacheId);
-        if (multiple) {
-            packet.writeShort(count);
+    public static MessageMarker read(PacketByteBuf wire) {
+        Identifier dimension = wire.readIdentifier();
+        PacketBufferBC buffer = new PacketBufferBC(wire);
+        boolean add = buffer.readBoolean(), multiple = buffer.readBoolean(), connection = buffer.readBoolean();
+        int cacheId = buffer.readUnsignedShort();
+        int count = multiple ? buffer.readUnsignedShort() : 1;
+        if (count < 1 || count > MAX_POSITIONS || buffer.readableBytes() != count * Long.BYTES) {
+            throw new IllegalArgumentException("Invalid marker payload length");
         }
-        for (BlockPos pos : positions) {
-            MessageUtil.writeBlockPos(packet, pos);
-        }
+        java.util.ArrayList<BlockPos> positions = new java.util.ArrayList<>(count);
+        for (int i = 0; i < count; i++) positions.add(buffer.readBlockPos());
+        return new MessageMarker(dimension, cacheId, add, connection, positions);
     }
 
-    @Override
-    public String toString() {
-        boolean[] flags = { add, multiple, connection };
-        return "Message Marker [" + Arrays.toString(flags) + ", cacheId " + cacheId + ", count = " + count
-            + ", positions = " + positions + "]";
+    @Override public void write(PacketByteBuf wire) {
+        wire.writeIdentifier(dimension);
+        PacketBufferBC buffer = new PacketBufferBC(wire);
+        buffer.writeBoolean(add);
+        buffer.writeBoolean(positions.size() != 1);
+        buffer.writeBoolean(connection);
+        buffer.writeShort(cacheId);
+        if (positions.size() != 1) buffer.writeShort(positions.size());
+        for (BlockPos pos : positions) buffer.writeBlockPos(pos);
     }
 
-    public static final IMessageHandler<MessageMarker, IMessage> HANDLER = (message, ctx) -> {
-        World world = BCLibProxy.getProxy().getClientWorld();
-        if (world == null) {
-            if (DEBUG) {
-                BCLog.logger.warn("[lib.messages][marker] The world was null for a message!");
-            }
-            return null;
-        }
-        if (message.cacheId < 0 || message.cacheId >= MarkerCache.CACHES.size()) {
-            if (DEBUG) {
-                BCLog.logger.warn("[lib.messages][marker] The cache ID " + message.cacheId + " was invalid!");
-            }
-            return null;
-        }
-        MarkerCache<?> cache = MarkerCache.CACHES.get(message.cacheId);
-        cache.getSubCache(world).handleMessageMain(message);
-        return null;
-    };
+    @Override public PacketType<?> getType() { return TYPE; }
 }

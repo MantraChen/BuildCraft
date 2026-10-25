@@ -364,6 +364,7 @@ public class TileQuarry extends TileBC_Neptune implements IDebuggable, IChunkLoa
 
     @Override
     public void onLoad() {
+        super.onLoad();
         if (!world.isClient) {
             updatePoses();
         }

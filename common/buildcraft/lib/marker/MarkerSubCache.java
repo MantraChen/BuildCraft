@@ -40,7 +40,7 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
     public static final boolean DEBUG_FULL = BCDebugging.shouldDebugComplex("lib.marker.full");
 
     public final int cacheId;
-    public final int dimensionId;
+    public final World world;
     public final boolean isServer;
     private final Map<BlockPos, C> posToConnection = new ConcurrentHashMap<>();
     private final Map<C, Set<BlockPos>> connectionToPos = new ConcurrentHashMap<>();
@@ -48,7 +48,7 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
 
     public MarkerSubCache(World world, int cacheId) {
         this.isServer = !world.isClient;
-        this.dimensionId = System.identityHashCode(world);
+        this.world = world;
         this.cacheId = cacheId;
     }
 
@@ -56,21 +56,16 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
         if (isServer) {// Sanity Check
             // Send ALL loaded markers
             if (!tileCache.isEmpty()) {
-                MessageMarker message = new MessageMarker();
-                message.add = true;
-                message.connection = false;
-                message.cacheId = cacheId;
-                message.positions.addAll(tileCache.keySet());
-                MessageManager.sendTo(message, player);
+                List<BlockPos> all = new ArrayList<>(tileCache.keySet());
+                for (int start = 0; start < all.size(); start += MessageMarker.MAX_POSITIONS) {
+                    MessageManager.sendTo(new MessageMarker(world.getRegistryKey().getValue(), cacheId, true, false,
+                        all.subList(start, Math.min(all.size(), start + MessageMarker.MAX_POSITIONS))), player);
+                }
             }
             // Send ALL connections.
             for (C connection : connectionToPos.keySet()) {
-                MessageMarker message = new MessageMarker();
-                message.add = true;
-                message.connection = true;
-                message.cacheId = cacheId;
-                message.positions.addAll(connection.getMarkerPositions());
-                MessageManager.sendTo(message, player);
+                MessageManager.sendTo(new MessageMarker(world.getRegistryKey().getValue(), cacheId, true, true,
+                    connection.getMarkerPositions()), player);
             }
         }
     }
@@ -96,14 +91,8 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
             BCLog.logger.info("[lib.marker.full] Set a marker at " + pos + " as " + marker);
         }
         if (isServer && !did) {
-            MessageMarker message = new MessageMarker();
-            message.add = true;
-            message.connection = false;
-            message.multiple = false;
-            message.cacheId = cacheId;
-            message.count = 1;
-            message.positions.add(pos);
-            MessageManager.sendToDimension(message, dimensionId);
+            MessageManager.sendToDimension(new MessageMarker(world.getRegistryKey().getValue(), cacheId, true, false,
+                List.of(pos)), (net.minecraft.server.world.ServerWorld) world);
         }
     }
 
@@ -122,14 +111,8 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
             refreshConnection(connection);
         }
         if (isServer) {
-            MessageMarker message = new MessageMarker();
-            message.add = false;
-            message.connection = false;
-            message.multiple = false;
-            message.cacheId = cacheId;
-            message.count = 1;
-            message.positions.add(pos);
-            MessageManager.sendToDimension(message, dimensionId);
+            MessageManager.sendToDimension(new MessageMarker(world.getRegistryKey().getValue(), cacheId, false, false,
+                List.of(pos)), (net.minecraft.server.world.ServerWorld) world);
         }
     }
 
@@ -241,14 +224,8 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
             posToConnection.remove(p);
         }
         if (isServer && set.size() > 0) {
-            MessageMarker message = new MessageMarker();
-            message.add = false;
-            message.connection = true;
-            message.cacheId = cacheId;
-            message.positions.addAll(set);
-            message.count = message.positions.size();
-            message.multiple = message.count > 1;
-            MessageManager.sendToDimension(message, dimensionId);
+            MessageManager.sendToDimension(new MessageMarker(world.getRegistryKey().getValue(), cacheId, false, true,
+                set), (net.minecraft.server.world.ServerWorld) world);
         }
     }
 
@@ -269,14 +246,8 @@ public abstract class MarkerSubCache<C extends MarkerConnection<C>> {
             posToConnection.put(p, connection);
         }
         if (isServer && lastSeen.size() > 0) {
-            MessageMarker message = new MessageMarker();
-            message.add = true;
-            message.connection = true;
-            message.cacheId = cacheId;
-            message.positions.addAll(connection.getMarkerPositions());
-            message.count = message.positions.size();
-            message.multiple = message.count > 1;
-            MessageManager.sendToDimension(message, dimensionId);
+            MessageManager.sendToDimension(new MessageMarker(world.getRegistryKey().getValue(), cacheId, true, true,
+                connection.getMarkerPositions()), (net.minecraft.server.world.ServerWorld) world);
         }
     }
 

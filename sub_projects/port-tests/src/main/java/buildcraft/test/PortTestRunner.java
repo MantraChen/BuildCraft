@@ -22,7 +22,8 @@ public final class PortTestRunner implements DedicatedServerModInitializer {
         Result result = JUnitCore.runClasses(StorageItemTransactorTest.class, CompactingBitSetTest.class,
             ItemHandlerManagerTest.class, IngredientNBTBCTest.class, ScriptResourceRootsTest.class, ListHandlerTest.class,
             MjConnectionTest.class, ConfigurationTest.class, buildcraft.test.lib.net.PacketCodecTest.class,
-            buildcraft.test.lib.net.TickTaskQueueTest.class, buildcraft.test.lib.net.NetworkedCacheTest.class);
+            buildcraft.test.lib.net.TickTaskQueueTest.class, buildcraft.test.lib.net.NetworkedCacheTest.class,
+            buildcraft.test.lib.net.MarkerPacketTest.class);
         for (Failure failure : result.getFailures()) {
             System.err.println(failure.getTestHeader());
             System.err.println(failure.getTrace());

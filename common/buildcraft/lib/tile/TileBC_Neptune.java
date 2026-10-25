@@ -305,16 +305,13 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
         tileCache.invalidate();
     }
 
-    // TODO(R.Chen): Yarn's BlockEntity has no onLoad() hook. This method must be invoked from a Fabric
-    // load callback (e.g. ServerChunkEvents / a custom first-tick guard) once available; for now it is a
-    // plain method kept for source parity with callers.
+    /** Invoked after Fabric's block-entity load event, once its NBT has been applied. */
     public void onLoad() {
         chunkCache.invalidate();
         tileCache.invalidate();
     }
 
-    // TODO(R.Chen): Forge onChunkUnload() — wired through ServerWorldEvents.UNLOAD in BCLibInitializer
-    // (currently stubbed). Kept as a plain method so the unload callback can dispatch to it.
+    /** Invoked by Fabric's block-entity unload event on the corresponding game thread. */
     public void onChunkUnload() {
         chunkCache.invalidate();
         tileCache.invalidate();

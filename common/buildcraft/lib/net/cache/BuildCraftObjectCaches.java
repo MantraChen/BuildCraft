@@ -19,7 +19,7 @@ public final class BuildCraftObjectCaches {
     public static final List<NetworkedObjectCache<?>> CACHES = Collections.unmodifiableList(REGISTRY);
     public static final NetworkedItemStackCache CACHE_ITEMS = registerCache(new NetworkedItemStackCache());
     public static final NetworkedFluidStackCache CACHE_FLUIDS = registerCache(new NetworkedFluidStackCache());
-    private static boolean frozen;
+    private static volatile boolean frozen;
 
     private BuildCraftObjectCaches() {}
 

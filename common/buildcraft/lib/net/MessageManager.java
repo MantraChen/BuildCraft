@@ -46,14 +46,9 @@ public class MessageManager {
         // TODO(R.Chen): migrate callers to FabricPacket
     }
 
-    /** Forge-compat: send a message to all players in a dimension. */
-    public static void sendToDimension(Object message, int dimensionId) {
-        // TODO(R.Chen): migrate to Fabric dimension-based broadcast
-    }
-
-    /** Forge-compat: send a message to all players in a dimension (FabricPacket). */
-    public static <T extends net.fabricmc.fabric.api.networking.v1.FabricPacket> void sendToDimension(T message, int dimensionId) {
-        // TODO(R.Chen): migrate to Fabric dimension-based broadcast
+    /** Broadcast to players in the actual source world, including custom dimensions. */
+    public static void sendToDimension(FabricPacket message, net.minecraft.server.world.ServerWorld world) {
+        for (ServerPlayerEntity player : world.getPlayers()) BCNetworkManager.sendTo(message, player);
     }
 
     /** Forge-compat: send a message to all nearby players. */

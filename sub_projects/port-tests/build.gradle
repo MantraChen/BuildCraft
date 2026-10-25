@@ -42,6 +42,8 @@ sourceSets.main.java {
     include 'buildcraft/lib/net/NetworkRouting.java'
     include 'buildcraft/lib/net/MessageUpdateTile.java'
     include 'buildcraft/lib/net/MessageContainer.java'
+    include 'buildcraft/lib/net/MessageMarker.java'
+    include 'buildcraft/test/lib/net/MarkerPacketTest.java'
     include 'buildcraft/test/lib/net/PacketCodecTest.java'
     include 'buildcraft/test/lib/world/NetworkGameTests.java'
     include 'buildcraft/lib/config/Configuration.java'

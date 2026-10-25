@@ -56,8 +56,9 @@ public class BCCoreInitializer implements ModInitializer {
         //               Fabric item tags (c:crafting_tables / data-driven tag json).
 
         // --- Forge init (BCCore.init) -----------------------------------------
-        // STUB(R.Chen): MarkerCache.registerCache(VolumeCache.INSTANCE / PathCache.INSTANCE)
-        //               — unblock once lib.marker + core.marker are migrated.
+        buildcraft.lib.marker.MarkerCache.registerCache(buildcraft.core.marker.VolumeCache.INSTANCE);
+        buildcraft.lib.marker.MarkerCache.registerCache(buildcraft.core.marker.PathCache.INSTANCE);
+        buildcraft.lib.marker.MarkerCache.postInit();
 
         // --- Forge postInit (BCCore.postInit) ---------------------------------
         // STUB(R.Chen): BCCoreConfig.saveConfigs() / postInit().

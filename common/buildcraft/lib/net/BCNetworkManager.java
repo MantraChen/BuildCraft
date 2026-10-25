@@ -77,6 +77,13 @@ public final class BCNetworkManager {
                 player.networkHandler.getConnection()::disconnect));
         ClientPlayNetworking.registerGlobalReceiver(buildcraft.lib.net.cache.MessageObjectCacheResponse.TYPE,
             (packet, player, sender) -> handle(packet::apply, player.networkHandler.getConnection()::disconnect));
+        ClientPlayNetworking.registerGlobalReceiver(MessageMarker.TYPE, (packet, player, sender) -> handle(() -> {
+            if (!player.getWorld().getRegistryKey().getValue().equals(packet.dimension)) return;
+            if (packet.cacheId >= buildcraft.lib.marker.MarkerCache.CACHES.size()) {
+                throw new IllegalArgumentException("Unknown marker cache: " + packet.cacheId);
+            }
+            buildcraft.lib.marker.MarkerCache.CACHES.get(packet.cacheId).getSubCache(player.getWorld()).handleMessageMain(packet);
+        }, player.networkHandler.getConnection()::disconnect));
     }
 
     private static void handle(PacketAction action, Consumer<net.minecraft.text.Text> disconnect) {

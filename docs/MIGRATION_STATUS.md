@@ -58,13 +58,14 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 194 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 193 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **88 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **92 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **14 world tests passed** after the 88 regression tests.
+- Headless Fabric GameTest: **14 world tests passed** after 88 regression tests; the
+  subsequent standalone regression run also passed four new marker codec tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -133,9 +134,16 @@ features explicitly as work proceeds.
   fluid renders stay blank. Nine regression tests cover round trips, deduplication, batch
   limits, malformed packets, failed sends and session isolation. Live pipe/tank rendering
   still requires the full connected client.
+- Marker messages now preserve dimension identifiers and ordered positions, use typed
+  client receivers and broadcast within the actual server world. World caches use object
+  identity, clear on unload/disconnect and resync on player join/dimension change. Four
+  codec tests cover flags, custom dimensions, immutability and invalid lengths. Native
+  block-entity load/unload callbacks now dispatch to tiles; load is deferred one tick
+  so it can use saved NBT. Actual marker connections and tile reloads still await full-mod
+  world validation.
 
 Remaining work includes full compilation, block/entity and screen registration, network
-marker/debug messages, renderers, fluid/energy integration, full quarry operation, packaged
+debug/robotics messages, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.
 

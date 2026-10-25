@@ -32,11 +32,24 @@ import buildcraft.BuildCraftFabric;
  */
 @Environment(EnvType.CLIENT)
 public class BCLibClientInitializer implements ClientModInitializer {
+    private net.minecraft.client.world.ClientWorld previousMarkerWorld;
 
     @Override
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
         buildcraft.lib.net.BCNetworkManager.registerClient();
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((entity, world) -> {
+            if (entity instanceof buildcraft.lib.tile.TileBC_Neptune tile) {
+                buildcraft.lib.misc.MessageUtil.doDelayedClient(1, () -> {
+                    if (net.minecraft.client.MinecraftClient.getInstance().world == world
+                        && !tile.isRemoved() && world.isChunkLoaded(tile.getPos())
+                        && world.getBlockEntity(tile.getPos()) == tile) tile.onLoad();
+                });
+            }
+        });
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((entity, world) -> {
+            if (entity instanceof buildcraft.lib.tile.TileBC_Neptune tile) tile.onChunkUnload();
+        });
 
         buildcraft.api.registry.BuildCraftRegistryManager.managerResourcePacks = buildcraft.lib.script.ReloadableRegistryManager.RESOURCE_PACKS;
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES)
@@ -44,12 +57,19 @@ public class BCLibClientInitializer implements ClientModInitializer {
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
+            buildcraft.lib.marker.MarkerCache.clearClient();
         });
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-            buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientJoinServer();
+            buildcraft.lib.marker.MarkerCache.clearClient();
+        });
 
         // Forge: ClientTickEvent (Phase.END)
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (previousMarkerWorld != client.world) {
+                if (previousMarkerWorld != null) buildcraft.lib.marker.MarkerCache.onWorldUnload(previousMarkerWorld);
+                previousMarkerWorld = client.world;
+            }
             buildcraft.lib.misc.MessageUtil.postClientTick();
             if (client.player != null && client.getNetworkHandler() != null) {
                 buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientTick(buildcraft.lib.net.BCNetworkManager::sendToServer);
