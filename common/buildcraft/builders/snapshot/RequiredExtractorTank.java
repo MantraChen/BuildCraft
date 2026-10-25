@@ -25,7 +25,7 @@ public class RequiredExtractorTank extends RequiredExtractor {
     @Override
     public List<FluidStackBC> extractFluidsFromBlock(@Nonnull BlockState blockState, @Nullable NbtCompound tileNbt) {
         return Optional.ofNullable(path.get(tileNbt))
-            .map(NbtCompound.class::cast)
+            .filter(NbtCompound.class::isInstance).map(NbtCompound.class::cast)
             .map(nbt -> !nbt.contains("Empty") ? FluidStackBC.loadFluidStackFromNBT(nbt) : null)
             .map(Collections::singletonList)
             .orElseGet(Collections::emptyList);
@@ -35,7 +35,7 @@ public class RequiredExtractorTank extends RequiredExtractor {
     @Override
     public List<FluidStackBC> extractFluidsFromEntity(@Nonnull NbtCompound entityNbt) {
         return Optional.ofNullable(path.get(entityNbt))
-            .map(NbtCompound.class::cast)
+            .filter(NbtCompound.class::isInstance).map(NbtCompound.class::cast)
             .map(nbt -> !nbt.contains("Empty") ? FluidStackBC.loadFluidStackFromNBT(nbt) : null)
             .map(Collections::singletonList)
             .orElseGet(Collections::emptyList);

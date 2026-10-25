@@ -50,7 +50,6 @@ public class BCBuilders {
         BCBuildersStatements.preInit();
         BCBuildersSchematics.preInit();
 
-        NetworkRegistry.INSTANCE.registerGuiHandler(INSTANCE, BCBuildersProxy.getProxy());
 
         BCBuildersProxy.getProxy().fmlPreInit();
 

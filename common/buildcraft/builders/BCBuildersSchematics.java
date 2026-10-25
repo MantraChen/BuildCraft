@@ -8,7 +8,7 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.block.BannerBlock;
+import net.minecraft.block.AbstractBannerBlock;
 import net.minecraft.block.VineBlock;
 import net.minecraft.util.DyeColor;
 import net.minecraft.item.BannerItem;
@@ -33,16 +33,16 @@ public class BCBuildersSchematics {
         registerSchematicFactory("default", 100, SchematicBlockDefault::predicate, SchematicBlockDefault::new);
         registerSchematicFactory("fluid", 200, SchematicBlockFluid::predicate, SchematicBlockFluid::new);
 
-        registerSchematicFactory("banner", 300, c -> c.block instanceof BannerBlock, BCBuildersSchematics::getBanner);
+        registerSchematicFactory("banner", 300, c -> c.block instanceof AbstractBannerBlock, BCBuildersSchematics::getBanner);
         registerSchematicFactory("vine", 300, c -> c.block instanceof VineBlock, BCBuildersSchematics::getVine);
 
-        SchematicEntityFactoryRegistry.registerFactory("default", 100, SchematicEntityDefault::predicate,
+        SchematicEntityFactoryRegistry.registerFactory("buildcraftbuilders:default", 100, SchematicEntityDefault::predicate,
             SchematicEntityDefault::new);
     }
 
     private static <S extends ISchematicBlock> void registerSchematicFactory(String name, int priority,
         Predicate<SchematicBlockContext> predicate, Supplier<S> supplier) {
-        SchematicBlockFactoryRegistry.registerFactory(name, priority, predicate, supplier);
+        SchematicBlockFactoryRegistry.registerFactory("buildcraftbuilders:" + name, priority, predicate, supplier);
     }
 
     private static SchematicBlockDefault getBanner() {
@@ -50,8 +50,9 @@ public class BCBuildersSchematics {
             @Nonnull
             @Override
             public List<ItemStack> computeRequiredItems() {
-                return Collections.singletonList(BannerItem.makeBanner(
-                    DyeColor.byDyeDamage(tileNbt.getInt("Base")), tileNbt.getList("Patterns", 10)));
+                var banner = new net.minecraft.block.entity.BannerBlockEntity(BlockPos.ORIGIN, blockState);
+                if (tileNbt != null) banner.readNbt(tileNbt.copy());
+                return List.of(banner.getPickStack());
             }
         };
     }
@@ -60,11 +61,7 @@ public class BCBuildersSchematics {
         return new SchematicBlockDefault() {
             @Override
             public boolean isReadyToBuild(World world, BlockPos blockPos) {
-                return super.isReadyToBuild(world, blockPos)
-                    && (world.getBlockState(blockPos.up()).getBlock() instanceof VineBlock
-                        || StreamSupport.stream(Direction.Plane.HORIZONTAL.spliterator(), false).map(blockPos::offset)
-                            .map(world::getBlockState)
-                            .anyMatch(state -> state.isFullCube() && state.getMaterial().blocksMovement()));
+                return super.isReadyToBuild(world, blockPos);
             }
         };
     }

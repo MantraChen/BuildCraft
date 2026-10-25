@@ -27,6 +27,7 @@ public class RequiredExtractorItemsList extends RequiredExtractor {
     @Override
     public List<ItemStack> extractItemsFromBlock(@Nonnull BlockState blockState, @Nullable NbtCompound tileNbt) {
         return Optional.ofNullable(path.get(tileNbt))
+            .filter(net.minecraft.nbt.NbtList.class::isInstance)
             .map(NBTUtilBC::readCompoundList)
             .map(stream -> stream.map(ItemStack::fromNbt).collect(Collectors.toList()))
             .map(Collections::unmodifiableList)
@@ -37,6 +38,7 @@ public class RequiredExtractorItemsList extends RequiredExtractor {
     @Override
     public List<ItemStack> extractItemsFromEntity(@Nonnull NbtCompound entityNbt) {
         return Optional.ofNullable(path.get(entityNbt))
+            .filter(net.minecraft.nbt.NbtList.class::isInstance)
             .map(NBTUtilBC::readCompoundList)
             .map(stream -> stream.map(ItemStack::fromNbt).collect(Collectors.toList()))
             .map(Collections::unmodifiableList)

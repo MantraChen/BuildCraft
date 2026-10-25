@@ -13,6 +13,7 @@ dependencies {
     modImplementation 'net.fabricmc:fabric-loader:0.15.11'
     modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.2+1.20.1'
     implementation 'junit:junit:4.13.2'
+    implementation project(':expression')
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
@@ -33,6 +34,22 @@ sourceSets.main.java {
     include 'buildcraft/builders/snapshot/SchematicBlockManager.java'
     include 'buildcraft/builders/snapshot/SchematicEntityManager.java'
     include 'buildcraft/builders/snapshot/SchematicBlockAir.java'
+    include 'buildcraft/builders/BCBuildersSchematics.java'
+    include 'buildcraft/builders/snapshot/SchematicBlockDefault.java'
+    include 'buildcraft/builders/snapshot/SchematicBlockFluid.java'
+    include 'buildcraft/builders/snapshot/SchematicEntityDefault.java'
+    include 'buildcraft/builders/snapshot/RulesLoader.java'
+    include 'buildcraft/builders/snapshot/JsonRule.java'
+    include 'buildcraft/builders/snapshot/JsonSelector.java'
+    include 'buildcraft/builders/snapshot/RequiredExtractor*.java'
+    include 'buildcraft/builders/snapshot/NbtPath.java'
+    include 'buildcraft/builders/snapshot/NbtRef.java'
+    include 'buildcraft/builders/snapshot/ItemStackRef.java'
+    include 'buildcraft/builders/snapshot/FluidStackRef.java'
+    include 'buildcraft/builders/snapshot/EnumNbtCompareOperation.java'
+    include 'buildcraft/lib/misc/JsonUtil.java'
+    include 'buildcraft/lib/misc/MathUtil.java'
+    include 'buildcraft/test/lib/world/SchematicGameTests.java'
     include 'buildcraft/api/schematics/*.java'
     include 'buildcraft/api/enums/EnumSnapshotType.java'
     include 'buildcraft/api/core/InvalidInputDataException.java'
@@ -206,4 +223,7 @@ loom {
     }
 }
 
-processResources { from('../../src/main/resources/buildcraft.accesswidener') }
+processResources {
+    from('../../src/main/resources/buildcraft.accesswidener')
+    from('../../buildcraft_resources') { include 'assets/buildcraftbuilders/compat/buildcraft/builders/**' }
+}

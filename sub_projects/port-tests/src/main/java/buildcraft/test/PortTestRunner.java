@@ -22,6 +22,7 @@ public final class PortTestRunner implements DedicatedServerModInitializer {
         buildcraft.test.lib.world.BlockEntityRegistryGameTests.initialize();
         buildcraft.test.lib.world.MachineApiGameTests.initialize();
         buildcraft.test.lib.world.FluidGameTests.initialize();
+        buildcraft.test.lib.world.SchematicGameTests.initialize();
         Result result = JUnitCore.runClasses(StorageItemTransactorTest.class, CompactingBitSetTest.class,
             ItemHandlerManagerTest.class, IngredientNBTBCTest.class, ScriptResourceRootsTest.class, ListHandlerTest.class,
             MjConnectionTest.class, ConfigurationTest.class, buildcraft.test.lib.net.PacketCodecTest.class,

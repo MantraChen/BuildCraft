@@ -30,5 +30,6 @@
     "buildcraft/blocks_buildcraft_inventories",
     "buildcraft/blocks_buildcraft_tanks",
     "buildcraft/blocks_batteries",
-    "buildcraft/builders"
+    "buildcraft/builders",
+    "vanilla/native_1201"
 ]

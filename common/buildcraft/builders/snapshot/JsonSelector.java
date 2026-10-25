@@ -36,8 +36,13 @@ public class JsonSelector {
 
     public boolean matches(Predicate<String> basePredicate, NbtCompound nbt) {
         return basePredicate.test(base) &&
-            expressions.stream()
-                .allMatch(expression -> expression.operation.compare(expression.key.get(nbt), expression.value));
+            (expressions == null ? java.util.stream.Stream.<Expression>empty() : expressions.stream())
+                .allMatch(expression -> {
+                    NbtElement actual = expression.key.get(nbt);
+                    if (actual == buildcraft.lib.misc.NBTUtilBC.NBT_NULL
+                        && expression.value != buildcraft.lib.misc.NBTUtilBC.NBT_NULL) return false;
+                    return expression.operation.compare(actual, expression.value);
+                });
     }
 
     public static final TypeAdapterFactory TYPE_ADAPTER_FACTORY = new TypeAdapterFactory() {

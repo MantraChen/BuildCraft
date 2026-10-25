@@ -112,7 +112,7 @@ public class NbtPath {
     }
 
     public NbtElement get(NbtList tag) {
-        if (elements.size() == 1) {
+        if (!elements.isEmpty()) {
             int key;
             try {
                 key = Integer.parseInt(elements.get(0));
@@ -132,6 +132,7 @@ public class NbtPath {
     }
 
     public NbtElement get(NbtCompound tag) {
+        if (tag == null) return NBTUtilBC.NBT_NULL;
         if (!elements.isEmpty()) {
             String key = elements.get(0);
             if (tag.contains(key)) {
@@ -165,6 +166,7 @@ public class NbtPath {
     }
 
     public NbtElement get(NbtElement tag) {
+        if (tag == null) return NBTUtilBC.NBT_NULL;
         switch (tag.getType()) {
             case NbtElement.BYTE_TYPE:
                 return get((NbtByte) tag);
@@ -188,6 +190,16 @@ public class NbtPath {
                 return get((NbtCompound) tag);
             case NbtElement.INT_ARRAY_TYPE:
                 return get((NbtIntArray) tag);
+            case NbtElement.LONG_ARRAY_TYPE:
+                if (elements.isEmpty()) return tag;
+                if (elements.size() == 1) {
+                    try {
+                        int index = Integer.parseInt(elements.get(0));
+                        long[] array = ((net.minecraft.nbt.NbtLongArray) tag).getLongArray();
+                        if (index >= 0 && index < array.length) return NbtLong.of(array[index]);
+                    } catch (NumberFormatException ignored) { }
+                }
+                return NBTUtilBC.NBT_NULL;
             default:
                 return NBTUtilBC.NBT_NULL;
         }

@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 51 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 47 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
 - Fabric regression fixture: **137 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **50 world tests passed** after 137 regression tests.
+- Headless Fabric GameTest: **60 world tests passed** after 137 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -80,6 +80,21 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Restored bundled schematic compatibility rules and native server-data additions at
+  `data/<namespace>/buildcraft/builders/rules/*.json`. Rules publish only after a complete
+  successful load, support block-state/tag selectors and retain declared rule order.
+  Nested inventory paths now traverse lists, missing item/fluid/list paths are empty,
+  and missing NBT cannot accidentally match a legacy inequality selector.
+- Default block schematics now capture, rotate, serialize, restore and compare native
+  states and block entities; fluid schematics distinguish sources from natural flow and
+  account for buckets/waterlogging. Native material rules cover container contents,
+  modern inventories, slab/snow counts, upper halves and potted plants. Banner capture
+  uses native colour/pattern data. Furnace/brewing work credit and furnace XP are cleared
+  when restoring a machine; unopened structure loot is not generated again.
+  Ten new GameTests cover these foundations, malformed block-entity rejection and all
+  vanilla default-state rule lookups. That registry test checks metadata/cost evaluation,
+  not placement of every vanilla block/state. Multi-block construction, entity capture,
+  blueprint item/fluid transactions and the builder machine remain unfinished.
 - Restored the template work executor with bounded surveys/queues, MJ credit, live material
   checks, break-before-place ordering, native owner-aware harvesting/placement, cancellation
   refunds, saved work identity and chunk-loaded checks. Queued jobs reserve no items.

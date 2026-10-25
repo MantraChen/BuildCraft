@@ -23,7 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric {@code ExtendedScreenHandlerType} (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric {@code Event} callbacks (deferred)
  *
- * Blocks, items and tile factories register here; schematic and screen integration remains.
+ * Blocks, items, schematic factories, filler screens and reloadable rules register here.
  */
 public class BCBuildersInitializer implements ModInitializer {
 
@@ -43,22 +43,22 @@ public class BCBuildersInitializer implements ModInitializer {
         BCBuildersRegistries.preInit();
         BCBuildersStatements.preInit();
         BCBuildersRegistries.init();
+        BCBuildersSchematics.preInit();
         BCBuildersItems.fmlPreInit();
         BCBuildersBlocks.fmlPreInit();
         BCBuildersBlocks.fmlInit();
         BCBuildersScreens.register();
+        buildcraft.builders.snapshot.RulesLoader.loadAll();
+        buildcraft.builders.snapshot.RulesLoader.registerReloadListener();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
-        //               ARCHITECT_TABLE, BUILDER, FILLER, LIBRARY, REPLACER, QUARRY.
+        //               ARCHITECT_TABLE, BUILDER, LIBRARY, REPLACER, QUARRY.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCBuildersEventDist.INSTANCE) — port the quarry
         //               validate/invalidate world-event-listener bookkeeping to Fabric callbacks.
 
         // --- Forge init (BCBuilders.init) ----------------------------------------
         // STUB(R.Chen): BCBuildersRecipes.init() — architect/library/snapshot recipes deferred.
-        // STUB(R.Chen): BCBuildersSchematics.init() — schematic factory registration deferred until the
-        //               snapshot/schematic serialization layer is ported.
 
         // --- Forge postInit (BCBuilders.postInit) --------------------------------
-        // STUB(R.Chen): BCBuildersStatements.init() / action providers deferred.
         buildcraft.core.BCCoreConfig.postInit();
     }
 }

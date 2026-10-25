@@ -6,3 +6,5 @@ pluginManagement {
     }
 }
 rootProject.name = 'buildcraft-port-tests'
+include 'expression'
+project(':expression').projectDir = file('../expression')

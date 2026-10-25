@@ -39,7 +39,7 @@ Five snapshot regressions cover template/blueprint NBT and stable hashes, copy i
 rotated coordinate transforms, false-valued plane edits, bounded dimensions/facing/data,
 legacy blueprint lists and invalid palette indices.
 
-For the regression tests followed by 50 tests in a real Minecraft world:
+For the regression tests followed by 60 tests in a real Minecraft world:
 
 ```powershell
 ./scripts/gradle.ps1 -p sub_projects/port-tests runGameTest --console=plain
@@ -72,6 +72,14 @@ MJ/material conservation, no early item reservations, cancellation/reload, faile
 dependency starvation, external completion, queue saturation, excavation ordering/drops,
 unbreakable/protected targets and unloaded chunks. These tests use a small fixture host;
 they do not instantiate the complete filler/blueprint machine or its client screen.
+Ten schematic tests load the real bundled rules and exercise stair rotation/NBT,
+container contents and native block-entity restoration, modern inventory costs,
+furnace work/XP clearing, multi-item counts, waterlogging/source fluids, malformed tile
+types, nested paths and piston-head omission. A metadata pass checks rule evaluation
+for every vanilla block's default state; it does not claim every state can be built.
+The fixture now includes the expression dependency used by the production rule JSON
+utilities. Run it sequentially with root/model builds because expression generation
+shares its output directory.
 This still loads selected production classes;
 full BuildCraft registration, rendering, machines and transport require separate checks.
 
