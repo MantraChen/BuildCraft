@@ -61,7 +61,16 @@ engine/pipe/laser production fixture. The advanced crafting table now uses a pro
 of laser energy per craft. Native recipe search respects survival recipe unlocks;
 blocked output pauses work, and saved energy survives pattern changes and reloads.
 Run `./scripts/full-smoke.ps1 -AdvancedCrafting` for its connected-client fixture.
-Other pluggables and the integration table still need restoration.
+The integration table now supports native data-pack recipes and the public Java
+integration registry, with a central item, eight component slots, atomic output
+and exact laser-energy charging. Center NBT can be preserved by recipes, and
+blocked output or save/reload retains paid work. Its native screen includes
+`Remake by FelixMantra`; run `./scripts/full-smoke.ps1 -Integration` to verify it.
+The original baseline defines no built-in integration recipes, so this table
+requires recipes supplied by a data pack or add-on. The test fixture's chipset
+upgrade is an example, not a production recipe. See the
+[integration recipe format](docs/MIGRATION_STATUS.md#native-integration-table).
+Charging tables and other pluggables still need restoration.
 Fluid pipes now expose native transactional storage, retain exact droplets/NBT through
 save/reload and deliver MJ-extracted tank contents. Material rates, iron direction,
 clay priority, void consumption and diamond/wooden-diamond fluid filters are restored.

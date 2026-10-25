@@ -1,4 +1,9 @@
 {
+  "block.buildcraftsilicon.integration_table": "集成台",
+  "gui.buildcraftsilicon.integration.working": "等待激光供能",
+  "gui.buildcraftsilicon.integration.ready": "准备就绪",
+  "gui.buildcraftsilicon.integration.blocked": "输出已堵塞",
+  "gui.buildcraftsilicon.integration.no_recipe": "没有匹配的集成配方",
   "block.buildcraftsilicon.advanced_crafting_table": "高级工作台",
   "item.buildcraftsilicon.redstone_chipset.red": "红石芯片组",
   "item.buildcraftsilicon.redstone_chipset.iron": "铁芯片组",

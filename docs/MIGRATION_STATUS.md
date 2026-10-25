@@ -69,7 +69,7 @@ features explicitly as work proceeds.
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - `remapJar` succeeds and bundles the expression library and Team Reborn Energy.
   A separate fixture loads the actual remapped artifact and its bundled dependencies;
-  **255 full-mod GameTests pass**. All **849 non-null registered block-entity states**
+  **271 full-mod GameTests pass**. All **849 non-null registered block-entity states**
   construct with compatible types and round-trip NBT. Native tank placement/ticks and
   optional MJ Dynamo sided lookup, simulation, commit and fractional MJ persistence
   pass in a real headless Minecraft world. Animated engines also retain non-opaque
@@ -873,7 +873,7 @@ features explicitly as work proceeds.
   `verification/assembly-client-run/screenshots/`, including the original table GUI,
   visible laser production, queued recipes and actual output barrel. The fixture
   exits cleanly with zero failures.
-- Integration/charging tables, remaining silicon pluggables and legacy
+- Charging tables, remaining silicon pluggables and legacy
   assembly-script/guide integration are still pending. Native data packs are the
   supported recipe source for the restored assembly table.
 
@@ -908,6 +908,71 @@ features explicitly as work proceeds.
   browser were visually checked under
   `verification/advanced-crafting-client-run/screenshots/`; the final client run
   exits cleanly with zero failures.
+
+### Native integration table
+
+- The original central slot, eight component slots and one real output are restored.
+  Materials and output commit in one Fabric transaction; the captured recipe cost
+  is charged exactly once after commit, including when the final inputs disappear.
+  Full or incompatible output rejects further laser work and retains paid energy.
+  Center/component container remainders export only after a successful craft.
+- All faces keep the original bidirectional access to inputs. Output is now
+  extract-only and offered first. An unfiltered extracting pipe can still withdraw
+  inputs after output runs out; use filters when automating this table.
+- Recipes can come from native data packs or `BuildcraftRecipeRegistry.integrationRecipes`.
+  Data-pack recipes take precedence, matching is deterministic, and replacement or
+  removal resolves the current definitions. The public Java API supports dynamic
+  output-dependent requirements/costs with defensive input/output copies. Counted
+  matching supports split stacks and overlapping ingredients without double use.
+- The native screen preserves the original texture, protected preview and progress
+  bar, adds `Remake by FelixMantra`, and routes recognized central items correctly
+  during shift-click. Its survival recipe requires the iron chipset's NBT. Saved
+  slots and generic paid work restore before world attachment; removed tables and
+  cached storage handles reject further work.
+- Sixteen additional packaged-mod tests bring the suite to **271 passing tests**.
+  They cover exact charging, backpressure, NBT copying/merging, overlapping material
+  allocation, packet bounds, recipe replacement/removal, public/dynamic Java
+  recipes, all-face storage rollback, save/reload, native screen permissions,
+  container remainders, native lasers, survival crafting and exact removal drops.
+- No built-in integration recipes existed in the original baseline. The chipset
+  upgrade under `sub_projects/full-tests/src/main/resources/data/buildcraft_full_tests/`
+  is fixture-only and is not included in the distributable. Add-ons/data packs must
+  provide recipes for this machine.
+- The real client fixture passes native placement, center/component shift-clicks,
+  protected preview and blocked-output recovery. A complete restart retains 250 MJ,
+  both central items and their custom name/configuration. An engine/MJ-pipe/laser
+  chain produces exactly two upgraded chipsets using the fixture data pack, charges
+  every craft and stops its beam. Output extraction, stale storage rejection and
+  native breaking also pass. Four screenshots were visually inspected under
+  `verification/integration-client-run/screenshots/`; the client exits cleanly with
+  zero fixture failures. Existing guide-link warnings remain outside this milestone.
+
+The native recipe type is `buildcraftsilicon:integration`. Put a recipe under your
+data pack's `data/<namespace>/recipes/<name>.json`, for example:
+
+```json
+{
+  "type": "buildcraftsilicon:integration",
+  "mj": 500,
+  "center": {"ingredient": {"item": "minecraft:emerald"}, "count": 1},
+  "components": [
+    {"ingredient": {"item": "minecraft:iron_ingot"}, "count": 2}
+  ],
+  "result": {"item": "minecraft:diamond", "count": 1},
+  "copy_center_nbt": false,
+  "allow_extra": false
+}
+```
+
+`mj` is an integer from 1 to 1,000,000. The center and up to eight component
+definitions accept native ingredients, counts from 1 to 64, and an optional
+`nbt` SNBT string requiring exact NBT equality. Fabric custom NBT ingredients can
+instead match a subset of fields. The result may also contain an SNBT `nbt`
+string. With `copy_center_nbt: true`, the consumed center's NBT is copied and the
+result's declared NBT overrides matching keys. By default unrelated components
+prevent a match; surplus amounts of required materials are allowed. Set
+`allow_extra: true` to leave unrelated materials in place. Neither flag defaults
+to true. Packet synchronization retains these counts, flags and NBT.
 
 Remaining work includes remaining resource/model/recipe migration and other pluggable
 items and placement, remaining machine screens, robotics/volume-planner integration, fluid/energy

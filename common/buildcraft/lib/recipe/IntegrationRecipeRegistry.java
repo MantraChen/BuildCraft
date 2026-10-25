@@ -21,12 +21,14 @@ import buildcraft.api.recipes.IntegrationRecipe;
 
 public class IntegrationRecipeRegistry implements IIntegrationRecipeRegistry {
     public static final IntegrationRecipeRegistry INSTANCE = new IntegrationRecipeRegistry();
-    public final Map<Identifier, IntegrationRecipe> recipes = new HashMap<>();
+    public final Map<Identifier, IntegrationRecipe> recipes = new java.util.TreeMap<>();
 
     @Override
     public IntegrationRecipe getRecipeFor(@Nonnull ItemStack target, @Nonnull DefaultedList<ItemStack> toIntegrate) {
         for (IntegrationRecipe recipe : recipes.values()) {
-            if (!recipe.getOutput(target, toIntegrate).isEmpty()) {
+            var components=DefaultedList.<ItemStack>of();
+            for(var stack:toIntegrate)components.add(stack.copy());
+            if (!recipe.getOutput(target.copy(), components).isEmpty()) {
                 return recipe;
             }
         }

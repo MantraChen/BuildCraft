@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["OiO", "OrO", "OgO"],
+  "key": {
+    "O": {"item": "minecraft:obsidian"},
+    "i": {"item": "minecraft:gold_ingot"},
+    "r": {"fabric:type": "fabric:nbt", "base": {"item": "buildcraftsilicon:redstone_chipset"}, "nbt": {"chipset": "iron"}, "strict": false},
+    "g": {"item": "buildcraftcore:gear_diamond"}
+  },
+  "result": {"item": "buildcraftsilicon:integration_table"}
+}

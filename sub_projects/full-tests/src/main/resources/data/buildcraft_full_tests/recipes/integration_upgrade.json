@@ -1,0 +1,13 @@
+{
+  "type": "buildcraftsilicon:integration",
+  "mj": 500,
+  "center": {
+    "ingredient": {"fabric:type": "fabric:nbt", "base": {"item": "buildcraftsilicon:redstone_chipset"}, "nbt": {"chipset": "red"}, "strict": false}
+  },
+  "components": [
+    {"ingredient": {"item": "minecraft:iron_ingot"}, "count": 2},
+    {"ingredient": {"item": "minecraft:redstone"}}
+  ],
+  "result": {"item": "buildcraftsilicon:redstone_chipset", "nbt": "{chipset:\"iron\"}"},
+  "copy_center_nbt": true
+}

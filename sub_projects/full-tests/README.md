@@ -31,6 +31,9 @@ From the repository root on Windows:
 ./scripts/full-smoke.ps1 -Assembly
 # Also verify advanced crafting templates, searched recipes and laser-powered work:
 ./scripts/full-smoke.ps1 -AdvancedCrafting
+
+# Also verify integration recipes, blocked output, NBT and laser work:
+./scripts/full-smoke.ps1 -Integration
 ```
 
 The script copies the jar to `verification/buildcraft-under-test.jar`. Because Loom
@@ -131,7 +134,24 @@ eight more planks. It checks output shift-clicks, beam stop, stale storage rejec
 and removal without dropping ghost materials. Screenshots cover partial work,
 laser production, recipe search and completed output.
 
-The 255 server tests currently verify:
+The integration client uses `verification/integration-client-run/` and the fixture-only
+`buildcraft_full_tests:integration_upgrade` data-pack recipe. It exercises native
+placement, center/component shift-clicks, protected preview, blocked output and a
+full restart with 250 MJ of paid work. A real engine/MJ-pipe/laser chain makes two
+upgraded chipsets with their custom name/configuration intact. It also checks output
+extraction, stopped beams, stale handles and native removal. The example recipe is
+not shipped in the production mod; the original baseline has no built-in integration
+recipes.
+
+The 271 server tests currently verify:
+
+- Sixteen integration tests cover exact charging after final input consumption,
+  full/incompatible output, central NBT copying and result overrides, split/overlapping
+  ingredients, native recipe packets and bounds, recipe replacement/removal, public
+  Java registry replacement and dynamic recipes, sided transactional storage,
+  paid-work reload/stale references, native preview and shift-click permissions,
+  center/component container remainders, actual laser supply, NBT-aware survival
+  crafting and recovery of every real inventory on removal.
 
 - Sixteen advanced-crafting tests cover the original 500 MJ cost and lack of passive
   crafting, nine-slot output backpressure, sided transactional permissions, saved

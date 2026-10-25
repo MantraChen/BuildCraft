@@ -1,4 +1,9 @@
 {
+  "block.buildcraftsilicon.integration_table": "Integration Table",
+  "gui.buildcraftsilicon.integration.working": "Waiting for laser power",
+  "gui.buildcraftsilicon.integration.ready": "Ready",
+  "gui.buildcraftsilicon.integration.blocked": "Output blocked",
+  "gui.buildcraftsilicon.integration.no_recipe": "No matching integration recipe",
   "block.buildcraftsilicon.advanced_crafting_table": "Advanced Crafting Table",
   "item.buildcraftsilicon.redstone_chipset.red": "Redstone Chipset",
   "item.buildcraftsilicon.redstone_chipset.iron": "Iron Chipset",

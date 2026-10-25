@@ -40,29 +40,8 @@ public final class NativeAssemblyRecipe implements Recipe<Inventory> {
     public ItemStack output(){return output.copy();}
     /** Capacity matching prevents broad and exact ingredients from consuming the same items twice. */
     public int[] allocate(List<ItemStack> stacks) {
-        int slots=stacks.size(),sink=slots+inputs.size()+1,n=sink+1;
-        if(slots>64)return null;
-        int[][] residual=new int[n][n];int needed=0;
-        for(int s=0;s<slots;s++) {
-            var stack=stacks.get(s);residual[0][s+1]=stack.getCount();
-            for(int i=0;i<inputs.size();i++)if(!stack.isEmpty() && inputs.get(i).test(stack))residual[s+1][slots+i+1]=64;
-        }
-        for(int i=0;i<inputs.size();i++){int count=inputs.get(i).count;residual[slots+i+1][sink]=count;needed+=count;}
-        int supplied=0;
-        while(supplied<needed) {
-            int[] parent=new int[n];Arrays.fill(parent,-1);parent[0]=0;
-            var queue=new ArrayDeque<Integer>();queue.add(0);
-            while(!queue.isEmpty() && parent[sink]<0) {
-                int from=queue.remove();
-                for(int to=1;to<n;to++)if(parent[to]<0 && residual[from][to]>0){parent[to]=from;queue.add(to);}
-            }
-            if(parent[sink]<0)return null;
-            int amount=Integer.MAX_VALUE;
-            for(int to=sink;to!=0;to=parent[to])amount=Math.min(amount,residual[parent[to]][to]);
-            for(int to=sink;to!=0;to=parent[to]){int from=parent[to];residual[from][to]-=amount;residual[to][from]+=amount;}
-            supplied+=amount;
-        }
-        int[] used=new int[slots];for(int s=0;s<slots;s++)used[s]=stacks.get(s).getCount()-residual[0][s+1];return used;
+        return buildcraft.lib.recipe.IngredientAllocation.allocate(inputs.stream()
+            .map(input->new buildcraft.lib.recipe.IngredientAllocation.Requirement(input::test,input.count())).toList(),stacks);
     }
     @Override public boolean matches(Inventory inventory,World world) {
         var stacks=new ArrayList<ItemStack>();for(int i=0;i<inventory.size();i++)stacks.add(inventory.getStack(i));return allocate(stacks)!=null;
