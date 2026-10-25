@@ -49,6 +49,7 @@
       "buildcraft.test.full.AutoCraftGameTests"
     ],
     "client": [
+      "buildcraft.test.full.GuideResourceClientSmoke",
       "buildcraft.test.full.PlannerClientSmoke",
       "buildcraft.test.full.LibraryClientSmoke",
       "buildcraft.test.full.ReplacerClientSmoke",

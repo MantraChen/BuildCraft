@@ -10,9 +10,19 @@ authors and dates. `archive/pr-4754` preserves the exact imported revision
 `2051fb41455312a2e6c5ffeb972c6639e2a32bb9`.
 
 **Status: incomplete experimental port.** The complete production source compiles and
-the packaged mod starts a Fabric GameTest world. Rendering, transport and machine
-integration still need work and gameplay validation. See [the migration assessment](docs/MIGRATION_STATUS.md)
+the packaged mod starts native Fabric test servers and real Minecraft clients.
+Transport, machines, construction and their screens have verified workflows;
+robotics, riding groups and broader mod compatibility remain unfinished.
+See [the migration assessment](docs/MIGRATION_STATUS.md)
 and [the history/contributions record](docs/HISTORY.md).
+
+The in-game guide displays synchronized native assembly recipes, including up to
+twelve ingredients, exact item data, counts and MJ costs. Recipe changes from a
+server data-pack reload refresh open pages; click an ingredient to navigate to it.
+Resource-pack changes preserve guide recipes. Legacy atlas sprites retain their
+original pixels and animation timing while supporting four mipmap levels.
+Run `./scripts/full-smoke.ps1 -Client -GuideResources` for the complete packaged-mod
+tests, model checks and connected guide/resource-reload workflow.
 
 ## Development
 

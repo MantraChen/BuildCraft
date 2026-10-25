@@ -39,7 +39,15 @@ public enum GuideManager implements SimpleSynchronousResourceReloadListener {
     public final Set<Object> objectsAdded = new HashSet<>();
     public ISuffixArray<PageLink> quickSearcher = new SimpleSuffixArray<>();
     private final Set<PageLink> indexed = new HashSet<>();
+    private Object recipeGeneration;
     private int generation;
+    /** Native RecipeManager replaces its map on server synchronization, including /reload. */
+    public void tickRecipes() {
+        var client=MinecraftClient.getInstance();var handler=client.getNetworkHandler();
+        if(client.world==null||handler==null){recipeGeneration=null;return;}
+        Object current=((buildcraft.lib.recipe.RecipeGeneration)handler.getRecipeManager()).buildcraft$recipeGeneration();
+        if(current!=recipeGeneration)reload();
+    }
     public int getGeneration() { return generation; }
 
     @Override public Identifier getFabricId() { return new Identifier("buildcraftlib", "guide"); }
@@ -49,6 +57,8 @@ public enum GuideManager implements SimpleSynchronousResourceReloadListener {
     }
     public void reload() { reload(MinecraftClient.getInstance().getResourceManager()); }
     @Override public void reload(ResourceManager resources) {
+        var handler=MinecraftClient.getInstance().getNetworkHandler();
+        recipeGeneration=handler==null?null:((buildcraft.lib.recipe.RecipeGeneration)handler.getRecipeManager()).buildcraft$recipeGeneration();
         pages.clear();
         generatedPages.clear();
         objectsAdded.clear();

@@ -19,7 +19,7 @@ import net.minecraft.util.profiler.Profiler;
 import buildcraft.lib.client.guide.parts.GuidePartFactory;
 
 public class RecipeLookupHelper {
-    public static final Map<String, IStackRecipes> handlerTypes = new HashMap<>();
+    public static final Map<String, IStackRecipes> handlerTypes = new java.util.LinkedHashMap<>();
 
     static {
         handlerTypes.put("smelting", GuideSmeltingRecipes.INSTANCE);

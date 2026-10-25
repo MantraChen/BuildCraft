@@ -1,66 +1,53 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0
+ * Remake by FelixMantra */
 package buildcraft.lib.client.guide.parts.recipe;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-
+import java.util.*;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
-
 import buildcraft.api.recipes.AssemblyRecipe;
-
 import buildcraft.lib.client.guide.parts.GuidePartFactory;
+import buildcraft.lib.recipe.*;
 import buildcraft.lib.misc.StackUtil;
-import buildcraft.lib.recipe.AssemblyRecipeRegistry;
-import buildcraft.lib.recipe.ChangingItemStack;
-import buildcraft.lib.recipe.ChangingObject;
+import buildcraft.silicon.BCSiliconRecipes;
+import buildcraft.silicon.recipe.NativeAssemblyRecipe;
 
 public enum GuideAssemblyRecipes implements IStackRecipes {
     INSTANCE;
-
-    @Override
-    public List<GuidePartFactory> getUsages(@Nonnull ItemStack stack) {
-        List<GuidePartFactory> usages = new ArrayList<>();
-        boolean all = net.minecraft.registry.Registries.ITEM.getId(stack.getItem())
-            .equals(new net.minecraft.util.Identifier("buildcraftsilicon", "assembly_table"));
-        for (AssemblyRecipe recipe : AssemblyRecipeRegistry.REGISTRY.values()) {
-            for (ItemStack output: recipe.getOutputPreviews()) {
-                if (all || recipe.getInputsFor(output).stream().anyMatch((definition) -> definition.ingredient.test(stack))) {
-                    usages.add(getFactory(recipe, output));
-                }
-            }
-
+    @Override public List<GuidePartFactory> getUsages(ItemStack stack){return find(stack,true);}
+    @Override public List<GuidePartFactory> getRecipes(ItemStack stack){return find(stack,false);}
+    private List<GuidePartFactory> find(ItemStack stack,boolean usages){
+        var result=new ArrayList<GuidePartFactory>();var nativeIds=new HashSet<Identifier>();
+        boolean all=usages&&net.minecraft.registry.Registries.ITEM.getId(stack.getItem()).equals(new Identifier("buildcraftsilicon:assembly_table"));
+        for(var recipe:GuideRecipes.all(BCSiliconRecipes.ASSEMBLY)){
+            nativeIds.add(recipe.getId());
+            if(usages?all||recipe.inputs().stream().anyMatch(input->input.test(stack)):matchesOutput(stack,recipe.output()))result.add(getFactory(recipe));
         }
-        return usages;
+        // Keep the public legacy API usable for add-ons; synchronized data-pack IDs take precedence.
+        AssemblyRecipeRegistry.REGISTRY.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry->{
+            if(nativeIds.contains(entry.getKey()))return;
+            var recipe=entry.getValue();for(var output:recipe.getOutputPreviews())
+                if(usages?all||recipe.getInputsFor(output).stream().anyMatch(input->input.ingredient.test(stack)):matchesOutput(stack,output))result.add(getFactory(recipe,output));
+        });
+        return result;
     }
-
-    @Override
-    public List<GuidePartFactory> getRecipes(@Nonnull ItemStack stack) {
-        List<GuidePartFactory> recipes = new ArrayList<>();
-        for (AssemblyRecipe recipe : AssemblyRecipeRegistry.REGISTRY.values()) {
-            for (ItemStack output: recipe.getOutputPreviews()) {
-                if (StackUtil.isCraftingEquivalent(output, stack, false)) {
-                    recipes.add(getFactory(recipe, output));
-                }
-            }
-        }
-        return recipes;
+    private static boolean matchesOutput(ItemStack target,ItemStack output){
+        return ItemStack.areItemsEqual(target,output)&&(!target.hasNbt()||!output.hasNbt()||ItemStack.canCombine(target,output));
     }
-
-    private static GuideAssemblyFactory getFactory(AssemblyRecipe recipe, ItemStack output) {
-        ChangingItemStack[] stacks = recipe.getInputsFor(output).stream().map(definition -> {
-                DefaultedList<ItemStack> items = Arrays.stream(definition.ingredient.getMatchingStacks()).map(ItemStack::copy).collect(StackUtil.nonNullListCollector());
-                items.forEach(stack -> stack.setCount(definition.count));
-                return items;
-        }).map(ChangingItemStack::new).toArray(ChangingItemStack[]::new);
-        return new GuideAssemblyFactory(stacks, new ChangingItemStack(output), new ChangingObject<>(new Long[] { recipe.getRequiredMicroJoulesFor(output) }));
+    private static GuideAssemblyFactory getFactory(NativeAssemblyRecipe recipe){
+        var stacks=recipe.inputs().stream().map(input->{
+            var choices=DefaultedList.<ItemStack>of();for(var stack:input.ingredient().getMatchingStacks()){
+                var copy=stack.copyWithCount(input.count());if(input.nbt()!=null)copy.setNbt(input.nbt());choices.add(copy);
+            }return new ChangingItemStack(choices);
+        }).toArray(ChangingItemStack[]::new);
+        return new GuideAssemblyFactory(stacks,new ChangingItemStack(recipe.output()),new ChangingObject<>(new Long[]{recipe.cost()}));
+    }
+    private static GuideAssemblyFactory getFactory(AssemblyRecipe recipe,ItemStack output){
+        var stacks=recipe.getInputsFor(output).stream().map(input->{
+            DefaultedList<ItemStack> items=Arrays.stream(input.ingredient.getMatchingStacks()).map(ItemStack::copy).collect(StackUtil.nonNullListCollector());
+            items.forEach(stack->stack.setCount(input.count));return new ChangingItemStack(items);
+        }).toArray(ChangingItemStack[]::new);
+        return new GuideAssemblyFactory(stacks,new ChangingItemStack(output),new ChangingObject<>(new Long[]{recipe.getRequiredMicroJoulesFor(output)}));
     }
 }

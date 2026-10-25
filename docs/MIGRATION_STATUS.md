@@ -51,6 +51,11 @@ features explicitly as work proceeds.
 
 ## Verified results
 
+Results below record successive migration milestones. The latest native-guide and
+atlas milestone resolves the recipe/animation/mipmap warnings mentioned in older
+entries; unrelated development-client warnings and unsupported features are listed
+separately there.
+
 - Original-history import: all 60 original migration commits now count as GitHub
   contributions; see [HISTORY.md](HISTORY.md).
 - Gradle wrapper: regenerated with Gradle 8.14.5, pinned to the official distribution
@@ -1719,3 +1724,45 @@ Remake by FelixMantra.
   validated here. Riding groups, robotics, broader modded-schematic compatibility
   and remaining resource/integration work still prevent declaring the entire port
   complete. Existing guide-recipe and texture-animation/mipmap warnings remain.
+
+### Native assembly guide, synchronized recipes and legacy atlas sprites
+
+- XML recipe tags now honor an explicit recipe type, return no recipe when that
+  type has no match, and use a deterministic fallback order when omitted. The old
+  reversed condition produced `Unknown recipe type null` and ignored explicit types.
+- Assembly pages read synchronized native recipes, including facade recipes and
+  server data packs. Exact NBT ingredients, input/output counts and MJ costs are
+  retained. Recipes differing in counts or energy remain distinct. Public legacy
+  assembly-registry entries remain available, with native recipe IDs taking priority.
+- The reader expands its original two-column ingredient panel to four columns for
+  seven to twelve inputs. Rendering and clickable item areas use the same layout.
+  The existing native guide item and `Remake by FelixMantra` footer are preserved.
+- Recipe-map replacement after server synchronization invalidates guide contents
+  and generated pages. An already open page refreshes when a data pack adds,
+  changes or removes its recipes; resource reload and a complete world restart
+  preserve the synchronized data.
+- A native atlas source adapts the original white sprite and both eight-pixel pipe
+  ends at load time using exact nearest-neighbor pixel replication. It packs only
+  the twenty referenced frames of the original oil, fuel and red-plasma strips,
+  preserving their frame order, durations and interpolation. Original PNG assets
+  are unchanged. Highest-priority resource-pack overrides are read through the
+  native resource manager, and removing an override restores the original pixels.
+- All **513 required GameTests** pass against the packaged artifact in
+  `verification/guide-full-client-2.log`. The same run validates **928 block states,
+  139 registered items and 232 item variants**, with zero model failures. The guide
+  client verifies native item opening, typed/untyped selectors, twelve counted
+  inputs, exact NBT, distinct costs, the twelfth slot's navigation, live recipe
+  replacement/removal, resource-pack override/removal, global mipmap level four
+  and a complete saved-world restart. It reports `failures=0` and exits cleanly;
+  the guide-client Gradle invocation takes 54 seconds.
+- All seven final screenshots in
+  `verification/guide-resource-client-run/screenshots` were visually reviewed.
+  Five new texture tests compare original RGBA pixels, explicit/implicit animation
+  sequences, durations and interpolation, reject invalid frames and generate four
+  mipmap levels for the real fluid assets. The model/texture suite now has **37
+  passing tests**, alongside **13 expression tests**.
+- The former unknown-recipe, unused-fluid-frame and mipmap-downgrade warnings are
+  absent from this validated run. Offline development authentication/Realms,
+  vanilla missing-sound and shader warnings are still present. Robotics, riding
+  groups, broader modded-schematic compatibility and the remaining migration work
+  are not covered by this milestone; the port remains experimental.

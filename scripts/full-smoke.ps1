@@ -1,6 +1,6 @@
 # Build the complete mod, then load the actual jar in a real Fabric GameTest world.
 # Remake by FelixMantra.
-param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities, [switch]$Replacer, [switch]$Library, [switch]$Planner)
+param([switch]$Client, [switch]$Interactions, [switch]$Quarry, [switch]$MiningWell, [switch]$Pump, [switch]$AutoCraft, [switch]$Distiller, [switch]$HeatExchange, [switch]$OilGeneration, [switch]$Assembly, [switch]$AdvancedCrafting, [switch]$Integration, [switch]$ControlPlugs, [switch]$TransportPlugs, [switch]$Lenses, [switch]$Facades, [switch]$GateCopier, [switch]$FloodGate, [switch]$Obsidian, [switch]$Stripes, [switch]$Filler, [switch]$Architect, [switch]$Builder, [switch]$Entities, [switch]$Replacer, [switch]$Library, [switch]$Planner, [switch]$GuideResources)
 
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -369,5 +369,17 @@ if ($Planner) {
         'onboardAccessibility:false' | Set-Content -LiteralPath $plannerOptions -Encoding utf8
     }
     & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runPlannerClientSmoke --console=plain
+}
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($GuideResources) {
+    $guideRun = Join-Path $verification 'guide-resource-client-run'
+    $guideConfig = Join-Path $guideRun 'config\buildcraft'
+    New-Item -ItemType Directory -Path $guideConfig -Force | Out-Null
+    Copy-Item -LiteralPath $testConfigFile -Destination (Join-Path $guideConfig 'main.cfg') -Force
+    $guideOptions = Join-Path $guideRun 'options.txt'
+    if (-not (Test-Path -LiteralPath $guideOptions)) {
+        'onboardAccessibility:false' | Set-Content -LiteralPath $guideOptions -Encoding utf8
+    }
+    & (Join-Path $PSScriptRoot 'gradle.ps1') -p sub_projects/full-tests runGuideResourceClientSmoke --console=plain
 }
 exit $LASTEXITCODE

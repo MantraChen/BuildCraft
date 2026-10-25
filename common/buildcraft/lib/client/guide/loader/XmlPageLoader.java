@@ -591,26 +591,19 @@ public enum XmlPageLoader implements IPageLoaderText {
             return null;
         }
         String type = tag.get("type");
-        if (type == null) {
+        List<GuidePartFactory> list;
+        if (type != null) {
             IStackRecipes recipes = RecipeLookupHelper.handlerTypes.get(type);
             if (recipes == null) {
-                BCLog.logger.warn(
-                    "[lib.guide.loader.xml] Unknown recipe type " + type + " - must be one of "
-                        + RecipeLookupHelper.handlerTypes.keySet()
-                );
-            } else {
-                List<GuidePartFactory> list = recipes.getRecipes(stack);
-                if (list.size() > 0) {
-                    return list.get(0);
-                }
+                BCLog.logger.warn("[lib.guide.loader.xml] Unknown recipe type {} - must be one of {}",
+                    type, RecipeLookupHelper.handlerTypes.keySet());
+                return null;
             }
-        }
-        List<GuidePartFactory> list = RecipeLookupHelper.getAllRecipes(stack, prof);
-        if (list.isEmpty()) {
-            return null;
+            list = recipes.getRecipes(stack);
         } else {
-            return list.get(0);
+            list = RecipeLookupHelper.getAllRecipes(stack, prof);
         }
+        return list.isEmpty() ? null : list.get(0);
     }
 
     private static List<GuidePartFactory> loadAllRecipes(XmlTag tag, Profiler prof) {

@@ -37,6 +37,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib client");
+        buildcraft.lib.client.sprite.AtlasSpriteLegacy.register();
         BCLibProxy.setClientWorldSupplier(() -> net.minecraft.client.MinecraftClient.getInstance().world);
         BCLibProxy.setResourceOpener(id -> net.minecraft.client.MinecraftClient.getInstance().getResourceManager()
             .getResource(id).orElseThrow(() -> new java.io.FileNotFoundException(id.toString())).getInputStream());
@@ -107,6 +108,7 @@ public class BCLibClientInitializer implements ClientModInitializer {
                 previousMarkerWorld = client.world;
             }
             buildcraft.lib.misc.MessageUtil.postClientTick();
+            buildcraft.lib.client.guide.GuideManager.INSTANCE.tickRecipes();
             if (client.player != null && client.getNetworkHandler() != null) {
                 buildcraft.lib.net.cache.BuildCraftObjectCaches.onClientTick(buildcraft.lib.net.BCNetworkManager::sendToServer);
             }

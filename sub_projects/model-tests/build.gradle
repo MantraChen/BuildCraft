@@ -32,6 +32,7 @@ sourceSets.main.java {
     include 'buildcraft/lib/client/render/laser/CompiledLaser*.java'
     include 'buildcraft/lib/client/render/laser/ILaserRenderer.java'
     include 'buildcraft/lib/client/sprite/SpriteHolderRegistry.java'
+    include 'buildcraft/lib/client/sprite/AtlasSpriteLegacy.java'
     include 'buildcraft/lib/client/render/fluid/FluidRenderer.java'
     include 'buildcraft/lib/client/render/fluid/FluidSpriteType.java'
     include 'buildcraft/energy/client/sprite/AtlasSpriteFluid.java'
