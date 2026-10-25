@@ -377,6 +377,11 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
     // ModInitializer, delegating to itemManager / tankManager / the MJ storage. Subclasses provide the
     // backing Storage instances.
 
+    @Nullable
+    public buildcraft.api.mj.IMjConnector getMjConnector(@Nullable Direction side) {
+        return caps.getMjConnector();
+    }
+
     // Item caps
     public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant>
         getItemStorage(@Nullable Direction side) {

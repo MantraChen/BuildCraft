@@ -58,9 +58,9 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 228 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 223 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **45 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **55 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
@@ -92,6 +92,13 @@ features explicitly as work proceeds.
 - Compact bit packing preserves historical bytes and supports signed 32-bit round trips.
   Snapshot readers, resource metadata, item caches and several mapped game APIs were
   corrected. Unused broken Forge shims were removed where native APIs replaced them.
+- MJ connectors now use a sided Fabric `BlockApiLookup`. Engines, battery-backed machines,
+  power-pipe sections and wooden extraction behaviours expose their actual MJ services;
+  pipe pluggables retain connection-blocking precedence. Simulated transfers, return of
+  excess power, pulse-receiver restrictions, NBT/packet persistence and numeric bounds
+  pass regression tests. The native lookup path and transport in a world still require
+  integration validation. Passive extraction and the Team Reborn conversion bridge remain
+  unfinished; micro-MJ units are not treated as interchangeable with external energy units.
 
 Remaining work includes full compilation, block/entity and screen registration, network
 payload routing, renderers, fluid/energy integration, lossless block harvesting, packaged

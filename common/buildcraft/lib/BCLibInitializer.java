@@ -37,6 +37,9 @@ public class BCLibInitializer implements ModInitializer {
         net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerFallback(
             (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
                 ? tile.getItemStorage(side) : null);
+        buildcraft.api.mj.MjAPI.CONNECTOR.registerFallback(
+            (world, pos, state, blockEntity, side) -> blockEntity instanceof buildcraft.lib.tile.TileBC_Neptune tile
+                ? tile.getMjConnector(side) : null);
         buildcraft.api.registry.BuildCraftRegistryManager.managerDataPacks = buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS;
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.SERVER_DATA)
             .registerReloadListener(buildcraft.lib.script.ReloadableRegistryManager.DATA_PACKS);

@@ -9,12 +9,11 @@ package buildcraft.lib.cap;
 import java.util.ArrayList;
 import java.util.List;
 
-// STUB(R.Chen): the Forge capability model (Capability<T> / ICapabilityProvider / hasCapability /
-// getCapability, keyed per EnumPipePart face) has no direct Fabric equivalent. Capability exposure now
-// happens via Transfer-API lookups (ItemStorage.SIDED / FluidStorage.SIDED / EnergyStorage.SIDED)
-// registered against the owning BlockEntity type in the ModInitializer. Only addProvider — used by
-// TileBC_Neptune's constructor to register itemManager — is retained as a registry until that wiring
-// lands; the per-face cap getters are deferred. See LegacyCapabilityStubs.
+import javax.annotation.Nullable;
+import buildcraft.api.mj.IMjConnector;
+import buildcraft.api.mj.MjCapabilityHelper;
+
+/** Collects machine providers. Native lookups expose the corresponding typed interfaces. */
 public class CapabilityHelper {
 
     private final List<Object> additional = new ArrayList<>();
@@ -26,5 +25,15 @@ public class CapabilityHelper {
             additional.add(provider);
         }
         return provider;
+    }
+
+    /** Machine-wide MJ provider; tiles with face restrictions override their sided getter. */
+    @Nullable
+    public IMjConnector getMjConnector() {
+        for (Object provider : additional) {
+            if (provider instanceof MjCapabilityHelper helper) return helper.connector;
+            if (provider instanceof IMjConnector connector) return connector;
+        }
+        return null;
     }
 }

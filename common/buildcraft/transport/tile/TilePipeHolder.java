@@ -624,10 +624,22 @@ public class TilePipeHolder extends TileBC_Neptune implements IPipeHolder, IDebu
         return redstoneValues[side.ordinal()];
     }
 
-    // Caps
-    // STUB(R.Chen): the Forge getCapability(Capability<T>, Direction) override is removed — TileBC_Neptune
-    // no longer models capabilities through a getCapability method. The per-side precedence (pluggable →
-    // pipe → super) is reproduced by the Fabric BlockApiLookup providers documented in registerCapabilities().
+    @Override
+    public buildcraft.api.mj.IMjConnector getMjConnector(Direction side) {
+        PipePluggable plug = getPluggable(side);
+        if (plug != null) {
+            buildcraft.api.mj.IMjConnector connector = plug.getMjConnector();
+            if (connector != null) return connector;
+            if (plug.isBlocking()) return null;
+        }
+        if (pipe != null) {
+            buildcraft.api.mj.IMjConnector connector = pipe.getBehaviour().getMjConnector(side);
+            if (connector != null) return connector;
+            connector = pipe.getFlow().getMjConnector(side);
+            if (connector != null) return connector;
+        }
+        return super.getMjConnector(side);
+    }
 
     // Client side stuffs
 

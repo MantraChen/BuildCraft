@@ -36,7 +36,6 @@ import buildcraft.api.mj.IMjConnector;
 import buildcraft.api.mj.IMjReceiver;
 import buildcraft.api.mj.IMjRedstoneReceiver;
 import buildcraft.api.mj.MjAPI;
-import buildcraft.api.mj.MjCapabilityHelper;
 import buildcraft.api.mj.MjToRfAutoConvertor;
 import buildcraft.api.tiles.IDebuggable;
 
@@ -67,9 +66,6 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements IDebu
 
     @Nonnull
     public final IMjConnector mjConnector = createConnector();
-    // TODO(R.Chen): MjCapabilityHelper is part of the un-migrated buildcraft.api.mj package (Forge
-    // Capability model). It must be replaced by a Transfer API EnergyStorage.SIDED lookup registration.
-    private final MjCapabilityHelper mjCaps = new MjCapabilityHelper(mjConnector);
 
     protected double heat = MIN_HEAT;// TODO: sync gui data
     protected long power = 0;// TODO: sync gui data
@@ -559,17 +555,12 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements IDebu
         return getReceiverToPower(tile, side) != null;
     }
 
-    // TODO(R.Chen): GAME LOGIC / CROSS-MOD — uses the un-migrated buildcraft.api.mj capability
-    // (MjAPI.CAP_RECEIVER) and the Forge RF bridge (CapabilityEnergy via MjToRfAutoConvertor). Both depend
-    // on the Forge Capability model and must move to Transfer API lookups. The RF fallback branch is stubbed
-    // out (returns null) until a Team Reborn EnergyStorage lookup replaces it.
     /** @deprecated Replaced with {@link #getReceiverToPower(Direction)}. */
     @Deprecated
     public IMjReceiver getReceiverToPower(BlockEntity tile, Direction side) {
         if (tile == null) return null;
-        // STUB(R.Chen): tile.getCapability(MjAPI.CAP_RECEIVER, side.getOpposite()) — Forge capability lookup.
-        IMjReceiver rec = null; // TODO(R.Chen): MjAPI.CAP_RECEIVER lookup via Transfer API.
-        if (rec != null && rec.canConnect(mjConnector) && mjConnector.canConnect(rec)) {
+        IMjReceiver rec = MjAPI.getReceiver(mjConnector, MjAPI.findConnector(tile, side.getOpposite()));
+        if (rec != null) {
             return rec;
         } else if (couldPowerRf()) {
             // STUB(R.Chen): tile.getCapability(CapabilityEnergy.ENERGY, ...) — Forge RF capability.
@@ -619,9 +610,10 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements IDebu
         return getReceiverToPower(next, side);
     }
 
-    // STUB(R.Chen): Forge getCapability(Capability<T>, Direction) override removed. The MJ receiver
-    // capability (mjCaps) must be exposed via an EnergyStorage.SIDED Transfer API lookup, restricted to
-    // currentDirection, registered against the owning BlockEntityType in the ModInitializer.
+    @Override
+    public IMjConnector getMjConnector(Direction side) {
+        return side == currentDirection ? mjConnector : super.getMjConnector(side);
+    }
 
     public abstract long getMaxPower();
 

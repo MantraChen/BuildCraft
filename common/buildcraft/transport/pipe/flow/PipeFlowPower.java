@@ -129,11 +129,9 @@ public class PipeFlowPower extends PipeFlow implements IFlowPower, IDebuggable {
 
     @Override
     public boolean canConnect(Direction face, BlockEntity oTile) {
-        // STUB(R.Chen): MJ capability lookup deferred to Phase 4F (BlockApiLookup / EnergyStorage.SIDED).
-        // The original queried CAP_PASSIVE_PROVIDER (when this is a receiver) and CAP_CONNECTOR on the
-        // neighbour tile. With no Fabric equivalent yet, external-tile connections are disabled; pipe→pipe
-        // connections still work through canConnect(Direction, PipeFlow).
-        return false;
+        if (maxPower == -1) reconfigure();
+        IMjConnector connector = MjAPI.findConnector(oTile, face.getOpposite());
+        return connector != null && connector.canConnect(sections.get(face));
     }
 
     @Override
@@ -191,13 +189,9 @@ public class PipeFlowPower extends PipeFlow implements IFlowPower, IDebuggable {
     }
 
     @Override
-    public <T> T getCapability(@Nonnull Object capability, Direction facing) {
-        // STUB(R.Chen): full implementation in Phase 4F.
-        // The original routed MjAPI.CAP_RECEIVER → this (when a receiver) and MjAPI.CAP_CONNECTOR → this,
-        // both of which depend on the Forge Capability system (Capability#cast). Those fields were removed
-        // from MjAPI pending the Transfer-API EnergyStorage.SIDED lookup wiring in Phase 4F — the same
-        // deferral as PipeFlow#getCapability, Pipe and PipeFlowItems.
-        return super.getCapability(capability, facing);
+    public IMjConnector getMjConnector(Direction facing) {
+        if (maxPower == -1) reconfigure();
+        return sections.get(facing);
     }
 
     @Override
@@ -387,12 +381,7 @@ public class PipeFlowPower extends PipeFlow implements IFlowPower, IDebuggable {
     }
 
     private IMjReceiver getReceiver(Direction side) {
-        // STUB(R.Chen): MJ receiver capability lookup deferred to Phase 4F.
-        // The original resolved CAP_RECEIVER on the neighbour (falling back to a Team Reborn
-        // EnergyStorage→MJ auto-convertor when RF conversion is enabled). Both depend on the Forge
-        // capability system; until the Fabric EnergyStorage.SIDED lookup is wired, external-tile power
-        // delivery is disabled. Pipe→pipe transfer (receivePowerInternal) is unaffected.
-        return null;
+        return MjAPI.getReceiver(sections.get(side), pipe.getHolder().getMjConnectorFromPipe(side));
     }
 
     private void step() {

@@ -99,6 +99,11 @@ public class PipeBehaviourWood extends PipeBehaviourDirectional implements IMjRe
     // IMjRedstoneReceiver
 
     @Override
+    public IMjConnector getMjConnector(Direction facing) {
+        return this;
+    }
+
+    @Override
     public boolean canConnect(@Nonnull IMjConnector other) {
         return true;
     }

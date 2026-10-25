@@ -50,7 +50,6 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
  *
  * STUB(R.Chen): VolumeUtil.iterateCone() not in libLeaf — target position search replaced with a
  * no-op stub; targets will never be found until VolumeUtil is migrated (Phase 4E).
- * STUB(R.Chen): MjCapabilityHelper/MjBatteryReceiver capability registration deferred.
  * STUB(R.Chen): LocalBlockUpdateNotifier world event listener stub — subscribes but no block
  * updates propagated until a mixin/Fabric event wires notifySubscribersInRange().
  * STUB(R.Chen): IDetachedRenderer/AdvDebuggerLaser, getRenderBoundingBox deferred to client phase.
@@ -73,8 +72,7 @@ public class TileLaser extends TileBC_Neptune implements IDebuggable, ILocalBloc
     public TileLaser(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         battery = new MjBattery(1024 * MjAPI.MJ);
-        // STUB(R.Chen): MjCapabilityHelper capability registration deferred until Fabric capability API lands.
-        // caps.addProvider(new MjCapabilityHelper(new MjBatteryReceiver(battery)));
+        caps.addProvider(new buildcraft.api.mj.MjCapabilityHelper(new buildcraft.lib.mj.MjBatteryReceiver(battery)));
     }
 
     public static <T extends TileLaser> BlockEntityTicker<T> ticker() {

@@ -13,9 +13,10 @@ The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not crea
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
 compilation or startup; the root `build` and real client/server checks remain required.
 
-Current coverage: 45 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 55 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
-resource-pack projection, list filters and damage/NBT matching. Tests run from the dedicated-server initialization entrypoint,
+resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
+policy. Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 
 Remake by FelixMantra.
