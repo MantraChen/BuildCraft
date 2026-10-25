@@ -12,5 +12,7 @@
   "buildcraft.fluid.heat_0": "%s (Cool)",
   "buildcraft.fluid.heat_1": "%s (Hot)",
   "buildcraft.fluid.heat_2": "%s (Searing)",
-  "item.buildcraftenergy.fluid_bucket": "%s Bucket"
+  "item.buildcraftenergy.fluid_bucket": "%s Bucket",
+  "gui.buildcraftenergy.engine_stone": "Stirling Engine",
+  "gui.buildcraftenergy.engine_iron": "Combustion Engine"
 }

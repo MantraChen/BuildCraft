@@ -15,7 +15,11 @@ import buildcraft.energy.tile.TileEngineStone_BC8;
 
 public class ContainerEngineStone_BC8 extends ContainerBCTile<TileEngineStone_BC8> {
     public ContainerEngineStone_BC8(PlayerEntity player, TileEngineStone_BC8 engine) {
-        super(player, engine);
+        this(player, 0, engine);
+    }
+
+    public ContainerEngineStone_BC8(PlayerEntity player, int syncId, TileEngineStone_BC8 engine) {
+        super(buildcraft.energy.BCEnergyScreens.STONE, player, syncId, engine);
 
         addFullPlayerInventory(84);
         addSlot(new SlotBase(engine.invFuel, 0, 80, 41));

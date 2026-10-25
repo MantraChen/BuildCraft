@@ -1,216 +1,86 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- *
- * Ported to Fabric 1.20.1 by R.Chen (https://github.com/MantraChen).
- */
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.energy.tile;
 
 import java.io.IOException;
-
-import javax.annotation.Nonnull;
-
+import java.util.List;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
-import buildcraft.api.mj.IMjConnector;
-import buildcraft.api.mj.MjAPI;
+import net.minecraft.util.math.*;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
+import buildcraft.api.fuels.*;
+import buildcraft.api.mj.*;
 import buildcraft.api.transport.pipe.IItemPipe;
-
-import buildcraft.lib.engine.EngineConnector;
-import buildcraft.lib.engine.TileEngineBase_BC8;
+import buildcraft.lib.engine.*;
+import buildcraft.lib.fluid.*;
 import buildcraft.lib.net.PacketBufferBC;
-
 import buildcraft.energy.BCEnergyGuis;
-import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-// Forge→Fabric migration notes (R.Chen):
-//   PlayerEntity / Direction / Hand     → PlayerEntity / Direction / Hand
-//   NbtCompound / readFromNBT/writeToNBT  → NbtCompound / readNbt/writeNbt
-//   nbt.setInteger/setDouble                 → nbt.putInt/putDouble
-//   EnvType.CLIENT / EnvType.SERVER                → NetSide.CLIENT / NetSide.SERVER
-//   MessageContext                           → Object ctx
-//   world.isClient                           → world.isClient
-//   player.getHeldItem                       → player.getStackInHand
-//   EntityUtil.getWrenchHand                 → STUB (not yet in libLeaf)
-//   Tank / FluidStack / IFluidHandlerAdv     → STUB — entire fluid fuel system deferred until
-//                                              Transfer-API fluid layer lands (Phase fluid)
-//   BuildcraftFuelRegistry / IFuel           → STUB — fuel API uses FluidStack; deferred
-//   caps.addCapabilityInstance               → removed (CapabilityHelper stub has no such method)
-//   tankManager.addAll / readData / writeData → removed (TankManager stub)
 public class TileEngineIron_BC8 extends TileEngineBase_BC8 {
     public static final int MAX_FLUID = 10_000;
-
-    public static final double COOLDOWN_RATE = 0.05;
+    public static final double COOLDOWN_RATE = .05;
     public static final int MAX_COOLANT_PER_TICK = 40;
-
-    // STUB(R.Chen): tankFuel / tankCoolant / tankResidue / fluidHandler removed.
-    // Fluid fuel system entirely deferred until Transfer-API fluid layer (Tank.java, FluidStack)
-    // and the buildcraft.api.fuels (IFuel, BuildcraftFuelRegistry) are ported to Fabric.
-
-    private int penaltyCooling = 0;
-    private boolean lastPowered = false;
-    private double burnTime;
-    private double residueAmount = 0;
-    // STUB(R.Chen): IFuel currentFuel removed — depends on FluidStack (Forge). Deferred.
+    public final Tank tankFuel = new Tank("fuel", MAX_FLUID, this, fluid -> BuildcraftFuelRegistry.fuel.getFuel(fluid) != null);
+    public final CoolantTank tankCoolant = new CoolantTank("coolant", MAX_FLUID, this);
+    public final Tank tankResidue = new Tank("residue", MAX_FLUID, this, fluid ->
+        BuildcraftFuelRegistry.fuel.getFuels().stream().anyMatch(fuel -> fuel instanceof IFuelManager.IDirtyFuel dirty
+            && dirty.getResidue().isFluidEqual(fluid)));
+    private final CombustionEngineLogic combustion = new CombustionEngineLogic(BuildcraftFuelRegistry.fuel, BuildcraftFuelRegistry.coolant);
+    private final Storage<FluidVariant> fluidStorage = new CombinedStorage<>(List.of(
+        new FluidStorageAccess(tankFuel, true, false), new FluidStorageAccess(tankCoolant, true, false),
+        new FluidStorageAccess(tankResidue, false, true)));
 
     public TileEngineIron_BC8(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        // STUB(R.Chen): tankManager.addAll(tankFuel, tankCoolant, tankResidue) — deferred.
-        // STUB(R.Chen): caps.addCapabilityInstance(CAP_FLUIDS, fluidHandler, ...) — removed;
-        //               Transfer-API FluidStorage.SIDED registration deferred to BCEnergyInitializer.
+        tankManager.addAll(tankFuel, tankCoolant, tankResidue);
     }
-
-    // BlockEntity overrides
-
-    @Override
-    public void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
-        nbt.putInt("penaltyCooling", penaltyCooling);
-        nbt.putDouble("burnTime", burnTime);
-        nbt.putDouble("residueAmount", residueAmount);
+    @Override public Storage<FluidVariant> getFluidStorage(Direction side) { return fluidStorage; }
+    @Override public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt); nbt.put("combustion", combustion.writeNbt());
     }
-
-    @Override
-    public void readFromNBT(NbtCompound nbt) {
+    @Override public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        penaltyCooling = nbt.getInt("penaltyCooling");
-        burnTime = nbt.getDouble("burnTime");
-        residueAmount = Math.max(0, nbt.getDouble("residueAmount"));
+        NbtCompound state = nbt.getCompound("combustion");
+        if (!nbt.contains("combustion")) state.putInt("penaltyCooling", nbt.getInt("penaltyCooling"));
+        combustion.readNbt(state);
     }
-
-    @Override
-    public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
+    @Override public void readPayload(int id, PacketBufferBC buffer, NetSide side, Object ctx) throws IOException {
         super.readPayload(id, buffer, side, ctx);
-        if (side == NetSide.CLIENT) {
-            if (id == NET_GUI_DATA || id == NET_GUI_TICK) {
-                // STUB(R.Chen): tankManager.readData(buffer) — deferred until fluid layer lands.
-            }
-        }
+        if (side == NetSide.CLIENT && (id == NET_GUI_DATA || id == NET_GUI_TICK)) tankManager.readFromBuffer(buffer);
     }
-
-    @Override
-    public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
+    @Override public void writePayload(int id, PacketBufferBC buffer, NetSide side) {
         super.writePayload(id, buffer, side);
-        if (side == NetSide.SERVER) {
-            if (id == NET_GUI_DATA || id == NET_GUI_TICK) {
-                // STUB(R.Chen): tankManager.writeData(buffer) — deferred until fluid layer lands.
-            }
-        }
+        if (side == NetSide.SERVER && (id == NET_GUI_DATA || id == NET_GUI_TICK)) tankManager.writeToBuffer(buffer);
     }
-
-    // TileEngineBase overrides
-
-    @Override
-    public boolean onActivated(PlayerEntity player, Hand hand, Direction side, float hitX, float hitY, float hitZ) {
-        ItemStack current = player.getStackInHand(hand).copy();
-        if (super.onActivated(player, hand, side, hitX, hitY, hitZ)) {
-            return true;
-        }
-        if (!current.isEmpty()) {
-            // STUB(R.Chen): EntityUtil.getWrenchHand not yet in libLeaf; wrench check disabled.
-            if (current.getItem() instanceof IItemPipe) {
-                return false;
-            }
-        }
-        if (!world.isClient) {
-            BCEnergyGuis.ENGINE_IRON.openGUI(player, getPos());
-        }
+    @Override public boolean onActivated(PlayerEntity player, Hand hand, Direction side, float x, float y, float z) {
+        if (!canInteractWith(player)) return false;
+        if (tankCoolant.interactHand(player, hand) || super.onActivated(player, hand, side, x, y, z)) return true;
+        if (buildcraft.lib.misc.EntityUtil.getWrenchHand(player) != null || player.getStackInHand(hand).getItem() instanceof IItemPipe) return false;
+        if (!world.isClient) BCEnergyGuis.ENGINE_IRON.openGUI(player, getPos());
         return true;
     }
-
-    @Override
-    public double getPistonSpeed() {
-        switch (getPowerStage()) {
-            case BLUE:
-                return 0.04;
-            case GREEN:
-                return 0.05;
-            case YELLOW:
-                return 0.06;
-            case RED:
-                return 0.07;
-            default:
-                return 0;
+    @Override public double getPistonSpeed() {
+        return switch (getPowerStage()) { case BLUE -> .04; case GREEN -> .05; case YELLOW -> .06; case RED -> .07; default -> 0; };
+    }
+    @Override protected IMjConnector createConnector() { return new EngineConnector(false); }
+    @Override public boolean isBurning() { return isRedstonePowered && isActive() && combustion.hasFuel(tankFuel.getStorage()); }
+    @Override protected void burn() {
+        currentOutput = combustion.burn(tankFuel.getStorage(), tankResidue.getStorage(), isRedstonePowered);
+        if (currentOutput > 0) {
+            addPower(currentOutput);
+            heat += currentOutput * HEAT_PER_MJ / MjAPI.MJ;
         }
     }
-
-    @Nonnull
-    @Override
-    protected IMjConnector createConnector() {
-        return new EngineConnector(false);
-    }
-
-    @Override
-    public boolean isBurning() {
-        // STUB(R.Chen): tankFuel removed — fluid fuel system deferred to Transfer-API fluid pass.
-        return false;
-    }
-
-    @Override
-    protected void burn() {
-        // STUB(R.Chen): fluid fuel system entirely deferred — Tank / FluidStack / IFuel not in libLeaf.
-    }
-
-    @Override
-    public void updateHeatLevel() {
-        // Cooling logic preserved sans coolant-fluid drain (Tank not available yet).
-        if (heat > MIN_HEAT && (penaltyCooling > 0 || !isRedstonePowered)) {
-            heat -= COOLDOWN_RATE;
-        }
-        // STUB(R.Chen): tankCoolant drain removed — BuildcraftFuelRegistry.coolant deferred.
-
-        if (heat <= MIN_HEAT && penaltyCooling > 0) {
-            penaltyCooling--;
-        }
-
-        if (heat <= MIN_HEAT) {
-            heat = MIN_HEAT;
-        }
-
-        getPowerStage();
-    }
-
-    @Override
-    public boolean isActive() {
-        return penaltyCooling <= 0;
-    }
-
-    @Override
-    public long getMaxPower() {
-        return 10_000 * MjAPI.MJ;
-    }
-
-    @Override
-    public long maxPowerReceived() {
-        return 2_000 * MjAPI.MJ;
-    }
-
-    @Override
-    public long maxPowerExtracted() {
-        return 500 * MjAPI.MJ;
-    }
-
-    @Override
-    public float explosionRange() {
-        return 4;
-    }
-
-    @Override
-    protected int getMaxChainLength() {
-        return 4;
-    }
-
-    @Override
-    public long getCurrentOutput() {
-        // STUB(R.Chen): currentFuel (IFuel/FluidStack) removed — returns 0 until fluid layer lands.
-        return 0;
-    }
+    @Override public void updateHeatLevel() { heat = combustion.cool(heat, isRedstonePowered, tankCoolant.getStorage()); }
+    @Override public boolean isActive() { return combustion.getPenaltyCooling() == 0; }
+    @Override public long getMaxPower() { return 10_000 * MjAPI.MJ; }
+    @Override public long maxPowerReceived() { return 2_000 * MjAPI.MJ; }
+    @Override public long maxPowerExtracted() { return 500 * MjAPI.MJ; }
+    @Override public float explosionRange() { return 4; }
+    @Override protected int getMaxChainLength() { return 4; }
+    @Override public long getCurrentOutput() { return currentOutput; }
 }

@@ -12,5 +12,7 @@
   "buildcraft.fluid.heat_0": "%s（冷却）",
   "buildcraft.fluid.heat_1": "%s（高温）",
   "buildcraft.fluid.heat_2": "%s（炽热）",
-  "item.buildcraftenergy.fluid_bucket": "%s桶"
+  "item.buildcraftenergy.fluid_bucket": "%s桶",
+  "gui.buildcraftenergy.engine_stone": "斯特林引擎",
+  "gui.buildcraftenergy.engine_iron": "内燃引擎"
 }

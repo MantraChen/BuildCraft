@@ -13,7 +13,7 @@ The dedicated JVM exits after printing `BUILDCRAFT PORT TESTS`. It does not crea
 world or launch the full BuildCraft mod. This fixture is **not** evidence of full-mod
 compilation or startup; the root `build` and real client/server checks remain required.
 
-Current coverage: 110 tests for historical bit packing, transactional inventory transfers,
+Current coverage: 125 tests for historical bit packing, transactional inventory transfers,
 machine inventory persistence/drops/access restrictions, strict NBT ingredients, native
 resource-pack projection, list filters, damage/NBT matching, MJ conservation and connection
 policy, persistent configuration (legacy files, reloads, migrations, defaults and bounds),
@@ -25,6 +25,10 @@ cover exact droplet/mB conversion, old saves, capacity bounds, fluid/NBT isolati
 nested rollback, first-fluid lock rollback, defensive snapshots, native bucket exchanges,
 insufficient capacity, stacked-bucket overflow rejection, column settling/barriers and
 round-trip exchanges for all 30 production oil/fuel buckets.
+Fifteen engine/inventory tests cover the original nine cold fuels, exact energy/residue
+yields, fractional fuel work across reloads and variant changes, blocked residue rollback,
+redstone cooldown, coolant limits, automation view permissions, whole-item ice conversion,
+vanilla/modded solid fuels and real native slot removal/insertion/extraction restrictions.
 Tests run from the dedicated-server initialization entrypoint,
 after all common initializers (including Fabric's ingredient serializers) have completed.
 

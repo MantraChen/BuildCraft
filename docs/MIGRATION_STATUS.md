@@ -58,13 +58,13 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 87 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 75 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **110 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **125 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **33 world tests passed** after 110 regression tests.
+- Headless Fabric GameTest: **33 world tests passed** after 125 regression tests.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -80,6 +80,30 @@ features explicitly as work proceeds.
 
 ## Repair progress
 
+- Restored the nine original cold combustion fuels and solid coolant values. Combustion
+  now accounts for fractional droplets, fuel work, MJ and residue across ticks and saves;
+  blocked residue outputs roll back fuel consumption. Cooling respects redstone cooldown,
+  temperature targets and the per-tick coolant limit. Automation can insert fuel/coolant
+  and extract residue without bypassing restrictions through storage views. Ice insertion
+  commits only if all coolant fits. Fifteen regression tests cover these rules and native
+  solid-fuel lookup, actual machine-slot removal, insertion limits and extraction denial.
+- Stirling engines use Fabric's fuel registry and update their power controller once per
+  tick, instead of mutating it from display getters. Empty fuel containers remain removable
+  without opening the fuel slot to arbitrary items. Engine MJ transfers clamp requests and
+  receiver leftovers, reject negative extraction and avoid addition overflow. Saved numeric
+  state is bounded and redstone state is refreshed on load. Full engine block ticking,
+  heat behavior, MJ chaining and interaction still require full-mod world verification.
+- Stirling/combustion screens use native extended handlers, actual sync IDs and block
+  positions, tank widgets and slot inventories. Shift-clicks respect insertion/extraction
+  and phantom-slot rules. Native backgrounds, fuel gauge, engine/ownership ledger icons
+  and labels are restored. Atlas sources now include GUI icons, and atlas holders bind
+  their texture before drawing. Screen opening and GPU output remain unverified.
+- `processResources` converts all 32 legacy language files from the main, localization
+  and guide trees into lower-case native JSON paths, preserving translation keys and
+  UTF-8 values. The output excludes obsolete `.lang` files; authored modern JSON remains
+  separate. Shared localization now reads Minecraft's language table, and engine screen
+  titles have English/Chinese translations. Resource processing passes independently
+  of the remaining compilation errors.
 - Replaced the tank's zero-return Fabric adapter and broken Forge storage shim with
   one transaction-aware droplet store. Legacy mB constructors/methods convert exactly
   once; partial mB quantities survive native transfers and saves. Variant/NBT isolation,

@@ -15,8 +15,8 @@ import buildcraft.lib.compat.FluidStackBC;
 import buildcraft.api.fuels.IFuel;
 import buildcraft.api.fuels.IFuelManager;
 
-public enum FuelRegistry implements IFuelManager {
-    INSTANCE;
+public final class FuelRegistry implements IFuelManager {
+    public static final FuelRegistry INSTANCE = new FuelRegistry();
 
     private final List<IFuel> fuels = new LinkedList<>();
 
@@ -38,7 +38,7 @@ public enum FuelRegistry implements IFuelManager {
 
     @Override
     public Collection<IFuel> getFuels() {
-        return fuels;
+        return java.util.Collections.unmodifiableList(fuels);
     }
 
     @Override
@@ -60,14 +60,17 @@ public enum FuelRegistry implements IFuelManager {
         private final int totalBurningTime;
 
         public Fuel(FluidStackBC fluid, long powerPerCycle, int totalBurningTime) {
-            this.fluid = fluid;
+            if (fluid == null || fluid.getFluidVariant().isBlank() || powerPerCycle <= 0 || totalBurningTime <= 0) {
+                throw new IllegalArgumentException("Fuel needs a fluid, positive power and positive burn time");
+            }
+            this.fluid = fluid.copy();
             this.powerPerCycle = powerPerCycle;
             this.totalBurningTime = totalBurningTime;
         }
 
         @Override
         public FluidStackBC getFluid() {
-            return fluid;
+            return fluid.copy();
         }
 
         @Override
@@ -87,12 +90,13 @@ public enum FuelRegistry implements IFuelManager {
 
         public DirtyFuel(FluidStackBC fluid, long powerPerCycle, int totalBurningTime, FluidStackBC residue) {
             super(fluid, powerPerCycle, totalBurningTime);
-            this.residue = residue;
+            if (residue == null || residue.isEmpty()) throw new IllegalArgumentException("Empty residue");
+            this.residue = residue.copy();
         }
 
         @Override
         public FluidStackBC getResidue() {
-            return residue;
+            return residue.copy();
         }
     }
 }

@@ -45,16 +45,11 @@ import buildcraft.lib.misc.NBTUtilBC;
 import buildcraft.lib.misc.StringUtilBC;
 import buildcraft.lib.misc.collect.OrderedEnumMap;
 import buildcraft.lib.misc.data.ModelVariableData;
-import buildcraft.lib.mj.MJEnergyStorage;
 import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-// Step 3 migration scope (R.Chen): only the Forge IEnergyStorage capability, the ITickable tick, and the
-// energy-field NBT have been ported. All engine-specific game logic (heat, piston, burn, MJ chaining) is
-// preserved verbatim and marked with TODO(R.Chen) where it still depends on un-migrated APIs
-// (buildcraft.api.mj, IDebuggable, the Forge MjToRfAutoConvertor RF bridge). Do NOT treat the game logic as
-// verified for Fabric.
+// Engines push MJ through the sided MJ connector lookup. Full in-world engine verification is pending.
 public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, IEngineLikeForLedger {
 
     /** Heat per {@link MjAPI#MJ}. */
@@ -67,8 +62,8 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
     @Nonnull
     public final IMjConnector mjConnector = createConnector();
 
-    protected double heat = MIN_HEAT;// TODO: sync gui data
-    protected long power = 0;// TODO: sync gui data
+    protected double heat = MIN_HEAT;
+    protected long power = 0;
     private long lastPower = 0;
     /** Increments from 0 to 1. Above 0.5 all of the held power is emitted. */
     private float progress, lastProgress;
@@ -77,33 +72,15 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
     protected EnumPowerStage powerStage = EnumPowerStage.BLUE;
     protected Direction currentDirection = Direction.UP;
 
-    public long currentOutput;// TODO: sync gui data
+    public long currentOutput;
     public boolean isRedstonePowered = false;
     protected boolean isPumping = false;
 
     /** The model variables, used to keep track of the various state-based variables. */
     public final ModelVariableData clientModelData = new ModelVariableData();
 
-    // Needed: Power stored
-
-    // Step 3: Forge IEnergyStorage capability → Team Reborn EnergyStorage (MJ, µJ-based). Created lazily
-    // because the capacity / transfer limits come from subclass-defined abstract methods that cannot be
-    // called from the constructor.
-    // TODO(R.Chen): the manual `long power` accumulator below should be folded onto this storage, and the
-    // storage exposed via EnergyStorage.SIDED in the owning ModInitializer (replacing getCapability).
-    private MJEnergyStorage mjEnergyStorage;
-
-    // TODO(R.Chen): Yarn BlockEntity requires (BlockEntityType<?>, BlockPos, BlockState). Subclasses must
-    // pass their registered BlockEntityType. This replaces the Forge no-arg constructor.
     public TileEngineBase_BC8(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-    }
-
-    protected MJEnergyStorage getMjEnergyStorage() {
-        if (mjEnergyStorage == null) {
-            mjEnergyStorage = new MJEnergyStorage(getMaxPower(), maxPowerReceived(), maxPowerExtracted());
-        }
-        return mjEnergyStorage;
     }
 
     @Override
@@ -115,9 +92,11 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
         }
         isRedstonePowered = nbt.getBoolean("isRedstonePowered");
         heat = nbt.getDouble("heat");
-        power = nbt.getLong("power");
+        heat = Double.isFinite(heat) ? Math.max(MIN_HEAT, Math.min(MAX_HEAT, heat)) : MIN_HEAT;
+        power = Math.max(0, Math.min(getMaxPower(), nbt.getLong("power")));
         progress = nbt.getFloat("progress");
-        progressPart = nbt.getInt("progressPart");
+        progress = Float.isFinite(progress) ? Math.max(0, Math.min(1, progress)) : 0;
+        progressPart = Math.max(0, Math.min(2, nbt.getInt("progressPart")));
     }
 
     @Override
@@ -178,6 +157,7 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
     // TODO(R.Chen): GAME LOGIC — not verified for Fabric. world.updateNeighborsAlways replaces the Forge
     // notifyNeighborsRespectDebug call; behaviour parity unconfirmed.
     public ActionResult attemptRotation() {
+        if (world == null) return ActionResult.FAIL;
         OrderedEnumMap<Direction> possible = VanillaRotationHandlers.ROTATE_FACING;
         Direction current = currentDirection;
         for (int i = 0; i < 6; i++) {
@@ -185,6 +165,7 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
             if (isFacingReceiver(current)) {
                 if (currentDirection != current) {
                     currentDirection = current;
+                    markDirty();
                     // makeTileCache();
                     sendNetworkUpdate(NET_RENDER_DATA);
                     redrawBlock();
@@ -258,7 +239,7 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
 
     @Override
     public final EnumPowerStage getPowerStage() {
-        if (!world.isClient) {
+        if (world != null && !world.isClient) {
             EnumPowerStage newStage = computePowerStage();
 
             if (powerStage != newStage) {
@@ -311,6 +292,15 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
         isRedstonePowered = world.getReceivedRedstonePower(getPos()) > 0;
     }
 
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (world != null && !world.isClient) {
+            isRedstonePowered = world.getReceivedRedstonePower(getPos()) > 0;
+            rotateIfInvalid();
+        }
+    }
+
     // Step 3: ITickable.update() → BlockEntityTicker pattern. The owning Block must return this ticker from
     // Block#getTicker(...). The tick BODY below is preserved verbatim game logic — TODO(R.Chen): unverified.
     public static <T extends TileEngineBase_BC8> BlockEntityTicker<T> ticker() {
@@ -320,8 +310,6 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
     public void tick() {
         deltaManager.tick();
         if (cannotUpdate()) return;
-
-        boolean overheat = getPowerStage() == EnumPowerStage.OVERHEAT;
 
         if (world.isClient) {
             lastProgress = progress;
@@ -333,13 +321,14 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
                     progress = 0;
                 }
             } else if (progress > 0) {
-                progress -= 0.01f;
+                progress = Math.max(0, progress - 0.01f);
             }
             clientModelData.tick();
             return;
         }
 
         lastPower = 0;
+        currentOutput = 0;
 
         if (!isRedstonePowered) {
             if (power > MjAPI.MJ) {
@@ -383,12 +372,10 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
         if (!pulsedPower) {
             if (isRedstonePowered && isActive()) {
                 sendPower(receiver);
-            } else {
-                currentOutput = 0;
             }
         }
 
-        if (!overheat) {
+        if (getPowerStage() != EnumPowerStage.OVERHEAT) {
             burn();
         }
 
@@ -414,7 +401,7 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
         if (receiver != null) {
             long extracted = getPowerToExtract(false);
             if (extracted > 0) {
-                long excess = receiver.receivePower(extracted, false);
+                long excess = Math.max(0, Math.min(extracted, receiver.receivePower(extracted, false)));
                 extractPower(extracted - excess, extracted - excess, true); // Comment out for constant power
                 // currentOutput = extractEnergy(0, needed, true); // Uncomment for constant power
             }
@@ -459,7 +446,10 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
 
     /** Temp! This should be replaced with a tile buffer! */
     public ITileBuffer getTileBuffer(Direction side) {
-        BlockEntity tile = world.getBlockEntity(getPos().offset(side));
+        if (world == null || side == null) return () -> null;
+        BlockPos neighbor = getPos().offset(side);
+        BlockEntity tile = world.isChunkLoaded(neighbor) ? world.getBlockEntity(neighbor) : null;
+        if (tile != null && tile.isRemoved()) return () -> null;
         return () -> tile;
     }
 
@@ -496,53 +486,16 @@ public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements build
     // }
 
     public void addPower(long microJoules) {
-        power += microJoules;
-        lastPower += microJoules;
-
-        if (getPowerStage() == EnumPowerStage.OVERHEAT) {
-            // TODO: turn engine off
-            // worldObj.createExplosion(null, xCoord, yCoord, zCoord, explosionRange(), true);
-            // worldObj.setBlockState(xCoord, yCoord, zCoord);
-        }
-
-        if (power > getMaxPower()) {
-            power = getMaxPower();
-        }
+        if (microJoules <= 0) return;
+        power += Math.min(microJoules, Math.max(0, getMaxPower() - power));
+        lastPower += Math.min(microJoules, Long.MAX_VALUE - lastPower);
     }
 
     public long extractPower(long min, long max, boolean doExtract) {
-        if (power < min) {
-            return 0;
-        }
-
-        long actualMax;
-
-        if (max > maxPowerExtracted()) {
-            actualMax = maxPowerExtracted();
-        } else {
-            actualMax = max;
-        }
-
-        if (actualMax < min) {
-            return 0;
-        }
-
-        long extracted;
-
-        if (power >= actualMax) {
-            extracted = actualMax;
-
-            if (doExtract) {
-                power -= actualMax;
-            }
-        } else {
-            extracted = power;
-
-            if (doExtract) {
-                power = 0;
-            }
-        }
-
+        if (min < 0 || max < min) return 0;
+        long extracted = Math.max(0, Math.min(power, Math.min(max, maxPowerExtracted())));
+        if (extracted < min) return 0;
+        if (doExtract) power -= extracted;
         return extracted;
     }
 

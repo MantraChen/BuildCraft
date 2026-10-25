@@ -82,7 +82,7 @@ public class SpriteHolderRegistry {
 
         @Override
         public void bindTexture() {
-            // Texture binding is handled by the Fabric render pipeline via RenderLayer.
+            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
         }
     }
 }

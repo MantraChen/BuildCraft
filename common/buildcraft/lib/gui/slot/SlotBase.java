@@ -10,20 +10,19 @@ package buildcraft.lib.gui.slot;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.inventory.SimpleInventory;
+import buildcraft.lib.inventory.ItemHandlerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 
 import buildcraft.lib.tile.item.IItemHandlerAdv;
 
-// STUB(R.Chen): Forge SlotItemHandler → Fabric Slot. SimpleInventory used as constructor placeholder;
-// real item access routes through IItemHandlerAdv. Full Transfer-API slot wiring deferred.
+// Native inventory access preserves the machine's extraction, replacement and dirty callbacks.
 public class SlotBase extends Slot {
     public final int handlerIndex;
     public final IItemHandlerAdv itemHandler;
 
     public SlotBase(IItemHandlerAdv itemHandler, int slotIndex, int posX, int posY) {
-        super(new SimpleInventory(Math.max(1, itemHandler.getSlots())), slotIndex, posX, posY);
+        super(new ItemHandlerInventory(itemHandler), slotIndex, posX, posY);
         this.handlerIndex = slotIndex;
         this.itemHandler = itemHandler;
     }
@@ -31,6 +30,9 @@ public class SlotBase extends Slot {
     public boolean canShift() {
         return true;
     }
+
+    @Override public int getMaxItemCount() { return itemHandler.getSlotLimit(handlerIndex); }
+    @Override public int getMaxItemCount(ItemStack stack) { return Math.min(getMaxItemCount(), stack.getMaxCount()); }
 
     @Override
     public ItemStack getStack() {
@@ -46,6 +48,11 @@ public class SlotBase extends Slot {
     @Override
     public boolean canInsert(@Nonnull ItemStack stack) {
         return itemHandler.canSet(handlerIndex, stack);
+    }
+
+    @Override
+    public boolean canTakeItems(net.minecraft.entity.player.PlayerEntity player) {
+        return !itemHandler.extractItem(handlerIndex, 1, true).isEmpty();
     }
 
     public ItemStack insert(ItemStack stack, boolean simulate) {

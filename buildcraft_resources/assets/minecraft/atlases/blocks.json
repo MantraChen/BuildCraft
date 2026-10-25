@@ -2,6 +2,7 @@
   "sources": [
     { "type": "minecraft:directory", "source": "blocks", "prefix": "blocks/" },
     { "type": "minecraft:directory", "source": "items", "prefix": "items/" },
+    { "type": "minecraft:directory", "source": "icons", "prefix": "icons/" },
     { "type": "buildcraftenergy:fluids" }
   ]
 }

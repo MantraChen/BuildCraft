@@ -20,7 +20,7 @@ import buildcraft.lib.BCLibInitializer;
  *   FMLPreInitializationEvent  → {@link #onInitialize()} (config, registry, proxy)
  *   FMLInitializationEvent     → {@link #onInitialize()} (recipes, world gen — folded)
  *   FMLPostInitializationEvent → {@link #onInitialize()} (biome validation — folded)
- *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType (deferred)
+ *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
  * Blocks, fluids, buckets, items and tile factories register here. World generation remains unfinished.
@@ -43,17 +43,16 @@ public class BCEnergyInitializer implements ModInitializer {
         BCEnergyFluids.register(BCEnergyConfig.oilIsSticky, BCEnergyConfig.enableOilBurn);
         BCEnergyBlocks.preInit();
         BCEnergyItems.preInit();
+        BCEnergyScreens.register();
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
-        // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
-        //               ENGINE_STONE, ENGINE_IRON, ENGINE_RF, DYNAMO_MJ.
-        // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCEnergyProxy) →
-        //               BCEnergyClientInitializer (model/sprite/render events).
+        // Remaining native screens: ENGINE_RF and DYNAMO_MJ.
+        // Client model/sprite/render registration is owned by BCLibClientInitializer.
         // STUB(R.Chen): EnergyStorage.SIDED.registerForBlockEntityType(
         //               (be, side) -> be.rfEnergyStorage, ENGINE_RF_TYPE, null)
         //               — Team Reborn registration deferred until ENGINE_RF_TYPE is registered.
 
         // --- Forge init (BCEnergy.init) ------------------------------------------
-        // STUB(R.Chen): BCEnergyRecipes.init() — fuel/coolant FluidStack registry deferred.
+        BCEnergyRecipes.init();
         // STUB(R.Chen): BCEnergyWorldGen.init() — oil biome/structure generation deferred.
 
         // --- Forge postInit (BCEnergy.postInit) ----------------------------------

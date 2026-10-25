@@ -18,8 +18,8 @@ import buildcraft.api.fuels.ICoolant;
 import buildcraft.api.fuels.ICoolantManager;
 import buildcraft.api.fuels.ISolidCoolant;
 
-public enum CoolantRegistry implements ICoolantManager {
-    INSTANCE;
+public final class CoolantRegistry implements ICoolantManager {
+    public static final CoolantRegistry INSTANCE = new CoolantRegistry();
 
     private final List<ICoolant> coolants = new LinkedList<>();
     private final List<ISolidCoolant> solidCoolants = new LinkedList<>();
@@ -98,7 +98,9 @@ public enum CoolantRegistry implements ICoolantManager {
         private final float degreesCoolingPerMB;
 
         public Coolant(FluidStackBC fluid, float degreesCoolingPerMB) {
-            this.fluid = fluid;
+            if (fluid == null || fluid.isEmpty() || !Float.isFinite(degreesCoolingPerMB) || degreesCoolingPerMB <= 0)
+                throw new IllegalArgumentException("Coolant requires positive finite cooling");
+            this.fluid = fluid.copy();
             this.degreesCoolingPerMB = degreesCoolingPerMB;
         }
 
@@ -122,8 +124,10 @@ public enum CoolantRegistry implements ICoolantManager {
         private final float multiplier;
 
         public SolidCoolant(ItemStack solid, FluidStackBC fluid, float multiplier) {
-            this.solid = solid;
-            this.fluid = fluid;
+            if (solid == null || solid.isEmpty() || fluid == null || fluid.isEmpty() || !Float.isFinite(multiplier) || multiplier <= 0)
+                throw new IllegalArgumentException("Invalid solid coolant");
+            this.solid = solid.copy();
+            this.fluid = fluid.copy();
             this.multiplier = multiplier;
         }
 
@@ -132,8 +136,8 @@ public enum CoolantRegistry implements ICoolantManager {
             if (stack == null || !ItemStack.areItemsEqual(stack, solid)) {
                 return null;
             }
-            int liquidAmount = (int) (stack.getCount() * fluid.amount * multiplier / solid.getCount());
-            return new FluidStackBC(fluid.getFluid(), liquidAmount);
+            long droplets = (long) (stack.getCount() * (double) fluid.amount * multiplier / solid.getCount());
+            return FluidStackBC.of(fluid.getFluidVariant(), droplets);
         }
     }
 }

@@ -31,6 +31,6 @@ public enum BCEnergyGuis {
     }
 
     public void openGUI(PlayerEntity player, BlockPos pos) {
-        // STUB(R.Chen): Forge player.openGui → Fabric ExtendedScreenHandlerType.openHandledScreen.
+        BCEnergyScreens.open(player, pos, this);
     }
 }

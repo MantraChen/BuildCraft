@@ -22,7 +22,7 @@ public class LedgerOwnership extends Ledger_Neptune {
 
     public LedgerOwnership(BuildCraftGui gui, TileBC_Neptune tile, boolean expandPositive) {
         super(gui, 0xFF_E0_F0_FF, expandPositive);
-        this.title = "gui.ledger.ownership";
+        this.title = buildcraft.lib.misc.LocaleUtil.localize("gui.ledger.ownership");
         this.tile = tile;
 
         appendText(this::getOwnerName, 0xFF_00_00_00);
@@ -32,7 +32,9 @@ public class LedgerOwnership extends Ledger_Neptune {
 
     @Override
     protected void drawIcon(double x, double y) {
-        // TODO(R.Chen): owner face sprite draw — SpriteUtil.getFaceSprite not yet migrated.
+        buildcraft.lib.gui.GuiIcon.draw(buildcraft.lib.misc.SpriteUtil.getFaceSprite(tile.getOwner()), x, y, x + 16, y + 16);
+        var overlay = buildcraft.lib.misc.SpriteUtil.getFaceOverlaySprite(tile.getOwner());
+        if (overlay != null) buildcraft.lib.gui.GuiIcon.draw(overlay, x, y, x + 16, y + 16);
     }
 
     private String getOwnerName() {

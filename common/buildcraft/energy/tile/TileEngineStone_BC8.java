@@ -12,7 +12,6 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -30,30 +29,15 @@ import buildcraft.lib.delta.DeltaInt;
 import buildcraft.lib.delta.DeltaManager.EnumNetworkVisibility;
 import buildcraft.lib.engine.EngineConnector;
 import buildcraft.lib.engine.TileEngineBase_BC8;
-import buildcraft.lib.misc.InventoryUtil; // STUB(R.Chen): drop() only; addToBestAcceptor removed
+import buildcraft.lib.misc.InventoryUtil;
 import buildcraft.lib.tile.item.ItemHandlerManager.EnumAccess;
 import buildcraft.lib.tile.item.ItemHandlerSimple;
 
 import buildcraft.energy.BCEnergyGuis;
 
-// Forge→Fabric migration notes (R.Chen):
-//   PlayerEntity                 → PlayerEntity
-//   Direction                   → Direction
-//   Hand                     → Hand
-//   NbtCompound                → NbtCompound
-//   readFromNBT / writeToNBT     → readNbt / writeNbt
-//   nbt.setInteger/setLong        → nbt.putInt/putLong
-//   nbt.getInteger                → nbt.getInt
-//   IItemHandlerModifiable handler → Object handler (stub)
-//   TileEntityFurnace.getItemBurnTime → STUB (returns 0; see TODO below)
-//   world.isClient               → world.isClient
-//   InventoryUtil.addToBestAcceptor → STUB (not yet in migrated InventoryUtil)
-//   BCEnergyGuis.ENGINE_STONE.openGUI → stub (GUI deferred)
 public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
     private static final long MAX_OUTPUT = MjAPI.MJ;
     private static final long MIN_OUTPUT = MAX_OUTPUT / 3;
-    private static final float kp = 1f;
-    private static final float ki = 0.05f;
     private static final long eLimit = (MAX_OUTPUT - MIN_OUTPUT) * 20;
 
     public final DeltaInt deltaFuelLeft = deltaManager.addDelta("fuel_left", EnumNetworkVisibility.GUI_ONLY);
@@ -63,15 +47,13 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
     int totalBurnTime = 0;
     long esum = 0;
 
-    private boolean isForceInserting = false;
-
     public TileEngineStone_BC8(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         invFuel = itemManager.addInvHandler("fuel", 1, this::isValidFuel, EnumAccess.BOTH, EnumPipePart.VALUES);
     }
 
     private boolean isValidFuel(int slot, ItemStack stack) {
-        return isForceInserting || getItemBurnTime(stack) > 0;
+        return getItemBurnTime(stack) > 0;
     }
 
     // BlockEntity overrides
@@ -79,9 +61,9 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
     @Override
     public void readFromNBT(NbtCompound nbt) {
         super.readFromNBT(nbt);
-        burnTime = nbt.getInt("burnTime");
-        totalBurnTime = nbt.getInt("totalBurnTime");
-        esum = nbt.getLong("esum");
+        totalBurnTime = Math.max(0, nbt.getInt("totalBurnTime"));
+        burnTime = Math.max(0, Math.min(totalBurnTime, nbt.getInt("burnTime")));
+        esum = clamp(nbt.getLong("esum"), -eLimit, eLimit);
     }
 
     @Override
@@ -92,19 +74,12 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
         nbt.putLong("esum", esum);
     }
 
-    @Override
-    protected void onSlotChange(Object handler, int slot, @Nonnull ItemStack before, @Nonnull ItemStack after) {
-        if (handler == invFuel) {
-            if (isForceInserting && after.isEmpty()) {
-                isForceInserting = false;
-            }
-        }
-    }
-
     // Engine overrides
 
     @Override
     public boolean onActivated(PlayerEntity player, Hand hand, Direction side, float hitX, float hitY, float hitZ) {
+        if (!canInteractWith(player) || buildcraft.lib.misc.EntityUtil.getWrenchHand(player) != null
+            || player.getStackInHand(hand).getItem() instanceof buildcraft.api.transport.pipe.IItemPipe) return false;
         if (!world.isClient) {
             BCEnergyGuis.ENGINE_STONE.openGUI(player, getPos());
         }
@@ -128,11 +103,13 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
         if (burnTime > 0) {
             burnTime--;
             if (getPowerStage() != EnumPowerStage.OVERHEAT) {
-                long output = getCurrentOutput();
+                long e = 3 * getMaxPower() / 8 - power;
+                esum = clamp(esum + e, -eLimit, eLimit);
+                long output = clamp(e + esum / 20, MIN_OUTPUT, MAX_OUTPUT);
                 currentOutput = output;
                 addPower(output);
             }
-        }
+        } else currentOutput = 0;
     }
 
     @Override
@@ -145,19 +122,13 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
                 deltaFuelLeft.addDelta(0, totalBurnTime, -100);
 
                 ItemStack fuel = invFuel.extractItem(0, 1, false);
-                // Forge item.getContainerItem(fuel) → Fabric ItemStack.getRecipeRemainder()
                 ItemStack container = fuel.getRecipeRemainder();
                 if (!container.isEmpty()) {
                     if (invFuel.getStackInSlot(0).isEmpty()) {
-                        isForceInserting = false;
-                        // STUB(R.Chen): IItemTransactor.insert(all-slots) not in libLeaf; try slot 0.
-                        ItemStack leftover = invFuel.insertItem(0, container, false);
-                        if (!leftover.isEmpty()) {
-                            isForceInserting = true;
-                            invFuel.setStackInSlot(0, leftover);
-                        }
+                        // Internal replacement may store a non-fuel remainder; external insertion
+                        // still uses the fuel filter and cannot put arbitrary items in this slot.
+                        invFuel.setStackInSlot(0, container);
                     } else {
-                        // STUB(R.Chen): InventoryUtil.addToBestAcceptor not yet in migrated InventoryUtil.
                         InventoryUtil.drop(world, getPos(), container);
                     }
                 }
@@ -165,15 +136,8 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
         }
     }
 
-    // TODO(R.Chen): Forge TileEntityFurnace.getItemBurnTime → Fabric 1.20.1.
-    // AbstractFurnaceBlockEntity.createFuelTimeMap() is protected in vanilla; the correct Fabric
-    // approach is via FuelRegistryImpl or a mixin. Returns 0 until lib.recipe is migrated.
     private static int getItemBurnTime(ItemStack stack) {
-        if (AbstractFurnaceBlockEntity.canUseAsFuel(stack)) {
-            // STUB(R.Chen): real burn duration unavailable; placeholder 200 ticks (vanilla coal default).
-            return 200;
-        }
-        return 0;
+        return buildcraft.lib.engine.SolidFuelBurner.burnTime(stack);
     }
 
     @Override
@@ -198,9 +162,7 @@ public class TileEngineStone_BC8 extends TileEngineBase_BC8 {
 
     @Override
     public long getCurrentOutput() {
-        long e = 3 * getMaxPower() / 8 - power;
-        esum = clamp(esum + e, -eLimit, eLimit);
-        return clamp(e + esum / 20, MIN_OUTPUT, MAX_OUTPUT);
+        return currentOutput;
     }
 
     private static long clamp(long val, long min, long max) {

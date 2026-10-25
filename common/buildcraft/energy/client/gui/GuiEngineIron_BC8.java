@@ -1,53 +1,35 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.energy.client.gui;
 
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
-import buildcraft.lib.gui.GuiBC8;
-import buildcraft.lib.gui.GuiIcon;
+import buildcraft.lib.gui.*;
 import buildcraft.lib.gui.ledger.LedgerEngine;
 import buildcraft.lib.gui.pos.GuiRectangle;
-import buildcraft.lib.misc.LocaleUtil;
-
 import buildcraft.energy.container.ContainerEngineIron_BC8;
 
 public class GuiEngineIron_BC8 extends GuiBC8<ContainerEngineIron_BC8> {
-    private static final Identifier TEXTURE_BASE = new Identifier("buildcraftenergy:textures/gui/combustion_engine_gui.png");
-    private static final int SIZE_X = 176, SIZE_Y = 177;
-    private static final GuiIcon ICON_GUI = new GuiIcon(TEXTURE_BASE, 0, 0, SIZE_X, SIZE_Y);
-    private static final GuiIcon ICON_TANK_OVERLAY = new GuiIcon(TEXTURE_BASE, 176, 0, 16, 60);
-
+    private static final Identifier TEXTURE = new Identifier("buildcraftenergy:textures/gui/combustion_engine_gui.png");
+    private static final GuiIcon BACKGROUND = new GuiIcon(TEXTURE,0,0,176,177);
+    private static final GuiIcon OVERLAY = new GuiIcon(TEXTURE,176,0,16,60);
     public GuiEngineIron_BC8(ContainerEngineIron_BC8 container) {
-        super(container);
-        xSize = SIZE_X;
-        ySize = SIZE_Y;
-
-        mainGui.shownElements.add(new LedgerEngine(mainGui, container.tile, true));
-        mainGui.shownElements.add(container.widgetTankFuel.createGuiElement(mainGui, new GuiRectangle(26, 18, 16, 60).offset(mainGui.rootElement), ICON_TANK_OVERLAY));
-        mainGui.shownElements.add(container.widgetTankCoolant.createGuiElement(mainGui, new GuiRectangle(80, 18, 16, 60).offset(mainGui.rootElement), ICON_TANK_OVERLAY));
-        mainGui.shownElements.add(container.widgetTankResidue.createGuiElement(mainGui, new GuiRectangle(134, 18, 16, 60).offset(mainGui.rootElement), ICON_TANK_OVERLAY));
+        this(container,container.player.getInventory(),Text.translatable("gui.buildcraftenergy.engine_iron"));
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    protected void drawBackgroundLayer(float partialTicks) {
-        ICON_GUI.drawAt(mainGui.rootElement);
+    public GuiEngineIron_BC8(ContainerEngineIron_BC8 container, PlayerInventory inventory, Text title) {
+        super(container,inventory,title); xSize=176; ySize=177;
+        shownElements.add(new LedgerEngine(this,container.tile,true));
+        shownElements.add(container.widgetTankFuel.createGuiElement(this,new GuiRectangle(26,18,16,60).offset(rootElement),OVERLAY));
+        shownElements.add(container.widgetTankCoolant.createGuiElement(this,new GuiRectangle(80,18,16,60).offset(rootElement),OVERLAY));
+        shownElements.add(container.widgetTankResidue.createGuiElement(this,new GuiRectangle(134,18,16,60).offset(rootElement),OVERLAY));
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    protected void drawForegroundLayer() {
-        String str = LocaleUtil.localize("tile.engineIron.name");
-        int strWidth = fontRenderer.getWidth(str);
-        double titleX = mainGui.rootElement.getCenterX() - strWidth / 2;
-        double titleY = mainGui.rootElement.getY() + 6;
-        // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(str, (int) titleX, (int) titleY, 0x404040)
-
-        double invX = mainGui.rootElement.getX() + 8;
-        double invY = mainGui.rootElement.getY() + SIZE_Y - 96;
-        // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(LocaleUtil.localize("gui.getInventory()"), (int) invX, (int) invY, 0x404040)
+    @Override public void drawElementBackgrounds(DrawContext context,float partialTicks) {
+        BACKGROUND.drawAt(rootElement); super.drawElementBackgrounds(context,partialTicks);
+    }
+    @Override public void drawElementForegrounds(DrawContext context,float partialTicks) {
+        context.drawText(textRenderer,title,x+(176-textRenderer.getWidth(title))/2,y+6,0x404040,false);
+        context.drawText(textRenderer,playerInventoryTitle,x+8,y+81,0x404040,false);
+        super.drawElementForegrounds(context,partialTicks);
     }
 }

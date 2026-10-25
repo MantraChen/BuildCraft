@@ -34,6 +34,8 @@ public class BCLibInitializer implements ModInitializer {
     public void onInitialize() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib (Fabric 1.20.1)");
         BCLibTags.register();
+        buildcraft.api.fuels.BuildcraftFuelRegistry.fuel = buildcraft.lib.fluid.FuelRegistry.INSTANCE;
+        buildcraft.api.fuels.BuildcraftFuelRegistry.coolant = buildcraft.lib.fluid.CoolantRegistry.INSTANCE;
         buildcraft.api.core.BuildCraftAPI.fakePlayerProvider = buildcraft.lib.misc.FakePlayerProvider.INSTANCE;
 
         net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerFallback(

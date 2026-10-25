@@ -25,6 +25,6 @@ public class LedgerHelp extends Ledger_Neptune {
 
     @Override
     protected void drawIcon(double x, double y) {
-        // TODO(R.Chen): help icon draw — BCLibSprites.HELP sprite draw helper pending.
+        buildcraft.lib.gui.GuiIcon.draw(buildcraft.lib.BCLibSprites.HELP, x, y, x + 16, y + 16);
     }
 }

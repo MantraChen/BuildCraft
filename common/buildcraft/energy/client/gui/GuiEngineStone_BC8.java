@@ -1,76 +1,42 @@
-/*
- * Copyright (c) 2017 SpaceToad and the BuildCraft team
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
- * distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
- */
-
+/* Copyright (c) 2017 SpaceToad and the BuildCraft team. SPDX-License-Identifier: MPL-2.0 */
 package buildcraft.energy.client.gui;
 
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
-import buildcraft.lib.gui.GuiBC8;
-import buildcraft.lib.gui.GuiIcon;
-import buildcraft.lib.gui.help.DummyHelpElement;
-import buildcraft.lib.gui.help.ElementHelpInfo;
+import buildcraft.lib.gui.*;
+import buildcraft.lib.gui.help.*;
 import buildcraft.lib.gui.ledger.LedgerEngine;
-import buildcraft.lib.gui.pos.GuiRectangle;
-import buildcraft.lib.gui.pos.IGuiArea;
-import buildcraft.lib.misc.LocaleUtil;
-
+import buildcraft.lib.gui.pos.*;
 import buildcraft.energy.container.ContainerEngineStone_BC8;
 
 public class GuiEngineStone_BC8 extends GuiBC8<ContainerEngineStone_BC8> {
-    private static final Identifier TEXTURE_BASE = new Identifier("buildcraftenergy:textures/gui/steam_engine_gui.png");
-    private static final int SIZE_X = 176, SIZE_Y = 166;
-    private static final GuiIcon ICON_GUI = new GuiIcon(TEXTURE_BASE, 0, 0, SIZE_X, SIZE_Y);
-
-    private final IGuiArea flameRect = new GuiRectangle(81, 25, 14, 14).offset(mainGui.rootElement);
-    private final IGuiArea fuelSlotRect = new GuiRectangle(78, 39, 20, 20).offset(mainGui.rootElement);
-    private final ElementHelpInfo helpFlame, helpFuel;
-
+    private static final Identifier TEXTURE = new Identifier("buildcraftenergy:textures/gui/steam_engine_gui.png");
+    private static final GuiIcon BACKGROUND = new GuiIcon(TEXTURE, 0, 0, 176, 166);
+    private final IGuiArea flame = new GuiRectangle(81, 25, 14, 14).offset(rootElement);
     public GuiEngineStone_BC8(ContainerEngineStone_BC8 container) {
-        super(container);
-        xSize = SIZE_X;
-        ySize = SIZE_Y;
-        mainGui.shownElements.add(new LedgerEngine(mainGui, container.tile, true));
-        helpFlame = new ElementHelpInfo("buildcraft.help.stone_engine.flame.title", 0xFF_FF_FF_1F, "buildcraft.help.stone_engine.flame");
-        // TODO: Auto list of example fuels!
-        helpFuel = new ElementHelpInfo("buildcraft.help.stone_engine.fuel.title", 0xFF_AA_33_33, "buildcraft.help.stone_engine.fuel");
+        this(container, container.player.getInventory(), Text.translatable("gui.buildcraftenergy.engine_stone"));
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void initGui() {
-        super.initGui();
-        mainGui.shownElements.add(new DummyHelpElement(flameRect.expand(2), helpFlame));
-        mainGui.shownElements.add(new DummyHelpElement(fuelSlotRect, helpFuel));
+    public GuiEngineStone_BC8(ContainerEngineStone_BC8 container, PlayerInventory inventory, Text title) {
+        super(container, inventory, title);
+        xSize = 176; ySize = 166;
+        shownElements.add(new LedgerEngine(this, container.tile, true));
+        shownElements.add(new DummyHelpElement(flame.expand(2),
+            new ElementHelpInfo("buildcraft.help.stone_engine.flame.title", "buildcraft.help.stone_engine.flame")));
+        shownElements.add(new DummyHelpElement(new GuiRectangle(78,39,20,20).offset(rootElement),
+            new ElementHelpInfo("buildcraft.help.stone_engine.fuel.title", "buildcraft.help.stone_engine.fuel")));
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    protected void drawBackgroundLayer(float partialTicks) {
-        ICON_GUI.drawAt(mainGui.rootElement);
-
-        double amount = container.tile.deltaFuelLeft.getDynamic(partialTicks) / 100;
-
-        if (amount > 0) {
-            int flameHeight = (int) Math.ceil(amount * flameRect.getHeight());
-
-            drawTexturedModalRect(//
-                    (int) flameRect.getX(),//
-                    (int) (flameRect.getY() + flameRect.getHeight() - flameHeight),//
-                    176, 14 - flameHeight, 14, flameHeight + 2);
-        }
+    @Override public void drawElementBackgrounds(DrawContext context, float partialTicks) {
+        BACKGROUND.drawAt(rootElement);
+        double amount = Math.max(0, Math.min(1, container.tile.deltaFuelLeft.getDynamic(partialTicks) / 100));
+        int height = (int) Math.ceil(amount * 14);
+        if (height > 0) new GuiIcon(TEXTURE, 176, 14-height, 14, height).drawAt(flame.getX(), flame.getEndY()-height);
+        super.drawElementBackgrounds(context, partialTicks);
     }
-
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    protected void drawForegroundLayer() {
-        String str = LocaleUtil.localize("tile.engineStone.name");
-        int strWidth = fontRenderer.getWidth(str);
-        double titleX = mainGui.rootElement.getCenterX() - strWidth / 2;
-        double titleY = mainGui.rootElement.getY() + 6;
-        // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(str, (int) titleX, (int) titleY, 0x404040)
-        
-        double invX = mainGui.rootElement.getX() + 8;
-        double invY = mainGui.rootElement.getY() + SIZE_Y - 96;
-        // TODO(migration): fontRenderer.draw in 1.20.1 needs DrawContext; originally: draw(LocaleUtil.localize("gui.getInventory()"), (int) invX, (int) invY, 0x404040)
+    @Override public void drawElementForegrounds(DrawContext context, float partialTicks) {
+        context.drawText(textRenderer, title, x+(176-textRenderer.getWidth(title))/2, y+6, 0x404040, false);
+        context.drawText(textRenderer, playerInventoryTitle, x+8, y+70, 0x404040, false);
+        super.drawElementForegrounds(context, partialTicks);
     }
 }

@@ -248,7 +248,7 @@ public class Tank extends FluidTank implements IFluidHandlerAdv {
         var context = player.isCreative()
             ? net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext.forCreativeInteraction(player, container.getCursorStack())
             : net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext.ofPlayerCursor(player, container);
-        if (FluidTransfers.interact(this, context, player)) container.sendContentUpdates();
+        if (interact(context, player)) container.sendContentUpdates();
     }
 
     public boolean interactInventorySlot(ContainerBC_Neptune container, net.minecraft.screen.slot.Slot slot) {
@@ -257,6 +257,10 @@ public class Tank extends FluidTank implements IFluidHandlerAdv {
         var context = player.isCreative()
             ? net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext.forCreativeInteraction(player, slot.getStack())
             : net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext.ofPlayerSlot(player, slotStorage);
+        return interact(context, player);
+    }
+
+    protected boolean interact(net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext context, PlayerEntity player) {
         return FluidTransfers.interact(this, context, player);
     }
 

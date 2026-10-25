@@ -26,7 +26,7 @@ public class LedgerEngine extends Ledger_Neptune {
     public LedgerEngine(BuildCraftGui gui, IEngineLikeForLedger engine, boolean expandPositive) {
         super(gui, OVERLAY_COLOUR, expandPositive);
         this.engine = engine;
-        this.title = "gui.power";
+        this.title = LocaleUtil.localize("gui.power");
 
         appendText(LocaleUtil.localize("gui.currentOutput") + ":", SUB_HEADER_COLOUR).setDropShadow(true);
         appendText(() -> LocaleUtil.localizeMjFlow(engine.getCurrentMjOutput()), TEXT_COLOUR);
@@ -43,6 +43,11 @@ public class LedgerEngine extends Ledger_Neptune {
 
     @Override
     protected void drawIcon(double x, double y) {
-        // TODO(R.Chen): drawIcon — sprite draw helper pending; sprite selected by engine.getPowerStage().
+        var sprite = switch (engine.getPowerStage()) {
+            case OVERHEAT -> buildcraft.lib.BCLibSprites.ENGINE_OVERHEAT;
+            case RED, YELLOW -> buildcraft.lib.BCLibSprites.ENGINE_WARM;
+            default -> engine.isEngineOn() ? buildcraft.lib.BCLibSprites.ENGINE_ACTIVE : buildcraft.lib.BCLibSprites.ENGINE_INACTIVE;
+        };
+        buildcraft.lib.gui.GuiIcon.draw(sprite, x, y, x + 16, y + 16);
     }
 }

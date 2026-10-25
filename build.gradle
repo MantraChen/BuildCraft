@@ -955,10 +955,9 @@ sourceSets {
             // plugin's default resources dir; re-declaring it here registers a second file
             // tree over the same dir and makes every entry a duplicate in processResources.
             srcDir "buildcraft_resources" // textures, models, blockstates, recipes
-            // Localization: .lang files must be converted to .json before 1.20.1
-            // will load them.  They are still included here so the build does not
-            // break; convert in a dedicated pass.
+            // Legacy translations are converted to native JSON below.
             srcDir "BuildCraft-Localization"
+            exclude "**/*.lang"
             // Guide page bodies are Markdown resources and must be included in the jar.
             exclude "README.md"
             srcDir "BuildCraftGuide/guide_resources"
@@ -1033,7 +1032,42 @@ compileJava.dependsOn ':sub_projects:expression:generateSources'
 // ---------------------------------------------------------------------------
 // Resource processing
 // ---------------------------------------------------------------------------
+def legacyLanguageRoots = [file('buildcraft_resources'), file('BuildCraft-Localization'), file('BuildCraftGuide/guide_resources')]
+def generatedLanguages = layout.buildDirectory.dir('generated/legacy-languages')
+def convertLegacyLanguages = tasks.register('convertLegacyLanguages') {
+    inputs.files(legacyLanguageRoots.collect { root -> fileTree(root) { include 'assets/*/lang/*.lang' } })
+    outputs.dir(generatedLanguages)
+    doLast {
+        File output = generatedLanguages.get().asFile.canonicalFile
+        if (!output.toPath().startsWith(layout.buildDirectory.get().asFile.canonicalFile.toPath())) {
+            throw new GradleException('Generated languages must stay inside the build directory')
+        }
+        delete(output)
+        Map<String, Map<String, String>> languages = new TreeMap<>()
+        legacyLanguageRoots.each { root ->
+            fileTree(root) { include 'assets/*/lang/*.lang' }.files.sort().each { source ->
+                String relative = root.toPath().relativize(source.toPath()).toString().replace('\\', '/')
+                String target = relative.substring(0, relative.lastIndexOf('/') + 1) + source.name.toLowerCase(Locale.ROOT).replaceFirst(/\.lang$/, '.json')
+                Map<String, String> entries = languages.computeIfAbsent(target) { new TreeMap<>() }
+                source.readLines('UTF-8').each { line ->
+                    if (line.startsWith('\uFEFF')) line = line.substring(1)
+                    int split = line.indexOf('=')
+                    if (split > 0 && !line.stripLeading().startsWith('#')) {
+                        entries[line.substring(0, split)] = line.substring(split + 1)
+                    }
+                }
+            }
+        }
+        languages.each { path, entries ->
+            File destination = new File(output, path)
+            destination.parentFile.mkdirs()
+            destination.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(entries)) + '\n', 'UTF-8')
+        }
+    }
+}
+
 processResources {
+    from(convertLegacyLanguages)
     inputs.property "version", project.version
 
     // Expand ${version} placeholder in fabric.mod.json (mirrors old mcmod.info expand)

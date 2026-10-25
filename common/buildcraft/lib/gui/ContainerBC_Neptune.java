@@ -90,8 +90,10 @@ public abstract class ContainerBC_Neptune extends ScreenHandler implements build
 
     @Override
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
+        if (!canUse(player) || slotIndex >= slots.size()) return;
         Slot slot = slotIndex < 0 ? null : this.slots.get(slotIndex);
         if (slot instanceof IPhantomSlot) {
+            if (actionType != SlotActionType.PICKUP || button < 0 || button > 1) return;
             IPhantomSlot phantom = (IPhantomSlot) slot;
             ItemStack playerStack = this.getCursorStack();
             if (playerStack.isEmpty()) {
@@ -114,42 +116,34 @@ public abstract class ContainerBC_Neptune extends ScreenHandler implements build
 
     @Override
     public ItemStack quickMove(PlayerEntity playerIn, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
-        Slot firstSlot = this.slots.get(0);
-        int playerInventorySize = 36;
-        boolean playerInventoryFirst = firstSlot.inventory instanceof PlayerInventory;
-
-        if (slot != null && slot.hasStack()) {
-            ItemStack itemstack1 = slot.getStack();
-            itemstack = itemstack1.copy();
-
-            if (slots.size() == playerInventorySize) return ItemStack.EMPTY;
-            if (playerInventoryFirst) {
-                if (index < playerInventorySize) {
-                    if (!this.insertItem(itemstack1, playerInventorySize, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                } else if (!this.insertItem(itemstack1, 0, playerInventorySize, true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else {
-                if (index < this.slots.size() - playerInventorySize) {
-                    if (!this.insertItem(itemstack1, this.slots.size() - playerInventorySize, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                } else if (!this.insertItem(itemstack1, 0, this.slots.size() - playerInventorySize, true)) {
-                    return ItemStack.EMPTY;
-                }
-            }
-
-            if (itemstack1.isEmpty()) {
-                slot.setStack(ItemStack.EMPTY);
-            } else {
-                slot.markDirty();
+        if (!canUse(playerIn) || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+        Slot source = slots.get(index);
+        if (!source.hasStack() || !source.canTakeItems(playerIn) || !canShift(source)) return ItemStack.EMPTY;
+        ItemStack remaining = source.getStack();
+        ItemStack original = remaining.copy();
+        boolean fromPlayer = source.inventory instanceof PlayerInventory;
+        // Merge existing stacks first, then empty slots. Slot.insertStack applies both the
+        // per-item limit and canInsert, including when merging an already occupied slot.
+        for (int pass = 0; pass < 2 && !remaining.isEmpty(); pass++) {
+            for (int n = 0; n < slots.size() && !remaining.isEmpty(); n++) {
+                Slot target = slots.get(fromPlayer ? n : slots.size() - 1 - n);
+                if (target == source || !target.isEnabled() || !canShift(target)
+                    || (target.inventory instanceof PlayerInventory) == fromPlayer
+                    || target.hasStack() != (pass == 0)) continue;
+                target.insertStack(remaining);
             }
         }
-        return itemstack;
+        int moved = original.getCount() - remaining.getCount();
+        if (moved == 0) return ItemStack.EMPTY;
+        if (remaining.isEmpty()) source.setStack(ItemStack.EMPTY);
+        else source.markDirty();
+        source.onTakeItem(playerIn, original.copyWithCount(moved));
+        return original;
+    }
+
+    private static boolean canShift(Slot slot) {
+        return !(slot instanceof IPhantomSlot)
+            && (!(slot instanceof buildcraft.lib.gui.slot.SlotBase base) || base.canShift());
     }
 
     public static ItemStack safeCopy(ItemStack in) {

@@ -26,10 +26,7 @@ import buildcraft.api.core.BCLog;
 import buildcraft.api.mj.MjAPI;
 import buildcraft.lib.fluid.Tank;
 
-// STUB(R.Chen): Forge-dependent methods (localizeColour, localizeFacing, localizeFluid*, localizeRf*,
-// localizeRfFlow, formatRf, localize(key, args)) stripped. BCLibConfig / I18n / IFluidTank / DyeColor
-// deps removed. Only MJ-related and heat helpers remain for TileEngineBase_BC8 / debug info rendering.
-// TODO(R.Chen): restore full localization once I18n is ported (net.minecraft.client.resource.language.I18n).
+// Language is available on both sides; the client replaces it when resource packs reload.
 public class LocaleUtil {
 
     public static final boolean DEBUG = BCDebugging.shouldDebugLog("lib.locale");
@@ -51,8 +48,7 @@ public class LocaleUtil {
 
     /** Localize a translation key. Returns the raw key if no translation is found. */
     public static String localize(String key) {
-        // TODO(R.Chen): replace with net.minecraft.client.resource.language.I18n.translate(key) once client I18n ported.
-        return key;
+        return net.minecraft.util.Language.getInstance().get(key);
     }
 
     /** Formats the given key with String.format-style args. */
@@ -66,7 +62,7 @@ public class LocaleUtil {
     }
 
     public static boolean canLocalize(String key) {
-        return false;
+        return net.minecraft.util.Language.getInstance().hasTranslation(key);
     }
 
     // STUB(R.Chen): colour/facing/fluid/RF localizers — return placeholder strings until I18n is ported.
