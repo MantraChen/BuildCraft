@@ -4,7 +4,7 @@ import java.util.List;
 
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.ITickable;
+
 
 import buildcraft.api.mj.IMjConnector;
 import buildcraft.api.mj.IMjReceiver;
@@ -15,7 +15,7 @@ import buildcraft.api.tiles.IDebuggable;
 import buildcraft.lib.misc.LocaleUtil;
 import buildcraft.lib.tile.TileBC_Neptune;
 
-public class TilePowerConsumerTester extends TileBC_Neptune implements IMjReceiver, ITickable, IDebuggable {
+public class TilePowerConsumerTester extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IMjReceiver, IDebuggable {
 
     private final MjCapabilityHelper mjCaps = new MjCapabilityHelper(this);
     private long lastReceived;
@@ -23,7 +23,8 @@ public class TilePowerConsumerTester extends TileBC_Neptune implements IMjReceiv
     private long lastTickReceived;
     private long totalReceived;
 
-    public TilePowerConsumerTester() {
+    public TilePowerConsumerTester(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
         caps.addProvider(mjCaps);
     }
 
@@ -49,7 +50,7 @@ public class TilePowerConsumerTester extends TileBC_Neptune implements IMjReceiv
     // ITickable
 
     @Override
-    public void update() {
+    public void tick() {
         lastTickReceived = nextTickReceived;
         nextTickReceived = 0;
     }

@@ -27,7 +27,7 @@ import buildcraft.lib.net.PacketBufferBC;
 import buildcraft.lib.tile.TileBC_Neptune;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-public abstract class TileLaserTableBase extends TileBC_Neptune implements ILaserTarget, IDebuggable {
+public abstract class TileLaserTableBase extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, ILaserTarget, IDebuggable {
     private static final long MJ_FLOW_ROUND = MjAPI.MJ / 10;
     private final AverageLong avgPower = new AverageLong(120);
     public long avgPowerClient;

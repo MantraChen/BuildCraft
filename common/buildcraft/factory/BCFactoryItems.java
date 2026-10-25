@@ -20,9 +20,9 @@ public class BCFactoryItems {
 
     public static void fmlPreInit() {
         if (BCLib.DEV) {
-            plasticSheet = HELPER.addItem(new ItemBC_Neptune("item.plastic.sheet"));
+            plasticSheet = HELPER.addItem("item.plastic.sheet", () -> new ItemBC_Neptune("item.plastic.sheet"));
         }
-        waterGel = HELPER.addItem(new ItemWaterGel("item.water_gel_spawn"));
-        gelledWater = HELPER.addItem(new ItemBC_Neptune("item.gel"));
+        waterGel = HELPER.addItem("item.water_gel_spawn", () -> new ItemWaterGel("item.water_gel_spawn"));
+        gelledWater = HELPER.addItem("item.gel", () -> new ItemBC_Neptune("item.gel"));
     }
 }

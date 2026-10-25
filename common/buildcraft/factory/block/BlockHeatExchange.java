@@ -65,7 +65,7 @@ public class BlockHeatExchange extends BlockBCTile_Neptune implements ICustomPip
 
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new TileHeatExchange(null, pos, state);
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileHeatExchange.class, pos, state);
     }
 
     @Override

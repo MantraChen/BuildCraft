@@ -39,7 +39,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   EnumParticleTypes / MinecraftClient.getInstance() → STUB (@Environment client only)
 //   ExchangeSection inner classes: all fluid/recipe logic STUBbed (Phase 4E)
 //   findAdjacentExchangers: Direction.rotateYClockwise() → Direction helper (Phase 4E)
-public class TileHeatExchange extends TileBC_Neptune implements IDebuggable {
+public class TileHeatExchange extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
 
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("HeatExchanger");
     public static final int NET_ID_CHANGE_SECTION = IDS.allocId("CHANGE_SECTION");

@@ -54,7 +54,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
  * updates propagated until a mixin/Fabric event wires notifySubscribersInRange().
  * STUB(R.Chen): IDetachedRenderer/AdvDebuggerLaser, getRenderBoundingBox deferred to client phase.
  */
-public class TileLaser extends TileBC_Neptune implements IDebuggable, ILocalBlockUpdateSubscriber {
+public class TileLaser extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, ILocalBlockUpdateSubscriber {
     private static final int TARGETING_RANGE = 6;
 
     private final SafeTimeTracker clientLaserMoveInterval = new SafeTimeTracker(5, 10);

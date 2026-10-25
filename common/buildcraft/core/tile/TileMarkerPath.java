@@ -17,6 +17,10 @@ import buildcraft.core.marker.PathCache;
 import buildcraft.core.marker.PathConnection;
 
 public class TileMarkerPath extends TileMarker<PathConnection> implements IPathProvider {
+    public TileMarkerPath(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
+    }
+
 
     @Override
     public ImmutableList<BlockPos> getPath() {

@@ -23,8 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
- * NOTE(R.Chen): All block/item/tile/plug/statement registration is stubbed until
- * lib.registry (RegistrationHelper, TagManager) and relevant API layers are ported.
+ * Blocks and tile factories register here; pluggables, items and screens still need integration.
  */
 public class BCSiliconInitializer implements ModInitializer {
 
@@ -40,9 +39,8 @@ public class BCSiliconInitializer implements ModInitializer {
 
         // --- Forge preInit (BCSilicon.preInit) -----------------------------------
         // STUB(R.Chen): BCSiliconConfig.preInit() — port to Fabric config (FabricLoader.getConfigDir).
-        // STUB(R.Chen): BCSiliconBlocks.preInit() — migrate all blocks + BlockEntityType registrations
-        //               to Registry.register(Registries.BLOCK / BLOCK_ENTITY_TYPE, ...) once
-        //               lib.block / lib.registry land.
+        BCSiliconTags.register();
+        BCSiliconBlocks.preInit();
         // STUB(R.Chen): BCSiliconItems.preInit() — migrate items to Registries.ITEM once lib.item lands.
         // STUB(R.Chen): BCSiliconPlugs.preInit() — register gate/lens/pulsar/lightSensor/timer/facade
         //               pluggables via PipeApi.pluggableRegistry once transport Phase 4E lands.

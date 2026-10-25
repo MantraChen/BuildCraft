@@ -9,7 +9,6 @@ package buildcraft.lib.engine;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -23,6 +22,8 @@ import net.minecraft.state.StateManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.block.BlockRenderType;
@@ -41,29 +42,43 @@ import buildcraft.lib.tile.TileBC_Neptune;
 
 public abstract class BlockEngineBase_BC8<E extends Enum<E> & IEngineType> extends BlockBCTile_Neptune
     implements ICustomRotationHandler {
-    private final Map<E, Supplier<? extends TileEngineBase_BC8>> engineTileConstructors =
-        new EnumMap<>(getEngineProperty().getValueClass());
+    private final Map<E, Class<? extends TileEngineBase_BC8>> engineTileClasses =
+        new EnumMap<>(getEngineProperty().getType());
 
     public BlockEngineBase_BC8(AbstractBlock.Settings material, String id) {
         super(material, id);
+        setDefaultState(getDefaultState().with(getEngineProperty(), getEngineType(0)));
     }
 
     // Engine directly related methods
 
-    public void registerEngine(E type, Supplier<? extends TileEngineBase_BC8> constructor) {
+    public void registerEngine(E type, Class<? extends TileEngineBase_BC8> tileClass) {
         if (RegistryConfig.isEnabled("engines", RegistryConfig.getId(this) + "/" + type.name().toLowerCase(Locale.ROOT),
             getUnlocalizedName(type))) {
-            engineTileConstructors.put(type, constructor);
+            engineTileClasses.put(type, tileClass);
         }
     }
 
     public boolean isRegistered(E type) {
-        return engineTileConstructors.containsKey(type);
+        return engineTileClasses.containsKey(type);
     }
 
     @Nonnull
     public ItemStack getStack(E type) {
-        return new ItemStack(this, 1);
+        ItemStack stack = new ItemStack(this);
+        stack.getOrCreateSubNbt("BlockStateTag").putString(getEngineProperty().getName(), getEngineProperty().name(type));
+        return stack;
+    }
+
+    public E getEngineType(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return getEngineType(0);
+        NbtCompound stateTag = stack.getSubNbt("BlockStateTag");
+        if (stateTag != null) {
+            E type = getEngineProperty().parse(stateTag.getString(getEngineProperty().getName())).orElse(null);
+            if (type != null) return type;
+        }
+        // Preserve the variant when importing an older stack that still uses metadata.
+        return getEngineType(stack.getDamage());
     }
 
     public abstract Property<E> getEngineProperty();
@@ -74,7 +89,25 @@ public abstract class BlockEngineBase_BC8<E extends Enum<E> & IEngineType> exten
 
     // BlockState
 
-        // TODO(R.Chen): Forge createBlockState() → override appendProperties() instead.
+    @Override
+    protected void addProperties(List<Property<?>> properties) {
+        super.addProperties(properties);
+        properties.add(getEngineProperty());
+    }
+
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        E type = getEngineType(context.getStack());
+        if (!isRegistered(type)) return null;
+        // Choose the variant before the world constructs its block entity. Applying
+        // BlockStateTag after placement would leave the default engine's entity behind.
+        return super.getPlacementState(context).with(getEngineProperty(), type);
+    }
+
+    @Override
+    public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
+        return getStack(state.get(getEngineProperty()));
+    }
 
 // @Override removed (R.Chen): no longer overrides — Phase 10
     public int getMetaFromState(BlockState state) {
@@ -135,22 +168,20 @@ public abstract class BlockEngineBase_BC8<E extends Enum<E> & IEngineType> exten
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
+    public TileBC_Neptune createBlockEntity(BlockPos pos, BlockState state) {
         E engineType = state.get(getEngineProperty());
-        Supplier<? extends TileEngineBase_BC8> constructor = engineTileConstructors.get(engineType);
-        if (constructor == null) {
+        Class<? extends TileEngineBase_BC8> tileClass = engineTileClasses.get(engineType);
+        if (tileClass == null) {
             return null;
         }
-        TileEngineBase_BC8 tile = constructor.get();
-        tile.setWorld(world);
-        return tile;
+        return buildcraft.lib.registry.BlockEntityRegistry.create(tileClass, pos, state);
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1
     public void getSubBlocks(ItemGroup tab, DefaultedList<ItemStack> list) {
         for (E engine : getEngineProperty().getValues()) {
-            if (engineTileConstructors.containsKey(engine)) {
-                list.add(new ItemStack(this, 1));
+            if (engineTileClasses.containsKey(engine)) {
+                list.add(getStack(engine));
             }
         }
     }

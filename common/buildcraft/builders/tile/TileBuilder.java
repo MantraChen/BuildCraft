@@ -35,10 +35,8 @@ import buildcraft.builders.snapshot.Template;
 public class TileBuilder extends TileBC_Neptune
         implements IDebuggable, ITileForTemplateBuilder, ITileForBlueprintBuilder {
 
-    public static BlockEntityType<TileBuilder> TYPE;
-
-    public TileBuilder(BlockPos pos, BlockState state) {
-        super(TYPE, pos, state);
+    public TileBuilder(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
     @Override

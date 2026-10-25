@@ -22,7 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.ITickable;
+
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -71,7 +71,11 @@ import buildcraft.core.marker.volume.VolumeBox;
 import buildcraft.core.marker.volume.WorldSavedDataVolumeBoxes;
 import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 
-public class TileArchitectTable extends TileBC_Neptune implements ITickable, IDebuggable {
+public class TileArchitectTable extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
+    public TileArchitectTable(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
+    }
+
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("architect");
     @SuppressWarnings("WeakerAccess")
     public static final int NET_BOX = IDS.allocId("BOX");
@@ -159,7 +163,7 @@ public class TileArchitectTable extends TileBC_Neptune implements ITickable, IDe
     }
 
     @Override
-    public void update() {
+    public void tick() {
         deltaManager.tick();
 
         if (world.isClient) {

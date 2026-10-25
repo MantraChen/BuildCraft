@@ -14,6 +14,6 @@ public class BCEnergyItems {
     public static ItemBC_Neptune globOil;
 
     public static void preInit() {
-        globOil = HELPER.addItem(new ItemBC_Neptune("item.glob.oil"));
+        globOil = HELPER.addItem("item.glob.oil", () -> new ItemBC_Neptune("item.glob.oil"));
     }
 }

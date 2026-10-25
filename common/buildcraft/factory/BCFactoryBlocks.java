@@ -46,24 +46,24 @@ public class BCFactoryBlocks {
     public static BlockWaterGel waterGel;
 
     public static void fmlPreInit() {
-        autoWorkbenchItems = HELPER.addBlockAndItem(new BlockAutoWorkbenchItems(MaterialBC.ROCK, "block.autoworkbench.item"));
-        miningWell = HELPER.addBlockAndItem(new BlockMiningWell(MaterialBC.IRON, "block.mining_well"));
-        pump = HELPER.addBlockAndItem(new BlockPump(MaterialBC.IRON, "block.pump"));
-        tube = HELPER.addBlock(new BlockTube(MaterialBC.IRON, "block.tube"));
-        floodGate = HELPER.addBlockAndItem(new BlockFloodGate(MaterialBC.IRON, "block.flood_gate"));
-        tank = HELPER.addBlockAndItem(new BlockTank(MaterialBC.IRON, "block.tank"));
-        chute = HELPER.addBlockAndItem(new BlockChute(MaterialBC.IRON, "block.chute"));
-        distiller = HELPER.addBlockAndItem(new BlockDistiller(MaterialBC.IRON, "block.distiller"));
-        heatExchange = HELPER.addBlockAndItem(new BlockHeatExchange(MaterialBC.IRON, "block.heat_exchange"));
-        waterGel = HELPER.addBlock(new BlockWaterGel(MaterialBC.CLAY, "block.water_gel"));
+        autoWorkbenchItems = HELPER.addBlockAndItem("block.autoworkbench.item", () -> new BlockAutoWorkbenchItems(MaterialBC.ROCK, "block.autoworkbench.item"));
+        miningWell = HELPER.addBlockAndItem("block.mining_well", () -> new BlockMiningWell(MaterialBC.IRON, "block.mining_well"));
+        pump = HELPER.addBlockAndItem("block.pump", () -> new BlockPump(MaterialBC.IRON, "block.pump"));
+        tube = HELPER.addBlock("block.tube", () -> new BlockTube(MaterialBC.IRON, "block.tube"));
+        floodGate = HELPER.addBlockAndItem("block.flood_gate", () -> new BlockFloodGate(MaterialBC.IRON, "block.flood_gate"));
+        tank = HELPER.addBlockAndItem("block.tank", () -> new BlockTank(MaterialBC.IRON, "block.tank"));
+        chute = HELPER.addBlockAndItem("block.chute", () -> new BlockChute(MaterialBC.IRON, "block.chute"));
+        distiller = HELPER.addBlockAndItem("block.distiller", () -> new BlockDistiller(MaterialBC.IRON, "block.distiller"));
+        heatExchange = HELPER.addBlockAndItem("block.heat_exchange", () -> new BlockHeatExchange(MaterialBC.IRON, "block.heat_exchange"));
+        waterGel = HELPER.addBlock("block.water_gel", () -> new BlockWaterGel(MaterialBC.CLAY, "block.water_gel"));
 
-        HELPER.registerTile(TileAutoWorkbenchItems.class, "tile.autoworkbench.item");
-        HELPER.registerTile(TileMiningWell.class, "tile.mining_well");
-        HELPER.registerTile(TilePump.class, "tile.pump");
-        HELPER.registerTile(TileFloodGate.class, "tile.flood_gate");
-        HELPER.registerTile(TileTank.class, "tile.tank");
-        HELPER.registerTile(TileChute.class, "tile.chute");
-        HELPER.registerTile(TileDistiller_BC8.class, "tile.distiller");
-        HELPER.registerTile(TileHeatExchange.class, "tile.heat_exchange");
+        HELPER.registerTile(TileAutoWorkbenchItems.class, "tile.autoworkbench.item", TileAutoWorkbenchItems::new, autoWorkbenchItems);
+        HELPER.registerTile(TileMiningWell.class, "tile.mining_well", TileMiningWell::new, miningWell);
+        HELPER.registerTile(TilePump.class, "tile.pump", TilePump::new, pump);
+        HELPER.registerTile(TileFloodGate.class, "tile.flood_gate", TileFloodGate::new, floodGate);
+        HELPER.registerTile(TileTank.class, "tile.tank", TileTank::new, tank);
+        HELPER.registerTile(TileChute.class, "tile.chute", TileChute::new, chute);
+        HELPER.registerTile(TileDistiller_BC8.class, "tile.distiller", TileDistiller_BC8::new, distiller);
+        HELPER.registerTile(TileHeatExchange.class, "tile.heat_exchange", TileHeatExchange::new, heatExchange);
     }
 }

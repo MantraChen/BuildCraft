@@ -43,19 +43,19 @@ public class BlockArchitectTable extends BlockBCTile_Neptune implements IBlockWi
 
     // @Override -- removed: method does not exist in Fabric 1.20.1
     public BlockState getStateFromMeta(int meta) {
-        BlockState state = super.getStateFromMeta(meta);
+        BlockState state = getDefaultState().with(getFacingProperty(), Direction.fromHorizontal(meta & 3));
         state = state.with(PROP_VALID, (meta & META_VALID_INDEX) == 0);
         return state;
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1
     public int getMetaFromState(BlockState state) {
-        return super.getMetaFromState(state) | (state.get(PROP_VALID) ? 0 : META_VALID_INDEX);
+        return state.get(getFacingProperty()).getHorizontal() | (state.get(PROP_VALID) ? 0 : META_VALID_INDEX);
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileArchitectTable();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileArchitectTable.class, pos, state);
     }
 
     @Override

@@ -37,7 +37,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   NbtCompound             → NbtCompound
 //   Side                       → NetSide
 //   balanceTankFluids / getTanks → STUB (Tank not in libLeaf)
-public class TileTank extends TileBC_Neptune implements IDebuggable {
+public class TileTank extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("tank");
     public static final int NET_FLUID_DELTA = IDS.allocId("FLUID_DELTA");
 

@@ -31,10 +31,6 @@ public abstract class BlockBCTile_Neptune extends BlockBCBase_Neptune implements
 
     // ── Forge-compat hooks (no @Override — these are new methods, called by Fabric bridges below) ────
 
-    /** Forge-compat: subclasses override this. Called by {@link #createBlockEntity(BlockPos, BlockState)}. */
-    @Nullable
-    public TileBC_Neptune createTileEntity(World world, BlockState state) { return null; }
-
     /** Forge-compat: no-op in 1.20.1 (BlockEntityProvider is the replacement). */
     public boolean hasTileEntity(BlockState state) { return true; }
 
@@ -75,9 +71,12 @@ public abstract class BlockBCTile_Neptune extends BlockBCBase_Neptune implements
     // ── Fabric 1.20.1 API bridges ────────────────────────────────────────────
 
     @Override
-    @Nullable
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return createTileEntity(null, state);
+    public abstract BlockEntity createBlockEntity(BlockPos pos, BlockState state);
+
+    @Override
+    public <T extends BlockEntity> net.minecraft.block.entity.BlockEntityTicker<T> getTicker(World world,
+            BlockState state, net.minecraft.block.entity.BlockEntityType<T> type) {
+        return buildcraft.lib.registry.BlockEntityRegistry.ticker(type);
     }
 
     @Override

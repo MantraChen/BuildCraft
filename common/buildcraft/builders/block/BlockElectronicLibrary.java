@@ -26,8 +26,8 @@ public class BlockElectronicLibrary extends BlockBCTile_Neptune implements IBloc
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileElectronicLibrary();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileElectronicLibrary.class, pos, state);
     }
 
     @Override

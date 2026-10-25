@@ -56,8 +56,8 @@ public class BlockFiller extends BlockBCTile_Neptune implements IBlockWithFacing
     // Others
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileFiller();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileFiller.class, pos, state);
     }
 
     @Override

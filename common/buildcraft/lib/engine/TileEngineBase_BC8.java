@@ -55,7 +55,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 // preserved verbatim and marked with TODO(R.Chen) where it still depends on un-migrated APIs
 // (buildcraft.api.mj, IDebuggable, the Forge MjToRfAutoConvertor RF bridge). Do NOT treat the game logic as
 // verified for Fabric.
-public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements IDebuggable, IEngineLikeForLedger {
+public abstract class TileEngineBase_BC8 extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, IEngineLikeForLedger {
 
     /** Heat per {@link MjAPI#MJ}. */
     public static final double HEAT_PER_MJ = 0.0023;

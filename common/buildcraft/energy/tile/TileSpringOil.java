@@ -26,6 +26,10 @@ import net.minecraft.nbt.NbtElement;
 
 // We don't extend TileBC here because we have no need of any of its functions.
 public class TileSpringOil extends BlockEntity implements IDebuggable, ITileOilSpring {
+    public TileSpringOil(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
+    }
+
 
     private static final Identifier ADVANCEMENT_PUMP_LARGE_OIL_WELL = new Identifier(
         "buildcraftfactory:black_gold"
@@ -48,10 +52,11 @@ public class TileSpringOil extends BlockEntity implements IDebuggable, ITileOilS
         PlayerPumpInfo info = pumpProgress.computeIfAbsent(profile, PlayerPumpInfo::new);
         info.lastPumpTick = world.getTime();
         info.sourcesPumped++;
+        markDirty();
 
         // BCLog.logger.info("Pumped " + info.sourcesPumped + " / " + totalSources + " at " + oilPos + " (for " +
         // System.identityHashCode(this) + ", "+getPos()+")");
-        if (info.sourcesPumped >= totalSources * 7 / 8) {
+        if (totalSources > 0 && info.sourcesPumped >= (long) totalSources * 7 / 8) {
             // BCLog.logger.info("Pumped nearly all oil blocks!");
             if (oilPos.equals(getPos().up())) {
                 AdvancementUtil.unlockAdvancement(profile.getId(), ADVANCEMENT_PUMP_LARGE_OIL_WELL);
@@ -59,26 +64,27 @@ public class TileSpringOil extends BlockEntity implements IDebuggable, ITileOilS
         }
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public void readFromNBT(NbtCompound nbt) {
-        super.readFromNBT(nbt);
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+        totalSources = Math.max(0, nbt.getInt("totalSources"));
+        pumpProgress.clear();
         NbtList list = nbt.getList("pumpProgress", NbtElement.COMPOUND_TYPE);
         for (int i = 0; i < list.size(); i++) {
-            PlayerPumpInfo info = new PlayerPumpInfo(list.getCompoundTagAt(i));
-            pumpProgress.put(info.profile, info);
+            PlayerPumpInfo info = new PlayerPumpInfo(list.getCompound(i));
+            if (info.profile != null) pumpProgress.put(info.profile, info);
         }
     }
 
-    // @Override -- removed: method does not exist in Fabric 1.20.1
-    public NbtCompound writeToNBT(NbtCompound nbt) {
-        super.writeToNBT(nbt);
+    @Override
+    public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
         nbt.putInt("totalSources", totalSources);
         NbtList list = new NbtList();
         for (PlayerPumpInfo info : pumpProgress.values()) {
             list.add(info.writeToNbt());
         }
         nbt.put("pumpProgress", list);
-        return nbt;
     }
 
     @Override

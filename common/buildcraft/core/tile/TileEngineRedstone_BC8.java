@@ -19,7 +19,8 @@ public class TileEngineRedstone_BC8 extends TileEngineBase_BC8 {
     private static final Identifier ADVANCEMENT = new Identifier("buildcraftcore:free_power");
     private boolean givenAdvancement = false;
 
-    public TileEngineRedstone_BC8() {}
+    public TileEngineRedstone_BC8(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);}
 
     @Nonnull
     @Override

@@ -103,52 +103,7 @@ public class BCCore {
         BCCoreConfig.postInit();
     }
 
-    static {
-        startBatch();
-        // Items
-        registerTag("item.wrench").reg("wrench").locale("wrenchItem").oldReg("wrenchItem").model("wrench");
-        registerTag("item.diamond.shard").reg("diamond_shard").locale("diamondShard").model("diamond_shard").tab("vanilla.materials");
-        registerTag("item.gear.wood").reg("gear_wood").locale("woodenGearItem").oreDict("gearWood").oldReg("woodenGearItem").model("gears/wood");
-        registerTag("item.gear.stone").reg("gear_stone").locale("stoneGearItem").oreDict("gearStone").oldReg("stoneGearItem").model("gears/stone");
-        registerTag("item.gear.iron").reg("gear_iron").locale("ironGearItem").oreDict("gearIron").oldReg("ironGearItem").model("gears/iron");
-        registerTag("item.gear.gold").reg("gear_gold").locale("goldGearItem").oreDict("gearGold").oldReg("goldGearItem").model("gears/gold");
-        registerTag("item.gear.diamond").reg("gear_diamond").locale("diamondGearItem").oreDict("gearDiamond").oldReg("diamondGearItem").model("gears/diamond");
-        registerTag("item.list").reg("list").locale("list").oldReg("listItem").model("list_");
-        registerTag("item.map_location").reg("map_location").locale("mapLocation").oldReg("mapLocation").model("map_location/");
-        registerTag("item.paintbrush").reg("paintbrush").locale("paintbrush").model("paintbrush/");
-        registerTag("item.marker_connector").reg("marker_connector").locale("markerConnector").model("marker_connector");
-        registerTag("item.volume_box").reg("volume_box").locale("volume_box").model("volume_box");
-        registerTag("item.goggles").reg("goggles").locale("goggles").model("goggles");
-        registerTag("item.fragile_fluid_shard").reg("fragile_fluid_shard").locale("fragile_fluid_shard").model("fragile_fluid_shard");
-        // Item Blocks
-        registerTag("item.block.marker.volume").reg("marker_volume").locale("markerBlock").oldReg("markerBlock").model("marker_volume");
-        registerTag("item.block.marker.path").reg("marker_path").locale("pathMarkerBlock").oldReg("pathMarkerBlock").model("marker_path");
-        registerTag("item.block.spring").reg("spring").locale("spring").model("spring");
-        registerTag("item.block.power_tester").reg("power_tester").locale("power_tester").model("power_tester");
-        registerTag("item.block.decorated").reg("decorated").locale("decorated").model("decorated/");
-        TagEntry engine = registerTag("item.block.engine.bc").reg("engine").locale("engineBlock");
-        // Blocks
-        registerTag("block.spring").reg("spring").locale("spring");
-        registerTag("block.decorated").reg("decorated").locale("decorated");
-        registerTag("block.engine.bc").reg("engine").locale("engineBlock").oldReg("engineBlock");
-        registerTag("block.engine.bc.wood").locale("engineWood");
-        registerTag("block.engine.bc.stone").locale("engineStone");
-        registerTag("block.engine.bc.iron").locale("engineIron");
-        registerTag("block.engine.bc.creative").locale("engineCreative");
-        registerTag("block.engine.bc.rf").locale("engineRf");
-        registerTag("block.marker.volume").reg("marker_volume").locale("markerBlock").oldReg("markerBlock").model("marker_volume");
-        registerTag("block.marker.path").reg("marker_path").locale("pathMarkerBlock").oldReg("pathMarkerBlock").model("marker_path");
-        registerTag("block.power_tester").reg("power_tester").locale("power_tester").oldReg("power_tester").model("power_tester");
-        // Tiles
-        registerTag("tile.marker.volume").reg("marker.volume").oldReg("buildcraft.builders.Marker", "Marker");
-        registerTag("tile.marker.path").reg("marker.path");
-        registerTag("tile.engine.wood").reg("engine.wood");
-        registerTag("tile.engine.creative").reg("engine.creative");
-        registerTag("tile.power_tester").reg("power_tester");
-
-        endBatch(TagManager.prependTags("buildcraftcore:", EnumTagType.REGISTRY_NAME, EnumTagType.MODEL_LOCATION).andThen(TagManager.setTab("buildcraft.main")));
-        engine.model("");// Clear model so that subtypes can set it properly
-    }
+    static { BCCoreTags.register(); }
 
     private static TagEntry registerTag(String id) {
         return TagManager.registerTag(id);

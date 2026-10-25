@@ -58,14 +58,14 @@ features explicitly as work proceeds.
 - Expression library: **13 tests passed**, zero failures/errors (4 dependency tests
   and 9 expression tests). The generator produced 100 Java source files.
 - Full `compileJava`: the imported source produced **357 errors**; after the current
-  fixes it still **fails with 193 errors**. No full BuildCraft client or dedicated-server
+  fixes it still **fails with 171 errors**. No full BuildCraft client or dedicated-server
   startup has been claimed.
-- Fabric regression fixture: **92 tests passed**, zero failures/ignored tests. This
+- Fabric regression fixture: **93 tests passed**, zero failures/ignored tests. This
   loads selected production classes under the real Fabric class loader and runs after
   Fabric's common initialization. It exits before starting a world and does not load
   the full BuildCraft mod. See [the fixture](../sub_projects/port-tests/README.md).
-- Headless Fabric GameTest: **14 world tests passed** after 88 regression tests; the
-  subsequent standalone regression run also passed four new marker codec tests.
+- Headless Fabric GameTest: **20 world tests passed** after 92 regression tests; the
+  subsequent standalone run also passed the new native registry-metadata test.
   A real Minecraft test server loaded a world, exercised selected production mining
   helpers, and shut down cleanly. This is a subsystem fixture, not full BuildCraft startup.
 - Runtime packaging configuration now includes the expression library and Team Reborn
@@ -141,8 +141,26 @@ features explicitly as work proceeds.
   block-entity load/unload callbacks now dispatch to tiles; load is deferred one tick
   so it can use saved NBT. Actual marker connections and tile reloads still await full-mod
   world validation.
+- Static blocks/items now register directly in the native registries. Optional-object
+  configuration is checked before invoking constructors, avoiding unregistered intrusive
+  holders for disabled blocks. Core, factory, energy, builder and silicon initializers
+  now call their block/entity registration paths; shared tag metadata can initialize
+  independently of legacy Forge entrypoints. One regression test verifies repeated
+  initialization preserves IDs, namespaces and historical aliases. Disabled-object
+  configuration still needs a full-mod startup check.
+- Block entities use explicit factories with their registered type, placed position and
+  state; the old sign/ORIGIN placeholder constructor has been removed. Machine tick
+  methods are connected through native block-entity tickers. Six real-world tests cover
+  placement, different entity types for one block, automatic ticking, vanilla NBT
+  reconstruction, invalid states and disabled/duplicate type registration. These test
+  the production registry with fixture tiles, not complete BuildCraft machines.
+- Engine stacks now encode their variant in `BlockStateTag`; placement selects that
+  variant before entity construction, and pick-block retains it. Oil spring entities
+  now receive actual positions/states and persist progress through native NBT callbacks.
+  Engine drops, creative groups, full machine reloads, fluid registration and connected
+  client rendering remain to be validated.
 
-Remaining work includes full compilation, block/entity and screen registration, network
+Remaining work includes full compilation, transport/item and screen registration, network
 debug/robotics messages, renderers, fluid/energy integration, full quarry operation, packaged
 dependencies, and actual client/server/world validation. The working fixture does not
 establish that any machine is ready for a survival world.

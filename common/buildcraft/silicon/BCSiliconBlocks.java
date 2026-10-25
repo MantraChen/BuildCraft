@@ -9,14 +9,16 @@ package buildcraft.silicon;
 
 import buildcraft.silicon.block.BlockLaser;
 import buildcraft.silicon.block.BlockLaserTable;
+import buildcraft.api.enums.EnumLaserTableType;
+import buildcraft.lib.BCLib;
+import buildcraft.lib.registry.RegistrationHelper;
+import buildcraft.silicon.tile.*;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.MapColor;
 
-/**
- * STUB(R.Chen): BCSiliconBlocks registration deferred until lib.registry (RegistrationHelper,
- * Registries.BLOCK / BLOCK_ENTITY_TYPE) is migrated. Block instances are null placeholders.
- */
 public class BCSiliconBlocks {
+    private static final RegistrationHelper HELPER = new RegistrationHelper();
 
-    // STUB(R.Chen): Block references are null until preInit() is wired.
     public static BlockLaser laser;
     public static BlockLaserTable assemblyTable;
     public static BlockLaserTable advancedCraftingTable;
@@ -25,6 +27,27 @@ public class BCSiliconBlocks {
     public static BlockLaserTable programmingTable;
 
     public static void preInit() {
-        // STUB(R.Chen): Registry.register(Registries.BLOCK, ...) calls deferred.
+        laser = HELPER.addBlockAndItem("block.laser", () -> new BlockLaser(settings(), "block.laser"));
+        assemblyTable = table(EnumLaserTableType.ASSEMBLY_TABLE, "block.assembly_table");
+        advancedCraftingTable = table(EnumLaserTableType.ADVANCED_CRAFTING_TABLE, "block.advanced_crafting_table");
+        integrationTable = table(EnumLaserTableType.INTEGRATION_TABLE, "block.integration_table");
+        if (BCLib.DEV) {
+            chargingTable = table(EnumLaserTableType.CHARGING_TABLE, "block.charging_table");
+            programmingTable = table(EnumLaserTableType.PROGRAMMING_TABLE, "block.programming_table");
+        }
+        HELPER.registerTile(TileLaser.class, "tile.laser", TileLaser::new, laser);
+        HELPER.registerTile(TileAssemblyTable.class, "tile.assembly_table", TileAssemblyTable::new, assemblyTable);
+        HELPER.registerTile(TileAdvancedCraftingTable.class, "tile.advanced_crafting_table", TileAdvancedCraftingTable::new, advancedCraftingTable);
+        HELPER.registerTile(TileIntegrationTable.class, "tile.integration_table", TileIntegrationTable::new, integrationTable);
+        HELPER.registerTile(TileChargingTable.class, "tile.charging_table", TileChargingTable::new, chargingTable);
+        HELPER.registerTile(TileProgrammingTable_Neptune.class, "tile.programming_table", TileProgrammingTable_Neptune::new, programmingTable);
+    }
+
+    private static AbstractBlock.Settings settings() {
+        return AbstractBlock.Settings.create().mapColor(MapColor.IRON_GRAY).strength(5.0F, 10.0F).nonOpaque();
+    }
+
+    private static BlockLaserTable table(EnumLaserTableType type, String id) {
+        return HELPER.addBlockAndItem(id, () -> new BlockLaserTable(type, settings(), id));
     }
 }

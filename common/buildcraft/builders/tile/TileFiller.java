@@ -34,16 +34,10 @@ import buildcraft.builders.snapshot.Template;
 public class TileFiller extends TileBC_Neptune
         implements IDebuggable, ITileForTemplateBuilder, IFillerStatementContainer, IControllable {
 
-    public static BlockEntityType<TileFiller> TYPE;
-
     private Mode controlMode = Mode.ON;
 
-    public TileFiller() {
-        super(TYPE, BlockPos.ORIGIN, null);
-    }
-
-    public TileFiller(BlockPos pos, BlockState state) {
-        super(TYPE, pos, state);
+    public TileFiller(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
     @Override

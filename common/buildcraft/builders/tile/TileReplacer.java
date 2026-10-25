@@ -9,7 +9,7 @@ package buildcraft.builders.tile;
 import java.util.Date;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ITickable;
+
 
 import buildcraft.api.core.InvalidInputDataException;
 import buildcraft.api.enums.EnumSnapshotType;
@@ -30,7 +30,11 @@ import buildcraft.builders.snapshot.SchematicBlockManager;
 import buildcraft.builders.snapshot.Snapshot;
 import buildcraft.builders.snapshot.Snapshot.Header;
 
-public class TileReplacer extends TileBC_Neptune implements ITickable {
+public class TileReplacer extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity {
+    public TileReplacer(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
+    }
+
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("replacer");
 
     public final ItemHandlerSimple invSnapshot = itemManager.addInvHandler(
@@ -56,7 +60,7 @@ public class TileReplacer extends TileBC_Neptune implements ITickable {
     );
 
     @Override
-    public void update() {
+    public void tick() {
         if (world.isClient) {
             return;
         }

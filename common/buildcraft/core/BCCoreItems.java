@@ -38,20 +38,20 @@ public class BCCoreItems {
     public static ItemGoggles goggles;
 
     public static void preInit() {
-        wrench = HELPER.addItem(new ItemWrench_Neptune("item.wrench"));
-        gearWood = HELPER.addItem(new ItemBC_Neptune("item.gear.wood"));
-        gearStone = HELPER.addItem(new ItemBC_Neptune("item.gear.stone"));
-        gearIron = HELPER.addItem(new ItemBC_Neptune("item.gear.iron"));
-        gearGold = HELPER.addItem(new ItemBC_Neptune("item.gear.gold"));
-        gearDiamond = HELPER.addItem(new ItemBC_Neptune("item.gear.diamond"));
-        paintbrush = HELPER.addItem(new ItemPaintbrush_BC8(new net.minecraft.item.Item.Settings().maxCount(1), "item.paintbrush"));
-        list = HELPER.addItem(new ItemList_BC8("item.list"));
-        mapLocation = HELPER.addItem(new ItemMapLocation("item.map_location"));
-        markerConnector = HELPER.addItem(new ItemMarkerConnector("item.marker_connector"));
-        volumeBox = HELPER.addItem(new ItemVolumeBox("item.volume_box"));
-        fragileFluidShard = HELPER.addItem(new ItemFragileFluidContainer(new net.minecraft.item.Item.Settings(), "item.fragile_fluid_shard"));
+        wrench = HELPER.addItem("item.wrench", () -> new ItemWrench_Neptune("item.wrench"));
+        gearWood = HELPER.addItem("item.gear.wood", () -> new ItemBC_Neptune("item.gear.wood"));
+        gearStone = HELPER.addItem("item.gear.stone", () -> new ItemBC_Neptune("item.gear.stone"));
+        gearIron = HELPER.addItem("item.gear.iron", () -> new ItemBC_Neptune("item.gear.iron"));
+        gearGold = HELPER.addItem("item.gear.gold", () -> new ItemBC_Neptune("item.gear.gold"));
+        gearDiamond = HELPER.addItem("item.gear.diamond", () -> new ItemBC_Neptune("item.gear.diamond"));
+        paintbrush = HELPER.addItem("item.paintbrush", () -> new ItemPaintbrush_BC8(new net.minecraft.item.Item.Settings().maxCount(1), "item.paintbrush"));
+        list = HELPER.addItem("item.list", () -> new ItemList_BC8("item.list"));
+        mapLocation = HELPER.addItem("item.map_location", () -> new ItemMapLocation("item.map_location"));
+        markerConnector = HELPER.addItem("item.marker_connector", () -> new ItemMarkerConnector("item.marker_connector"));
+        volumeBox = HELPER.addItem("item.volume_box", () -> new ItemVolumeBox("item.volume_box"));
+        fragileFluidShard = HELPER.addItem("item.fragile_fluid_shard", () -> new ItemFragileFluidContainer(new net.minecraft.item.Item.Settings(), "item.fragile_fluid_shard"));
         if (BCLib.DEV) {
-            goggles = HELPER.addItem(new ItemGoggles("item.goggles"));
+            goggles = HELPER.addItem("item.goggles", () -> new ItemGoggles("item.goggles"));
         }
         FluidItemDrops.item = fragileFluidShard;
     }

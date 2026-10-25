@@ -33,6 +33,7 @@ public class BCLibInitializer implements ModInitializer {
     @Override
     public void onInitialize() {
         BuildCraftFabric.LOGGER.info("[BCLib] Initializing buildcraft-lib (Fabric 1.20.1)");
+        BCLibTags.register();
         buildcraft.api.core.BuildCraftAPI.fakePlayerProvider = buildcraft.lib.misc.FakePlayerProvider.INSTANCE;
 
         net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerFallback(

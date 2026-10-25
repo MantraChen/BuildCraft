@@ -28,8 +28,8 @@ public class BlockAutoWorkbenchFluids extends BlockBCTile_Neptune {
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileAutoWorkbenchFluids();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileAutoWorkbenchFluids.class, pos, state);
     }
 
     @Override

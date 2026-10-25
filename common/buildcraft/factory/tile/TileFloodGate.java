@@ -40,7 +40,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   MessageContext           → Object
 //   Side                     → NetSide
 //   NBTPrimitive/NbtByteArray open-sides decode → simplified to BitSet pattern
-public class TileFloodGate extends TileBC_Neptune implements IDebuggable {
+public class TileFloodGate extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
     private static final int[] REBUILD_DELAYS = { 16, 32, 64, 128, 256 };
 
     // STUB(R.Chen): BlockFloodGate.CONNECTED_MAP not in libLeaf — initialise directly (UP excluded per original).

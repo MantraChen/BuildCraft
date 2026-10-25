@@ -27,11 +27,7 @@ import buildcraft.lib.BCLibInitializer;
  *   MinecraftForge.EVENT_BUS    → individual Fabric {@code Event} callbacks
  *   WorldEvent.Unload           → {@link ServerWorldEvents#UNLOAD}
  *
- * NOTE(R.Chen): the legacy {@link BCCore} carries the full block/item/tile/tag
- * registration. None of it can be wired yet because its dependencies
- * (lib.registry TagManager/CreativeTabManager, lib.marker MarkerCache,
- * lib.block / lib.item base classes, BCLib / BCLibItems) are still on Forge
- * mappings. Each STUB below is unblocked as those layers land.
+ * Native registration uses shared metadata without executing the old Forge lifecycle.
  */
 public class BCCoreInitializer implements ModInitializer {
 
@@ -47,10 +43,15 @@ public class BCCoreInitializer implements ModInitializer {
 
         // --- Forge preInit (BCCore.preInit) -----------------------------------
         BCCoreConfig.preInit(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("buildcraft").toFile());
+        BCCoreTags.register();
+        BCCoreBlocks.preInit();
+        BCCoreItems.preInit();
+        buildcraft.lib.BCLibItems.enableGuide();
+        buildcraft.lib.BCLibItems.enableDebugger();
+        buildcraft.lib.BCLibItems.fmlPreInit();
         // STUB(R.Chen): CreativeTabManager.createTab("buildcraft.main") — port to
         //               FabricItemGroup once lib.registry is migrated.
-        // STUB(R.Chen): BCCoreBlocks/Items/Statements.preInit() + BCCoreRecipes —
-        //               unblock once lib.block / lib.item / lib.registry land.
+        // TODO: wire statements and native recipes.
         // STUB(R.Chen): NetworkRegistry GUI handler — port to ExtendedScreenHandlerType.
         // STUB(R.Chen): OreDictionaryStub.registerOre("craftingTableWood", ...) — port to
         //               Fabric item tags (c:crafting_tables / data-driven tag json).

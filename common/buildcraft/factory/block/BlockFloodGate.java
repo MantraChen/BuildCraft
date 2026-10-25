@@ -50,8 +50,8 @@ public class BlockFloodGate extends BlockBCTile_Neptune {
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileFloodGate();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileFloodGate.class, pos, state);
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1

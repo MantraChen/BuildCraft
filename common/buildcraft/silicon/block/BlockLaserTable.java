@@ -14,7 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import buildcraft.api.enums.EnumLaserTableType;
 import buildcraft.api.mj.ILaserTargetBlock;
 
-import buildcraft.lib.block.BlockBCBase_Neptune;
+import buildcraft.lib.block.BlockBCTile_Neptune;
 
 import buildcraft.silicon.tile.TileAdvancedCraftingTable;
 import buildcraft.silicon.tile.TileAssemblyTable;
@@ -23,12 +23,11 @@ import buildcraft.silicon.tile.TileIntegrationTable;
 import buildcraft.silicon.tile.TileProgrammingTable_Neptune;
 
 /**
- * STUB(R.Chen): BlockBCTile_Neptune not available in libLeaf — extends BlockBCBase_Neptune directly.
- * onUse (was onBlockActivated), BlockEntityProvider, VoxelShape deferred.
+ * Screen opening and table shape still require native client integration.
  * BCSiliconGuis.openGui deferred until ExtendedScreenHandlerType is registered.
  * isOpaqueCube/isFullCube/getBlockLayer do not exist in 1.20.1 — removed.
  */
-public class BlockLaserTable extends BlockBCBase_Neptune implements ILaserTargetBlock {
+public class BlockLaserTable extends BlockBCTile_Neptune implements ILaserTargetBlock {
     private final EnumLaserTableType type;
 
     public BlockLaserTable(EnumLaserTableType type, Settings settings, String id) {
@@ -36,19 +35,19 @@ public class BlockLaserTable extends BlockBCBase_Neptune implements ILaserTarget
         this.type = type;
     }
 
-    // STUB(R.Chen): createBlockEntity deferred until BlockEntityType is registered.
+    @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         switch (type) {
             case ASSEMBLY_TABLE:
-                return new TileAssemblyTable(null, pos, state);
+                return buildcraft.lib.registry.BlockEntityRegistry.create(TileAssemblyTable.class, pos, state);
             case ADVANCED_CRAFTING_TABLE:
-                return new TileAdvancedCraftingTable(null, pos, state);
+                return buildcraft.lib.registry.BlockEntityRegistry.create(TileAdvancedCraftingTable.class, pos, state);
             case INTEGRATION_TABLE:
-                return new TileIntegrationTable(null, pos, state);
+                return buildcraft.lib.registry.BlockEntityRegistry.create(TileIntegrationTable.class, pos, state);
             case CHARGING_TABLE:
-                return new TileChargingTable(null, pos, state);
+                return buildcraft.lib.registry.BlockEntityRegistry.create(TileChargingTable.class, pos, state);
             case PROGRAMMING_TABLE:
-                return new TileProgrammingTable_Neptune(null, pos, state);
+                return buildcraft.lib.registry.BlockEntityRegistry.create(TileProgrammingTable_Neptune.class, pos, state);
             default:
                 return null;
         }

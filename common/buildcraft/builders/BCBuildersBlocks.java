@@ -37,22 +37,22 @@ public class BCBuildersBlocks {
     public static BlockQuarry quarry;
 
     public static void fmlPreInit() {
-        filler = HELPER.addBlockAndItem(new BlockFiller(MaterialBC.IRON, "block.filler"));
-        builder = HELPER.addBlockAndItem(new BlockBuilder(MaterialBC.IRON, "block.builder"));
-        architect = HELPER.addBlockAndItem(new BlockArchitectTable(MaterialBC.IRON, "block.architect"));
-        library = HELPER.addBlockAndItem(new BlockElectronicLibrary(MaterialBC.IRON, "block.library"));
-        replacer = HELPER.addBlockAndItem(new BlockReplacer(MaterialBC.IRON, "block.replacer"));
+        filler = HELPER.addBlockAndItem("block.filler", () -> new BlockFiller(MaterialBC.IRON, "block.filler"));
+        builder = HELPER.addBlockAndItem("block.builder", () -> new BlockBuilder(MaterialBC.IRON, "block.builder"));
+        architect = HELPER.addBlockAndItem("block.architect", () -> new BlockArchitectTable(MaterialBC.IRON, "block.architect"));
+        library = HELPER.addBlockAndItem("block.library", () -> new BlockElectronicLibrary(MaterialBC.IRON, "block.library"));
+        replacer = HELPER.addBlockAndItem("block.replacer", () -> new BlockReplacer(MaterialBC.IRON, "block.replacer"));
 
-        frame = HELPER.addBlockAndItem(new BlockFrame(MaterialBC.IRON, "block.frame"));
-        quarry = HELPER.addBlockAndItem(new BlockQuarry(MaterialBC.IRON, "block.quarry"));
+        frame = HELPER.addBlockAndItem("block.frame", () -> new BlockFrame(MaterialBC.IRON, "block.frame"));
+        quarry = HELPER.addBlockAndItem("block.quarry", () -> new BlockQuarry(MaterialBC.IRON, "block.quarry"));
     }
 
     public static void fmlInit() {
-        HELPER.registerTile(TileFiller.class, "tile.filler");
-        HELPER.registerTile(TileBuilder.class, "tile.builder");
-        HELPER.registerTile(TileArchitectTable.class, "tile.architect");
-        HELPER.registerTile(TileElectronicLibrary.class, "tile.library");
-        HELPER.registerTile(TileReplacer.class, "tile.replacer");
-        HELPER.registerTile(TileQuarry.class, "tile.quarry");
+        HELPER.registerTile(TileFiller.class, "tile.filler", TileFiller::new, filler);
+        HELPER.registerTile(TileBuilder.class, "tile.builder", TileBuilder::new, builder);
+        HELPER.registerTile(TileArchitectTable.class, "tile.architect", TileArchitectTable::new, architect);
+        HELPER.registerTile(TileElectronicLibrary.class, "tile.library", TileElectronicLibrary::new, library);
+        HELPER.registerTile(TileReplacer.class, "tile.replacer", TileReplacer::new, replacer);
+        HELPER.registerTile(TileQuarry.class, "tile.quarry", TileQuarry::new, quarry);
     }
 }

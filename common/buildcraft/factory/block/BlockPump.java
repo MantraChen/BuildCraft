@@ -22,7 +22,7 @@ public class BlockPump extends BlockBCTile_Neptune {
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World worldIn, BlockState state) {
-        return new TilePump();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TilePump.class, pos, state);
     }
 }

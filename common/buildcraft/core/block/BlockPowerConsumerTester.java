@@ -18,7 +18,7 @@ public class BlockPowerConsumerTester extends BlockBCTile_Neptune {
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World worldIn, BlockState state) {
-        return new TilePowerConsumerTester();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TilePowerConsumerTester.class, pos, state);
     }
 }

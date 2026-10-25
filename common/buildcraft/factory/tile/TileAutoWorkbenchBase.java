@@ -39,7 +39,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   Side                     → NetSide
 //   Identifier         → Identifier
 //   crafting/power logic     → STUB (WorkbenchCrafting not in libLeaf)
-public abstract class TileAutoWorkbenchBase extends TileBC_Neptune {
+public abstract class TileAutoWorkbenchBase extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity {
 
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("autoWorkbench");
 

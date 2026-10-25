@@ -46,7 +46,8 @@ public class TileMarkerVolume extends TileMarker<VolumeConnection> implements IT
 
     private boolean showSignals = false;
 
-    public TileMarkerVolume() {
+    public TileMarkerVolume(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
         caps.addCapabilityInstance(TilesAPI.CAP_TILE_AREA_PROVIDER, this, EnumPipePart.VALUES);
     }
 

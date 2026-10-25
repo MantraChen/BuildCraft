@@ -32,28 +32,25 @@ public class BCEnergyBlocks {
     public static void preInit() {
 
         if (BCCoreBlocks.engine != null) {
-            // STUB(R.Chen): engine tiles now use the (BlockEntityType, BlockPos, BlockState) constructor and are
-            // created via BlockEntityType; the legacy no-arg Supplier registry path is a no-op until the
-            // engine BlockEntityTypes are wired up — Phase 10.
-            BCCoreBlocks.engine.registerEngine(EnumEngineType.STONE, () -> null);
-            BCCoreBlocks.engine.registerEngine(EnumEngineType.IRON, () -> null);
+            BCCoreBlocks.engine.registerEngine(EnumEngineType.STONE, TileEngineStone_BC8.class);
+            BCCoreBlocks.engine.registerEngine(EnumEngineType.IRON, TileEngineIron_BC8.class);
             if (BCEnergyConfig.enableRfEngine) {
-                BCCoreBlocks.engine.registerEngine(EnumEngineType.RF, () -> null);
+                BCCoreBlocks.engine.registerEngine(EnumEngineType.RF, TileEngineRF.class);
             }
         }
 
         if (BCEnergyConfig.enableMjDynamo) {
             mjDynamo = HELPER.addForcedBlock(new BlockDynamoMJ(MaterialBC.IRON, "block.mj_dynamo"));
             HELPER.addForcedItem(new ItemBlockBC_Neptune(mjDynamo));
-            HELPER.registerTile(TileDynamoMJ.class, "tile.mj_dynamo");
+            HELPER.registerTile(TileDynamoMJ.class, "tile.mj_dynamo", TileDynamoMJ::new, mjDynamo);
         }
 
         EnumSpring.OIL.liquidBlock = BCEnergyFluids.crudeOil[0].getBlock().getDefaultState();
-        EnumSpring.OIL.tileConstructor = TileSpringOil::new;
+        EnumSpring.OIL.tileConstructor = (pos, state) -> buildcraft.lib.registry.BlockEntityRegistry.create(TileSpringOil.class, pos, state);
 
-        HELPER.registerTile(TileSpringOil.class, "tile.spring.oil");
-        HELPER.registerTile(TileEngineStone_BC8.class, "tile.engine.stone");
-        HELPER.registerTile(TileEngineIron_BC8.class, "tile.engine.iron");
-        HELPER.registerTile(TileEngineRF.class, "tile.engine.rf");
+        HELPER.registerTile(TileSpringOil.class, "tile.spring.oil", TileSpringOil::new, BCCoreBlocks.spring);
+        HELPER.registerTile(TileEngineStone_BC8.class, "tile.engine.stone", TileEngineStone_BC8::new, BCCoreBlocks.engine);
+        HELPER.registerTile(TileEngineIron_BC8.class, "tile.engine.iron", TileEngineIron_BC8::new, BCCoreBlocks.engine);
+        HELPER.registerTile(TileEngineRF.class, "tile.engine.rf", TileEngineRF::new, BCCoreBlocks.engine);
     }
 }

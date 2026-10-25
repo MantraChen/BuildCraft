@@ -43,7 +43,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   NbtCompound             → NbtCompound
 //   Direction                 → Direction
 //   Side                       → NetSide
-public class TileDistiller_BC8 extends TileBC_Neptune implements IDebuggable {
+public class TileDistiller_BC8 extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
 
     public static final IdAllocator IDS = TileBC_Neptune.IDS.makeChild("Distiller");
     public static final int NET_TANK_IN = IDS.allocId("TANK_IN");

@@ -152,18 +152,6 @@ public abstract class TileBC_Neptune extends BlockEntity implements IPayloadRece
         caps.addProvider(itemManager);
     }
 
-    /**
-     * Forge-compat no-arg constructor. Used by unmigrated subclasses that haven't yet adopted the
-     * (BlockEntityType, BlockPos, BlockState) signature. Uses BlockEntityType.SIGN as a placeholder
-     * type that is always registered. WILL FAIL at runtime — subclasses must migrate.
-     * TODO(R.Chen): remove once all subclasses pass their registered BlockEntityType.
-     */
-    @SuppressWarnings("unchecked")
-    public TileBC_Neptune() {
-        this((BlockEntityType<?>) BlockEntityType.SIGN, BlockPos.ORIGIN,
-             net.minecraft.block.Blocks.OAK_SIGN.getDefaultState());
-    }
-
     // ##################################################
     //
     // Local blockstate + tile entity getters

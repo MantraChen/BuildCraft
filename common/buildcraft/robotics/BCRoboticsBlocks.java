@@ -20,8 +20,8 @@ public class BCRoboticsBlocks {
     public static BlockZonePlanner zonePlanner;
 
     public static void preInit() {
-        zonePlanner = HELPER.addBlockAndItem(new BlockZonePlanner(MaterialBC.IRON, "block.zone_planner"));
+        zonePlanner = HELPER.addBlockAndItem("block.zone_planner", () -> new BlockZonePlanner(MaterialBC.IRON, "block.zone_planner"));
 
-        HELPER.registerTile(TileZonePlanner.class, "tile.zone_planner");
+        HELPER.registerTile(TileZonePlanner.class, "tile.zone_planner", TileZonePlanner::new, zonePlanner);
     }
 }

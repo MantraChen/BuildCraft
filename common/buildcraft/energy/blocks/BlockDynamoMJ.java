@@ -28,7 +28,7 @@ public class BlockDynamoMJ extends BlockBCTile_Neptune implements ICustomRotatio
 
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new TileDynamoMJ(null, pos, state);
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileDynamoMJ.class, pos, state);
     }
 
     @Override

@@ -41,8 +41,8 @@ public class BlockTank extends BlockBCTile_Neptune implements ICustomPipeConnect
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileTank();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileTank.class, pos, state);
     }
 
     @Override

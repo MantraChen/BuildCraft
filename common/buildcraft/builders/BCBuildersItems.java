@@ -19,8 +19,8 @@ public class BCBuildersItems {
     public static ItemFillerPlanner addonFillerPlanner;
 
     public static void fmlPreInit() {
-        snapshot = HELPER.addItem(new ItemSnapshot("item.snapshot"));
-        schematicSingle = HELPER.addItem(new ItemSchematicSingle(new net.minecraft.item.Item.Settings(), "item.schematic.single"));
-        addonFillerPlanner = HELPER.addItem(new ItemFillerPlanner("item.filler_planner"));
+        snapshot = HELPER.addItem("item.snapshot", () -> new ItemSnapshot("item.snapshot"));
+        schematicSingle = HELPER.addItem("item.schematic.single", () -> new ItemSchematicSingle(new net.minecraft.item.Item.Settings(), "item.schematic.single"));
+        addonFillerPlanner = HELPER.addItem("item.filler_planner", () -> new ItemFillerPlanner("item.filler_planner"));
     }
 }

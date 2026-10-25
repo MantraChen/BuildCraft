@@ -11,26 +11,20 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 
-import buildcraft.lib.block.BlockBCBase_Neptune;
+import buildcraft.lib.block.BlockBCTile_Neptune;
 import buildcraft.lib.block.IBlockWithFacing;
 
 import buildcraft.silicon.tile.TileLaser;
 
-/**
- * STUB(R.Chen): BlockBCTile_Neptune not available in libLeaf — extends BlockBCBase_Neptune directly.
- * BlockEntityProvider and full tile integration deferred until lib.block is migrated.
- * isFullCube/isOpaqueCube do not exist in 1.20.1 — removed.
- */
-public class BlockLaser extends BlockBCBase_Neptune implements IBlockWithFacing {
+public class BlockLaser extends BlockBCTile_Neptune implements IBlockWithFacing {
 
     public BlockLaser(Settings settings, String id) {
         super(settings, id);
     }
 
-    // STUB(R.Chen): BlockEntityProvider.createBlockEntity deferred until BlockEntityType is registered.
+    @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        // STUB(R.Chen): BlockEntityType<?> is null here — will be wired during BCSiliconBlocks.preInit().
-        return new TileLaser(null, pos, state);
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileLaser.class, pos, state);
     }
 
     @Override

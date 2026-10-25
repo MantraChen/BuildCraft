@@ -71,8 +71,8 @@ public class BlockQuarry extends BlockBCTile_Neptune implements IBlockWithFacing
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileQuarry();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileQuarry.class, pos, state);
     }
 
     @Override

@@ -23,8 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric {@code ExtendedScreenHandlerType} (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric {@code Event} callbacks (deferred)
  *
- * NOTE(R.Chen): All block/item/tile/recipe registration is stubbed until lib.registry
- * (RegistrationHelper, TagManager) and lib.block/lib.item base classes are ported.
+ * Blocks, items and tile factories register here; screens and recipes remain to be wired.
  */
 public class BCFactoryInitializer implements ModInitializer {
 
@@ -39,13 +38,9 @@ public class BCFactoryInitializer implements ModInitializer {
         );
 
         // --- Forge preInit (BCFactory.preInit) -----------------------------------
-        // STUB(R.Chen): RegistryConfig.useOtherModConfigFor(MODID, BCCoreInitializer.MODID) —
-        //               port to Fabric config directory once BCCoreConfig is migrated.
-        // STUB(R.Chen): BCFactoryBlocks.fmlPreInit() — migrate all blocks + tile entity types to
-        //               Registry.register(Registries.BLOCK / Registries.BLOCK_ENTITY_TYPE, ...)
-        //               once lib.block/lib.registry land.
-        // STUB(R.Chen): BCFactoryItems.fmlPreInit() — migrate items to
-        //               Registry.register(Registries.ITEM, ...) once lib.item lands.
+        BCFactoryTags.register();
+        BCFactoryBlocks.fmlPreInit();
+        BCFactoryItems.fmlPreInit();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for each of:
         //               AUTO_WORKBENCH_ITEMS, CHUTE, TANK, DISTILLER.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCFactoryEventDist.INSTANCE) —
@@ -60,6 +55,6 @@ public class BCFactoryInitializer implements ModInitializer {
         // --- Forge postInit (BCFactory.postInit) --------------------------------
         // STUB(R.Chen): BCFactoryProxy.fmlPostInit() — no factory-specific post-init hook.
 
-        BuildCraftFabric.LOGGER.info("[BCFactory] Initialization complete (all registration stubbed)");
+        BuildCraftFabric.LOGGER.info("[BCFactory] Block, item and tile registration complete");
     }
 }

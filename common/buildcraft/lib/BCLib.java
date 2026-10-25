@@ -149,14 +149,7 @@ public class BCLib {
         event.registerServerCommand(new CommandBuildCraft());
     }
 
-    static {
-        startBatch();
-        registerTag("item.guide").reg("guide").locale("buildcraft.guide").model("guide").tab("vanilla.misc");
-        registerTag("item.guide.note").reg("guide_note").locale("buildcraft.guide_note").model("guide_note")
-            .tab("vanilla.misc");
-        registerTag("item.debugger").reg("debugger").locale("debugger").model("debugger").tab("vanilla.misc");
-        endBatch(TagManager.prependTags("buildcraftlib:", EnumTagType.REGISTRY_NAME, EnumTagType.MODEL_LOCATION));
-    }
+    static { BCLibTags.register(); }
 
     private static TagEntry registerTag(String id) {
         return TagManager.registerTag(id);

@@ -9,5 +9,6 @@ package buildcraft.robotics.tile;
 import buildcraft.lib.tile.TileBC_Neptune;
 
 public class TileZonePlanner extends TileBC_Neptune {
-    public TileZonePlanner() {}
+    public TileZonePlanner(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);}
 }

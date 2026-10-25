@@ -31,8 +31,8 @@ public class BlockReplacer extends BlockBCTile_Neptune implements IBlockWithFaci
 
     @Nullable
     @Override
-    public TileBC_Neptune createTileEntity(World world, BlockState state) {
-        return new TileReplacer();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileReplacer.class, pos, state);
     }
 
     @Override

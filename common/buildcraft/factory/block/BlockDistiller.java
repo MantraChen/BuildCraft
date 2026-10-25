@@ -32,8 +32,8 @@ public class BlockDistiller extends BlockBCTile_Neptune implements IBlockWithFac
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World worldIn, BlockState state) {
-        return new TileDistiller_BC8();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileDistiller_BC8.class, pos, state);
     }
 
     // @Override -- removed: method does not exist in Fabric 1.20.1

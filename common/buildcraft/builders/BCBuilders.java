@@ -76,38 +76,7 @@ public class BCBuilders {
         GlobalSavedDataSnapshots.reInit(buildcraft.lib.tile.TileBC_Neptune.NetSide.SERVER);
     }
 
-    static {
-        startBatch();
-        // Items
-        registerTag("item.schematic.single").reg("schematic_single").locale("schematicSingle").model("schematic_single/");
-        registerTag("item.snapshot").reg("snapshot").locale("snapshot").model("snapshot/");
-        registerTag("item.filler_planner").reg("filler_planner").oldReg("filling_planner").locale("buildcraft.filler_planner").model("filler_planner");
-        // Item Blocks
-        registerTag("item.block.architect").reg("architect").locale("architectBlock").model("architect");
-        registerTag("item.block.builder").reg("builder").locale("builderBlock").model("builder");
-        registerTag("item.block.filler").reg("filler").locale("fillerBlock").model("filler");
-        registerTag("item.block.library").reg("library").locale("libraryBlock").model("library");
-        registerTag("item.block.replacer").reg("replacer").locale("replacerBlock").model("replacer");
-        registerTag("item.block.frame").reg("frame").locale("frameBlock").model("frame");
-        registerTag("item.block.quarry").reg("quarry").locale("quarryBlock").model("quarry");
-        // Blocks
-        registerTag("block.architect").reg("architect").locale("architectBlock").model("architect");
-        registerTag("block.builder").reg("builder").locale("builderBlock").model("builder");
-        registerTag("block.filler").reg("filler").locale("fillerBlock").model("filler");
-        registerTag("block.library").reg("library").locale("libraryBlock").model("library");
-        registerTag("block.replacer").reg("replacer").locale("replacerBlock").model("replacer");
-        registerTag("block.frame").reg("frame").locale("frameBlock").model("frame");
-        registerTag("block.quarry").reg("quarry").locale("quarryBlock").model("quarry");
-        // Tiles
-        registerTag("tile.architect").reg("architect");
-        registerTag("tile.builder").reg("builder");
-        registerTag("tile.library").reg("library");
-        registerTag("tile.replacer").reg("replacer");
-        registerTag("tile.filler").reg("filler");
-        registerTag("tile.quarry").reg("quarry");
-
-        endBatch(TagManager.prependTags("buildcraftbuilders:", EnumTagType.REGISTRY_NAME, EnumTagType.MODEL_LOCATION).andThen(TagManager.setTab("buildcraft.main")));
-    }
+    static { BCBuildersTags.register(); }
 
     private static TagEntry registerTag(String id) {
         return TagManager.registerTag(id);

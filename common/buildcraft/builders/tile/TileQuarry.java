@@ -101,7 +101,7 @@ import buildcraft.lib.tile.TileBC_Neptune.NetSide;
 //   - BCBuildersEventDist: quarry validate/invalidate bookkeeping dropped.
 //   - AdvDebuggerQuarry / render bounding box: client debug render stubbed.
 //   - BlockUtil fluid viscosity / break-power / drops: BlockUtil stubs (see lib.misc.BlockUtil).
-public class TileQuarry extends TileBC_Neptune implements IDebuggable, IChunkLoadingTile {
+public class TileQuarry extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable, IChunkLoadingTile {
     public static final boolean DEBUG_QUARRY = BCDebugging.shouldDebugLog("builders.quarry");
     private static final long MAX_POWER_PER_TICK = 512 * MjAPI.MJ;
     private static final Identifier ADVANCEMENT_COMPLETE

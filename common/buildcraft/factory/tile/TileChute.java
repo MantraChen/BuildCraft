@@ -45,7 +45,7 @@ import buildcraft.lib.tile.item.ItemHandlerSimple;
 //   ICapabilityProvider        → Object
 //   pickupItems/putInNearInventories: TransactorEntityItem + BoundingBoxUtil not in libLeaf — STUBbed.
 //   TilesAPI.CAP_HAS_WORK      → deferred (Phase 4F)
-public class TileChute extends TileBC_Neptune implements IDebuggable {
+public class TileChute extends TileBC_Neptune implements buildcraft.lib.tile.TickingBlockEntity, IDebuggable {
     private static final Identifier ADVANCEMENT_DID_INSERT = new Identifier("buildcraftfactory", "retired_hopper");
 
     @SuppressWarnings("unused")

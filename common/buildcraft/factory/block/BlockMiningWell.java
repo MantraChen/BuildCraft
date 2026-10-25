@@ -23,7 +23,7 @@ public class BlockMiningWell extends BlockBCTile_Neptune implements IBlockWithFa
     }
 
     @Override
-    public TileBC_Neptune createTileEntity(World worldIn, BlockState state) {
-        return new TileMiningWell();
+    public TileBC_Neptune createBlockEntity(net.minecraft.util.math.BlockPos pos, BlockState state) {
+        return buildcraft.lib.registry.BlockEntityRegistry.create(TileMiningWell.class, pos, state);
     }
 }

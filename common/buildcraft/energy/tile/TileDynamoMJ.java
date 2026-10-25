@@ -20,14 +20,8 @@ import buildcraft.lib.tile.TileBC_Neptune;
 
 public class TileDynamoMJ extends TileBC_Neptune implements IEngineLikeForLedger {
 
-    public static BlockEntityType<TileDynamoMJ> TYPE;
-
     public TileDynamoMJ(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-    }
-
-    public TileDynamoMJ(BlockPos pos, BlockState state) {
-        this(TYPE, pos, state);
     }
 
     @Override

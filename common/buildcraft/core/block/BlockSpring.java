@@ -52,8 +52,8 @@ public class BlockSpring extends BlockBCBase_Neptune implements BlockEntityProvi
 
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        Supplier<BlockEntity> constructor = state.get(SPRING_TYPE).tileConstructor;
-        return constructor != null ? constructor.get() : null;
+        java.util.function.BiFunction<BlockPos, BlockState, BlockEntity> constructor = state.get(SPRING_TYPE).tileConstructor;
+        return constructor != null ? constructor.apply(pos, state) : null;
     }
 
     // Tick

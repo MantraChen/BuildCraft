@@ -23,9 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric ExtendedScreenHandlerType (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric Event callbacks (deferred)
  *
- * NOTE(R.Chen): All block/item/tile/fluid/recipe/world-gen registration is stubbed until
- * lib.registry (RegistrationHelper, TagManager), lib.block/lib.item, the Transfer-API fluid
- * layer, and the world-gen migration pass are completed.
+ * Blocks, items and tile factories register here. Fluid and world-generation integration remains.
  */
 public class BCEnergyInitializer implements ModInitializer {
 
@@ -41,17 +39,11 @@ public class BCEnergyInitializer implements ModInitializer {
 
         // --- Forge preInit (BCEnergy.preInit) ------------------------------------
         BCEnergyConfig.preInit();
+        BCEnergyTags.register();
+        BCEnergyBlocks.preInit();
+        BCEnergyItems.preInit();
         // STUB(R.Chen): BCEnergyEntities.preInit() — no-op in 1.12.2; kept for parity.
         // STUB(R.Chen): BCEnergyFluids.preInit() — oil/fuel fluids need Transfer-API FluidVariant.
-        // STUB(R.Chen): BCEnergyBlocks.preInit() — migrate engine tile types + dynamo to
-        //               Registry.register(Registries.BLOCK / BLOCK_ENTITY_TYPE, ...) once
-        //               lib.block lands:
-        //               - TileEngineStone_BC8 → BlockEntityType ENGINE_STONE
-        //               - TileEngineIron_BC8  → BlockEntityType ENGINE_IRON
-        //               - TileEngineRF        → BlockEntityType ENGINE_RF   (if config enabled)
-        //               - TileDynamoMJ        → BlockEntityType DYNAMO_MJ   (if config enabled)
-        //               - TileSpringOil       → BlockEntityType SPRING_OIL
-        // STUB(R.Chen): BCEnergyItems.preInit() — glob of oil item deferred until lib.item lands.
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ENGINE_STONE, ENGINE_IRON, ENGINE_RF, DYNAMO_MJ.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCEnergyProxy) →

@@ -58,22 +58,7 @@ public class BCRobotics {
         BCRoboticsProxy.getProxy().fmlPostInit();
     }
 
-    static {
-        startBatch();
-
-        // Items
-
-        // Item Blocks
-        registerTag("item.block.zone_planner").reg("zone_planner").locale("zonePlannerBlock").model("zone_planner");
-
-        // Blocks
-        registerTag("block.zone_planner").reg("zone_planner").oldReg("zonePlannerBlock").locale("zonePlannerBlock").model("zone_planner");
-
-        // Tiles
-        registerTag("tile.zone_planner").reg("zone_planner");
-
-        endBatch(TagManager.prependTags("buildcraftrobotics:", EnumTagType.REGISTRY_NAME, EnumTagType.MODEL_LOCATION).andThen(TagManager.setTab("buildcraft.main")));
-    }
+    static { BCRoboticsTags.register(); }
 
     private static TagEntry registerTag(String id) {
         return TagManager.registerTag(id);

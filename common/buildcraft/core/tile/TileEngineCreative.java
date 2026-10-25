@@ -28,6 +28,10 @@ import buildcraft.lib.misc.MathUtil;
 import buildcraft.lib.net.PacketBufferBC;
 
 public class TileEngineCreative extends TileEngineBase_BC8 {
+    public TileEngineCreative(net.minecraft.block.entity.BlockEntityType<?> type, net.minecraft.util.math.BlockPos pos, net.minecraft.block.BlockState state) {
+        super(type, pos, state);
+    }
+
     public static final long[] outputs = { 1, 2, 4, 8, 16, 32, 64, 128, 256 };
     public int currentOutputIndex = 0;
 

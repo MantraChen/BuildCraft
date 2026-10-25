@@ -13,9 +13,7 @@ import buildcraft.lib.tile.TileBC_Neptune;
 
 public class TileElectronicLibrary extends TileBC_Neptune {
 
-    public static BlockEntityType<TileElectronicLibrary> TYPE;
-
-    public TileElectronicLibrary(BlockPos pos, BlockState state) {
-        super(TYPE, pos, state);
+    public TileElectronicLibrary(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 }

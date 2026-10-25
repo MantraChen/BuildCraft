@@ -23,9 +23,7 @@ import buildcraft.lib.BCLibInitializer;
  *   NetworkRegistry GUI handler → Fabric {@code ExtendedScreenHandlerType} (deferred)
  *   MinecraftForge.EVENT_BUS    → individual Fabric {@code Event} callbacks (deferred)
  *
- * NOTE(R.Chen): All block/item/tile/recipe/schematic/snapshot registration is stubbed until
- * lib.registry (RegistrationHelper, TagManager), lib.block/lib.item, and the snapshot/schematic
- * serialization layer are ported.
+ * Blocks, items and tile factories register here; schematic and screen integration remains.
  */
 public class BCBuildersInitializer implements ModInitializer {
 
@@ -41,11 +39,10 @@ public class BCBuildersInitializer implements ModInitializer {
 
         // --- Forge preInit (BCBuilders.preInit) ----------------------------------
         BCBuildersConfig.preInit();
-        // STUB(R.Chen): BCBuildersBlocks.fmlPreInit() — migrate blocks + BlockEntityType registrations to
-        //               Registry.register(Registries.BLOCK / BLOCK_ENTITY_TYPE, ...) once lib.block lands:
-        //               - TileQuarry → BlockEntityType QUARRY  (chunk-loading tile, EnergyStorage receiver)
-        //               - TileArchitectTable, TileBuilder, TileFiller, TileElectronicLibrary, TileReplacer
-        // STUB(R.Chen): BCBuildersItems.fmlPreInit() — schematic/blueprint/snapshot items deferred.
+        BCBuildersTags.register();
+        BCBuildersItems.fmlPreInit();
+        BCBuildersBlocks.fmlPreInit();
+        BCBuildersBlocks.fmlInit();
         // STUB(R.Chen): NetworkRegistry GUI handler → ExtendedScreenHandlerType for:
         //               ARCHITECT_TABLE, BUILDER, FILLER, LIBRARY, REPLACER, QUARRY.
         // STUB(R.Chen): MinecraftForge.EVENT_BUS.register(BCBuildersEventDist.INSTANCE) — port the quarry
